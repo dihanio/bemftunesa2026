@@ -99,7 +99,7 @@ export function Footer() {
           <ul className="space-y-3 text-xs font-bold uppercase tracking-wider">
             <li>
               <a
-                href="http://localhost:3002"
+                href="https://oprec.bemftunesa.org"
                 className="hover:text-[#10b981] transition-colors"
               >
                 BEM FT Shop
@@ -107,7 +107,7 @@ export function Footer() {
             </li>
             <li>
               <a
-                href="http://localhost:3003"
+                href="https://ims.bemftunesa.org"
                 className="hover:text-[#10b981] transition-colors"
               >
                 Portal PKKMB

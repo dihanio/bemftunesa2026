@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.bemftunesa.org/v1";
     return [
       {
         source: "/api/v1/:path*",
@@ -51,7 +51,7 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
+      process.env.NEXT_PUBLIC_API_URL || "https://api.bemftunesa.org/v1";
     const apiURLObj = new URL(apiUrl);
     const apiHost = apiURLObj.host;
     const apiProto = apiURLObj.protocol;

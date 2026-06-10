@@ -206,7 +206,7 @@ export default function RecruitmentPage() {
 
         try {
           const loginRes = await fetch(
-            "http://localhost:3001/api/v1/auth/google",
+            "https://api.bemftunesa.org/v1/auth/google",
             {
               method: "POST",
               headers: {
@@ -306,7 +306,7 @@ export default function RecruitmentPage() {
     }
 
     try {
-      const loginRes = await fetch("http://localhost:3001/api/v1/auth/direct", {
+      const loginRes = await fetch("https://api.bemftunesa.org/v1/auth/direct", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

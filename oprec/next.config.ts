@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.bemftunesa.org/v1";
     return [
       {
         source: "/api/v1/:path*",

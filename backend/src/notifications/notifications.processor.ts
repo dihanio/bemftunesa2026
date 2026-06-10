@@ -145,7 +145,7 @@ export class NotificationsProcessor extends WorkerHost {
       ${
         link
           ? `<div class="btn-container">
-               <a class="btn" href="http://localhost:3000${link}">Akses Instan IMS</a>
+               <a class="btn" href="https://ims.bemftunesa.org${link}">Akses Instan IMS</a>
              </div>`
           : ''
       }
@@ -189,7 +189,7 @@ Terdapat pembaruan status birokrasi baru di sistem ERP:
 ⏰ *Waktu:* ${new Date().toLocaleString('id-ID')}
 
 ---------------------------------------
-${link ? `🔗 *Link Akses:* http://localhost:3000${link}` : ''}
+${link ? `🔗 *Link Akses:* https://ims.bemftunesa.org${link}` : ''}
 ---------------------------------------
 
 _Pemberitahuan resmi dikirim secara asinkron dari robot internal BEM FT UNESA. Mohon segera melakukan koordinasi dan tindak lanjut di sistem IMS._

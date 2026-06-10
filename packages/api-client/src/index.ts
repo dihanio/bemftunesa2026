@@ -69,7 +69,7 @@ export class ApiClient {
       envBaseURL = `${window.location.origin}/api/v1`;
     }
 
-    const fallback = "http://localhost:3001/api/v1";
+    const fallback = "https://api.bemftunesa.org/v1";
     const url = envBaseURL || fallback;
     const normalized = url.endsWith("/") ? url.slice(0, -1) : url;
 
