@@ -1,22 +1,17 @@
-FROM oven/bun:1 AS deps
-WORKDIR /app
+FROM oven/bun:1-slim
 
-# Copy the entire monorepo to ensure all workspaces and their dependencies are available
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Copy the entire monorepo
 COPY . .
 
-# Install dependencies for all workspaces
+# Install all dependencies (including workspaces)
 RUN bun install
 
-FROM deps AS build
+# Build the backend
 WORKDIR /app/backend
 RUN bun run build
 
-FROM oven/bun:1-slim AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/packages ./packages
-COPY --from=build /app/backend ./backend
 EXPOSE 3001
-CMD ["bun", "backend/dist/main.js"]
+CMD ["bun", "dist/main.js"]
