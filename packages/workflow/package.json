@@ -1,0 +1,20 @@
+{
+  "name": "@bemft/workflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared configurable workflow engine contracts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "dependencies": {
+    "@bemft/permissions": "workspace:*",
+    "@bemft/types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

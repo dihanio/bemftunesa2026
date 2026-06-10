@@ -1,0 +1,108 @@
+services:
+  # === API Backend (api.bemftunesa.org) ===
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: bemft-api
+    environment:
+      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-password}@db:27017/${DB_NAME:-bemft_db}?authSource=admin
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  # === Public Frontend ===
+  public:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: bemft-public
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:3001/v1}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # === Database (MongoDB) ===
+  db:
+    image: mongo:7.0
+    container_name: bemft-db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: ${DB_NAME:-bemft_db}
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  # === Redis (Cache + Queue) ===
+  redis:
+    image: redis:7-alpine
+    container_name: bemft-redis
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+
+  # === IMS (Internal Management System) ===
+  ims:
+    build:
+      context: .
+      dockerfile: ims/Dockerfile
+    container_name: bemft-ims
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:3001/v1}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "3002:3002"
+    depends_on:
+      - api
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # === NGINX Reverse Proxy ===
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: bemft-nginx
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  #     - ./nginx/certs:/etc/nginx/certs
+  #   depends_on:
+  #     - api
+  #     - public
+  #     - ims
+
+  # Note: or/shop/pkkmb can be deployed separately if needed
+
+volumes:
+  mongo_data:

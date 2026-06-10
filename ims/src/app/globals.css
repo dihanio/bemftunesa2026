@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-geist-sans: "Plus Jakarta Sans", "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-geist-mono: "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  --font-heading: "Outfit", sans-serif;
+  --background: #091c11;
+  --foreground: #f5f2eb;
+  --primary: #10b981;
+  --primary-light: #34d399;
+  --primary-dark: #12331e;
+  --accent: #10b981;
+  --accent-light: #a7f3d0;
+  --success: #71d39b;
+  --warning: #f0c36a;
+  --danger: #ff7a7a;
+  --muted: #708b75;
+  --border: rgba(255, 255, 255, 0.14);
+  --card: rgba(255, 255, 255, 0.065);
+  --card-foreground: #f5f2eb;
+  --secondary: rgba(255, 255, 255, 0.1);
+  --secondary-foreground: #f5f2eb;
+  --primary-foreground: #091c11;
+  --ring: #10b981;
+  --destructive: #ff7a7a;
+  --radius: 0.625rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-heading);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+    font-weight: 700;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(18, 51, 30, 0.96), rgba(9, 28, 17, 0.98));
+    background-size: 36px 36px, 36px 36px, auto;
+    background-attachment: fixed;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+}
+
+@utility card {
+  @apply rounded-xl border border-white/10 bg-white/6 shadow-sm backdrop-blur-xl transition-all duration-300;
+}
+
+@utility card-hover {
+  @apply card hover:shadow-lg hover:-translate-y-1 hover:border-accent/30 hover:bg-white/9;
+}
+
+@utility card-premium {
+  @apply card shadow-[inset_0_1px_1px_rgba(255,255,255,0.15)] hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.12),inset_0_1px_1px_rgba(255,255,255,0.25)];
+}
+
+@utility btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-primary-dark font-semibold rounded-lg hover:bg-accent-light hover:shadow-[0_0_24px_rgba(167,243,208,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 cursor-pointer;
+}
+
+@utility btn-accent {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-accent text-primary-dark font-semibold rounded-lg hover:bg-accent-light hover:shadow-[0_0_24px_rgba(16,185,129,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-300 cursor-pointer;
+}
+
+@utility btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-muted font-medium hover:text-foreground hover:bg-white/8 rounded-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 cursor-pointer;
+}
+
+@utility glass-glow-accent {
+  box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.16), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+@utility glass-glow-success {
+  box-shadow: 0 0 40px -10px rgba(113, 211, 155, 0.16), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+@utility glass-glow-warning {
+  box-shadow: 0 0 40px -10px rgba(240, 195, 106, 0.16), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+@utility glass-glow-info {
+  box-shadow: 0 0 40px -10px rgba(157, 195, 255, 0.16), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+@utility input {
+  @apply w-full px-3 py-2 bg-white/8 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all;
+}
+
+@utility sidebar-link {
+  @apply flex items-center gap-3 px-3 py-2 rounded-lg text-muted hover:text-foreground hover:bg-white/8 transition-colors;
+}
+
+@utility sidebar-link-active {
+  @apply sidebar-link bg-accent/10 text-accent font-medium;
+}
+
+@utility status-badge {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-medium rounded-full;
+}
+
+@utility status-badge-success {
+  @apply status-badge bg-success/10 text-success;
+}
+
+@utility status-badge-warning {
+  @apply status-badge bg-warning/10 text-warning;
+}
+
+@utility status-badge-danger {
+  @apply status-badge bg-danger/10 text-danger;
+}
+
+@utility status-badge-info {
+  @apply status-badge bg-accent/10 text-accent;
+}

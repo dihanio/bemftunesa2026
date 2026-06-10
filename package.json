@@ -1,0 +1,27 @@
+{
+  "name": "website-bem-ft-unesa",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:frontend": "turbo run dev --filter=@bemft/frontend",
+    "dev:backend": "turbo run dev --filter=@bemft/backend",
+    "dev:ims": "turbo run dev --filter=@bemft/ims",
+    "dev:oprec": "turbo run dev --filter=@bemft/oprec",
+    "dev:all": "turbo run dev --filter=@bemft/frontend --filter=@bemft/ims --filter=@bemft/backend --filter=@bemft/oprec",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "turbo": "2.9.10"
+  },
+  "workspaces": [
+    "frontend",
+    "backend",
+    "ims",
+    "oprec",
+    "packages/*"
+  ],
+  "packageManager": "bun@1.3.11"
+}

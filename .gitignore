@@ -1,0 +1,42 @@
+node_modules/
+.DS_Store
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Secrets / service account keys
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*credentials*.json
+backend/*.json
+!backend/package.json
+!backend/nest-cli.json
+!backend/tsconfig.json
+!backend/tsconfig.build.json
+
+# Build artifacts
+dist/
+.next/
+coverage/
+
+# Logs
+*.log
+
+# Turborepo
+.turbo/
+
+# VSCode
+.vscode/
+
+# AI Agent Artifacts
+.agents/
+.gemini/
+implementation_plan.md
+task.md
+walkthrough.md
+scratch/
