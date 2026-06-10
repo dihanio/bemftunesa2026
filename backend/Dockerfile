@@ -1,11 +1,13 @@
 FROM oven/bun:1 AS deps
 WORKDIR /app
-COPY package.json bun.lock ./
-COPY backend/package.json backend/package.json
+
+# Copy the entire monorepo to ensure all workspaces and their dependencies are available
+COPY . .
+
+# Install dependencies for all workspaces
 RUN bun install --frozen-lockfile
 
 FROM deps AS build
-COPY . .
 WORKDIR /app/backend
 RUN bun run build
 
