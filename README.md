@@ -33,6 +33,19 @@ Kode internal yang digunakan secara bersama-sama oleh aplikasi di atas terletak 
 
 ---
 
+## ✨ Fitur Utama (Bahasa Awam / Non-IT)
+
+Untuk teman-teman pengurus BEM yang bukan dari jurusan IT, ini adalah ringkasan apa saja yang bisa dilakukan oleh sistem kita:
+
+1. 📝 **Sistem Persuratan & LPJ Otomatis**: Pengajuan proposal, surat menyurat, hingga LPJ tidak perlu lagi dikirim manual via WA. Semua lewat sistem (Dashboard IMS) dan bisa dilacak statusnya (apakah sedang direvisi, disetujui, atau ditolak).
+2. 🔐 **Keamanan & Persetujuan Ketat**: Persetujuan dana (RAB/Proposal) membutuhkan verifikasi ganda (seperti masuk m-banking) oleh Ketua BEM atau Bendahara, sehingga uang organisasi sangat aman.
+3. 🔔 **Notifikasi Otomatis**: Jika ada proposal yang butuh tanda tangan atau batas waktu revisi LPJ mau habis, sistem akan otomatis mengirimkan notifikasi.
+4. 🌐 **Portal Informasi Terpusat**: Mahasiswa umum bisa melihat berita terbaru, struktur kabinet, dan mengecek transparansi program kerja BEM langsung di website utama (`bemftunesa.org`).
+5. 🎯 **Pendaftaran Panitia & Pengurus (Oprec)**: Mahasiswa yang ingin mendaftar kepanitiaan atau menjadi pengurus BEM bisa langsung mengisi form, mengunggah berkas, dan melihat hasil seleksi di portal khusus Oprec (`oprec.bemftunesa.org`).
+6. 🕵️ **Rekam Jejak Transparan**: Semua perubahan data, siapa yang menyetujui dokumen, dan jam berapa mereka login akan tercatat permanen di sistem, sehingga tidak ada data yang bisa dimanipulasi secara diam-diam.
+
+---
+
 ## 🚀 Memulai Pengembangan Lokal (Getting Started)
 
 ### Prasyarat Instalasi
