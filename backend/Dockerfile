@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies for all workspaces
-RUN bun install --frozen-lockfile
+RUN bun install
 
 FROM deps AS build
 WORKDIR /app/backend
