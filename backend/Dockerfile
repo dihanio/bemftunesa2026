@@ -14,9 +14,9 @@ RUN bun run build
 FROM oven/bun:1-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages ./packages
-COPY --from=build /app/backend/dist ./backend/dist
-COPY --from=build /app/backend/package.json ./backend/package.json
+COPY --from=build /app/backend ./backend
 EXPOSE 3001
 CMD ["bun", "backend/dist/main.js"]
