@@ -1,12 +1,11 @@
 services:
-  # === API Backend (api.bemftunesa.org) ===
+  # === API Backend ===
   api:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: bemft-api
     environment:
-      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-password}@db:27017/${DB_NAME:-bemft_db}?authSource=admin
+      MONGODB_URI: ${MONGODB_URI:-mongodb://root:XA4FsP4xH4yVcJJVERElcHQJDy63VuN6UTd7RHEASBYwU2GMnMMfhYBPsfCxuWlp@s9rb1g12avyy0y3zpdj6z0a4:27017/bemft_db?authSource=admin&directConnection=true}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:-super-secret-key}
@@ -18,58 +17,24 @@ services:
     ports:
       - "3001:3001"
     depends_on:
-      - db
-      - redis
-    restart: unless-stopped
-
-  # === Database (MongoDB) ===
-  db:
-    image: mongo:7.0
-    container_name: bemft-db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${DB_USER:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD:-password}
-      MONGO_INITDB_DATABASE: ${DB_NAME:-bemft_db}
-    volumes:
-      - mongo_data:/data/db
+      redis:
+        condition: service_healthy
+    networks:
+      - default
+      - coolify
     restart: unless-stopped
 
   # === Redis (Cache + Queue) ===
   redis:
     image: redis:7-alpine
-    container_name: bemft-redis
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
-  # === Public Frontend (disabled for now) ===
-  # public:
-  #   build:
-  #     context: .
-  #     dockerfile: frontend/Dockerfile
-  #   container_name: bemft-public
-  #   environment:
-  #     NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:3001/v1}
-  #     NODE_ENV: ${NODE_ENV:-production}
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - api
-  #   restart: unless-stopped
-
-  # === IMS (disabled for now) ===
-  # ims:
-  #   build:
-  #     context: .
-  #     dockerfile: ims/Dockerfile
-  #   container_name: bemft-ims
-  #   environment:
-  #     NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://api:3001/v1}
-  #     NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-  #     NODE_ENV: ${NODE_ENV:-production}
-  #   ports:
-  #     - "3002:3002"
-  #   depends_on:
-  #     - api
-  #   restart: unless-stopped
-
-volumes:
-  mongo_data:
+networks:
+  coolify:
+    external: true
