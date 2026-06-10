@@ -1,4 +1,4 @@
-# âš¡ CENTRAL ERP API BACKEND BEM FT UNESA
+# ⚡ CENTRAL ERP API BACKEND BEM FT UNESA
 
 **Domain**: `api.bemftunesa.org`
 **Base URL**: `https://api.bemftunesa.org/v1` (Semua endpoint diawali dengan `/v1`)
@@ -6,7 +6,7 @@
 
 ---
 
-## 1. ðŸŽ¯ Tujuan & Arsitektur Monorepo
+## 1. 🎯 Tujuan & Arsitektur Monorepo
 
 Sistem beralih dari _multi-repo_ menjadi **Monorepo Architecture** menggunakan **Turborepo**. Arsitektur ini mengelola **Central API Backend** (berbasis NestJS & Bun) beserta 5 Micro-Frontend Next.js secara tersentralisasi, guna memastikan konsistensi _dependencies_, sinkronisasi tipe data, dan pembagian _UI Component Library_.
 
@@ -33,13 +33,13 @@ graph TD
 
 ---
 
-## ðŸ›¡ï¸ 2. Granular Permission System & Policy Engine
+## 🛡️ 2. Granular Permission System & Policy Engine
 
 Sistem tidak lagi melakukan otorisasi _hardcoded_ berdasarkan "Role" statis, melainkan melalui **Permission Engine**.
 
 ### 2.1 Arsitektur Granular Permission
 
-Hierarki izin berjenjang: **User â”€â”€â–º Roles â”€â”€â–º Permissions â”€â”€â–º Policies**
+Hierarki izin berjenjang: **User ──► Roles ──► Permissions ──► Policies**
 
 - **Direct Permission**: Memberikan hak istimewa langsung ke user spesifik (tanpa mengubah role default).
 - **Inherited Permission**: Izin yang diturunkan dari struktur jabatan organisasi.
@@ -87,7 +87,7 @@ Keamanan setara perbankan _Enterprise_ (SaaS / FinTech):
 
 ---
 
-## ðŸ”” 4. Enterprise Notification System
+## 🔔 4. Enterprise Notification System
 
 Notifikasi berbasis prioritas yang diatur oleh antrean _background-job_ **BullMQ** & **Redis**:
 
@@ -98,7 +98,7 @@ Notifikasi berbasis prioritas yang diatur oleh antrean _background-job_ **BullMQ
 
 ---
 
-## ðŸ•µï¸ 5. Audit & Event Logging
+## 🕵️ 5. Audit & Event Logging
 
 Setiap tindakan (_mutation_) di sistem dicatat secara _immutable_ di dalam koleksi `audit_logs` untuk menjaga integritas historis birokrasi:
 
@@ -109,7 +109,7 @@ Setiap tindakan (_mutation_) di sistem dicatat secara _immutable_ di dalam kolek
 
 ---
 
-## âš™ï¸ 6. Feature Flag System
+## ⚙️ 6. Feature Flag System
 
 Manajemen sakelar (_toggle_) fitur secara dinamis (tanpa harus melakukan _deployment_ ulang):
 
@@ -118,7 +118,7 @@ Manajemen sakelar (_toggle_) fitur secara dinamis (tanpa harus melakukan _deploy
 
 ---
 
-## ðŸ¤– 7. Future AI-Ready Architecture
+## 🤖 7. Future AI-Ready Architecture
 
 _Data pipeline_ dirancang agar siap diintegrasikan dengan modul GenAI di masa depan:
 

@@ -1,16 +1,16 @@
-# ðŸŽ“ PKKMB & MENTORING PORTAL BEM FT UNESA
+# 🎓 PKKMB & MENTORING PORTAL BEM FT UNESA
 
 **Domain**: `pkkmb.bemftunesa.org`
 **Version**: **v2.0 (Enterprise ERP Edition)**
 
 ---
 
-## ðŸŽ¯ 1. Deskripsi & Tujuan
+## 🎯 1. Deskripsi & Tujuan
 
 Aplikasi khusus **PKKMB & Mentoring** Fakultas Teknik UNESA dirancang sebagai portal terpadu untuk mendistribusikan materi, memantau tata tertib, mengumpulkan tugas harian, serta merekam presensi kehadiran mahasiswa baru secara real-time. Platform ini secara langsung terhubung ke **Central API & IMS Core** untuk memfasilitasi panitia penilai (reviewers) dalam melakukan audit tugas.
 
 ```
- [MAHASISWA BARU (pkkmb.bemftunesa.org)] â”€â”€â–º [Central API] â”€â”€â–º [IMS REVIEW BOARD]
+ [MAHASISWA BARU (pkkmb.bemftunesa.org)] ──► [Central API] ──► [IMS REVIEW BOARD]
                      â”‚                                                â”‚
    (NIM Auth, Tasks Submit, QR Attendance)                  (Coordinators, Grading)
                                                                       â”‚
@@ -42,7 +42,7 @@ Melalui sistem S-RBAC, panitia PKKMB mendapatkan delegasi hak akses temporal yan
 ## ðŸ”„ 3. Alur Tugas & Penilaian (Task Workflow)
 
 ```
-[Kordiv PKKMB Buat Tugas] â”€â”€â–º [Peserta Login via NIM] â”€â”€â–º [Submit Tugas via Supabase Storage]
+[Kordiv PKKMB Buat Tugas] ──► [Peserta Login via NIM] ──► [Submit Tugas via Supabase Storage]
                                                                   â”‚
                                                                   â–¼
 [Penilaian Dinamis oleh Mentor/Reviewer] â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜

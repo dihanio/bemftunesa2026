@@ -5,12 +5,12 @@
 
 ---
 
-## ðŸŽ¯ 1. Deskripsi & Tujuan
+## 🎯 1. Deskripsi & Tujuan
 
 Website publik **BEM FT UNESA** berfungsi sebagai **wajah media digital utama** organisasi. Menggunakan arsitektur **Headless CMS**, seluruh informasi profil organisasi, jajaran fungsionaris, program kerja, artikel berita, dan dokumentasi kegiatan tidak ditulis secara statis (hardcoded), melainkan disajikan secara dinamis dari **Central ERP API**.
 
 ```
- [VISITOR (bemftunesa.org)] â”€â”€â–º [Next.js ISR Layer (Incremental Static)]
+ [VISITOR (bemftunesa.org)] ──► [Next.js ISR Layer (Incremental Static)]
                                             â”‚
                                             â–¼
                                [Central API / MongoDB Data]

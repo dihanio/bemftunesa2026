@@ -1,16 +1,16 @@
-# ðŸ›ï¸ FT MERCHANDISE STOREFRONT & E-COMMERCE
+# 🛒ï¸ FT MERCHANDISE STOREFRONT & E-COMMERCE
 
 **Domain**: `shop.bemftunesa.org`
 **Version**: **v2.0 (Enterprise ERP Edition)**
 
 ---
 
-## ðŸŽ¯ 1. Deskripsi & Tujuan
+## 🎯 1. Deskripsi & Tujuan
 
 Aplikasi khusus **Merchandise Storefront** dirancang untuk mendistribusikan produk cinderamata dan atribut resmi Fakultas Teknik UNESA (hoodie kabinet, jaket angkatan, totebag, stiker, lanyard). Toko ini dikelola oleh Divisi Ekonomi Kreatif BEM FT sebagai salah satu pilar pendapatan internal organisasi (_Revenue Engine_).
 
 ```
- [BUYER FRONTEND (shop.bemftunesa.org)] â”€â”€â–º [Central API / Midtrans Gateway]
+ [BUYER FRONTEND (shop.bemftunesa.org)] ──► [Central API / Midtrans Gateway]
                        â”‚                                    â”‚
            (Browser Guest Checkout)               (Automated Webhooks Sync)
                                                             â”‚
@@ -31,7 +31,7 @@ Aplikasi khusus **Merchandise Storefront** dirancang untuk mendistribusikan prod
 Semua transaksi diproses secara dinamis menggunakan sistem transisi status yang terintegrasi penuh ke modul persediaan barang:
 
 ```
-[Waiting Payment] â”€â”€â–º [Verified] â”€â”€â–º [Production] â”€â”€â–º [Ready Pickup / Shipping] â”€â”€â–º [Completed]
+[Waiting Payment] ──► [Verified] ──► [Production] ──► [Ready Pickup / Shipping] ──► [Completed]
 ```
 
 ### 2.1 Alur Transaksi Detail

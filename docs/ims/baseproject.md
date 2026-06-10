@@ -5,7 +5,7 @@
 
 ---
 
-## ðŸŽ¯ 1. Deskripsi & Tujuan Sistem
+## 🎯 1. Deskripsi & Tujuan Sistem
 
 **IMS BEM FT UNESA** telah bertransformasi menjadi sebuah **Organizational Resource Planning (ERP)** tingkat _Enterprise_ yang terintegrasi secara penuh. Sistem ini bukan lagi sekadar dasbor, melainkan sebuah ekosistem _operating system_ organisasi yang mengendalikan birokrasi, keuangan, rekrutmen, analitik, dan perizinan akses secara granular.
 
@@ -31,7 +31,7 @@ graph TD
 
 ---
 
-## ðŸ›¡ï¸ 2. Frontend Permission-Based UI Access Control
+## 🛡️ 2. Frontend Permission-Based UI Access Control
 
 Arsitektur _frontend_ menerapkan proteksi di seluruh _layer_ (Komponen, Rute, dan Navigasi) berdasarkan izin (_permissions_), bukan sekadar peran (_roles_).
 
@@ -57,7 +57,7 @@ Komponen `PermissionGuard` mengatur rendering elemen berdasarkan hak akses:
 
 Kepanitiaan tidak lagi berstatus aktif selamanya. Alur hidup event (Lifecycle) diatur secara spesifik:
 
-**Planning â”€â”€â–º Active â”€â”€â–º Event Finished â”€â”€â–º LPJ Revision â”€â”€â–º LPJ Approved â”€â”€â–º Archived**
+**Planning ──► Active ──► Event Finished ──► LPJ Revision ──► LPJ Approved ──► Archived**
 
 - **Manual Archive-Based Transition**: Pencabutan akses kepanitiaan tidak dilakukan otomatis oleh sistem, melainkan melalui **Arsip Manual** oleh Sekretaris/WaKaBEM/KaBEM setelah LPJ final disetujui.
 - **Archival Freeze**: Ketika diarsipkan, panitia menjadi _read-only_, file proposal dan LPJ dibekukan menjadi _immutable_, izin akses finansial dicabut permanen, dan data diawetkan untuk audit.

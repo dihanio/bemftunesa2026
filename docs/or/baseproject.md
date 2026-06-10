@@ -5,12 +5,12 @@
 
 ---
 
-## ðŸŽ¯ 1. Deskripsi & Tujuan
+## 🎯 1. Deskripsi & Tujuan
 
 Aplikasi khusus **Open Recruitment (OR)** dirancang untuk memfasilitasi penjaringan fungsionaris baru BEM FT UNESA serta panitia pelaksana kegiatan (OC) secara transparan, masif, dan terstruktur. Dipisahkan ke subdomain khusus untuk menangani lonjakan lalu lintas data (traffic spike) saat masa pendaftaran mahasiswa baru dibuka.
 
 ```
- [APPLICANT PORTAL (or.bemftunesa.org)] â”€â”€â–º [Central API] â”€â”€â–º [IMS REVIEW BOARD]
+ [APPLICANT PORTAL (or.bemftunesa.org)] ──► [Central API] ──► [IMS REVIEW BOARD]
                      â”‚                                                â”‚
    (Biodata, CV & Upload Berkas)                            (Scoring & Assignment)
                                                                       â”‚
@@ -31,7 +31,7 @@ Aplikasi khusus **Open Recruitment (OR)** dirancang untuk memfasilitasi penjarin
 Proses pendaftaran dikelola melalui lima gerbang seleksi dinamis yang dipantau real-time oleh fungsionaris BPI/BPH melalui dasbor internal IMS:
 
 ```
-[Applied] â”€â”€â–º [Administration Review] â”€â”€â–º [Interview Schedule] â”€â”€â–º [Interview Scoring] â”€â”€â–º [Final Review] â”€â”€â–º [Accepted/Rejected]
+[Applied] ──► [Administration Review] ──► [Interview Schedule] ──► [Interview Scoring] ──► [Final Review] ──► [Accepted/Rejected]
 ```
 
 ### 2.1 Tahapan Evaluasi Detail
