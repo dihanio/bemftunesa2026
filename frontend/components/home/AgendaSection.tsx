@@ -90,7 +90,10 @@ export function AgendaSection() {
   const selectedDayEvents = selectedDate
     ? events.filter((e) => isSameDay(e.date, selectedDate))
     : [];
-  const upcomingEvents = events.filter((e) => e.date >= new Date()).slice(0, 3);
+  const upcomingEvents = events
+    .filter((e) => e.date >= new Date())
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, 3);
 
   return (
     <section className="w-full max-w-5xl mx-auto px-6 relative z-10 py-24">
