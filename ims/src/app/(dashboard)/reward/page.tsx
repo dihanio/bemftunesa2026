@@ -45,7 +45,11 @@ export default function RewardPage() {
       queryFn: () => pointsService.getLeaderboard(),
     });
 
-  const leaderboard = leaderboardResponse?.data || [];
+  const leaderboard = (leaderboardResponse?.data || []).filter((item: any) => {
+    const dept = item.department?.toLowerCase() || "";
+    const name = item.userName?.toLowerCase() || "";
+    return dept !== "bpi" && name !== "system administrator" && name !== "developer bypass";
+  });
 
   const giveMutation = useMutation({
     mutationFn: (newPoint: GivePointsDto) => pointsService.givePoints(newPoint),
