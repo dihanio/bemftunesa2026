@@ -162,6 +162,7 @@ export function AgendaSection() {
                 const isSelected =
                   selectedDate && isSameDay(selectedDate, currentDayDate);
                 const isToday = isSameDay(new Date(), currentDayDate);
+                const isPast = currentDayDate < new Date(new Date().setHours(0, 0, 0, 0));
 
                 return (
                   <button
@@ -174,7 +175,7 @@ export function AgendaSection() {
                   >
                     <span
                       className={`text-xs font-mono transition-colors
-                    ${isSelected ? "text-[#10b981] font-bold scale-110" : hasEvent ? "text-[#f5f2eb] font-semibold" : "text-gray-400 opacity-40"}
+                    ${isSelected ? "text-[#10b981] font-bold scale-110" : hasEvent ? (isPast ? "text-gray-400 font-medium" : "text-[#f5f2eb] font-semibold") : "text-gray-400 opacity-40"}
                     ${isToday ? "px-1.5 bg-white text-[#091c11] rounded-sm font-bold" : ""}
                   `}
                     >
@@ -184,7 +185,13 @@ export function AgendaSection() {
                     {hasEvent && (
                       <div
                         className={`absolute bottom-2 right-2 w-1.5 h-1.5 rounded-full transition-all duration-300
-                      ${isSelected ? "bg-white scale-125 shadow-[0_0_12px_#fff]" : "bg-[#10b981] shadow-[0_0_8px_rgba(16, 185, 129,0.8)]"}
+                      ${
+                        isSelected
+                          ? "bg-white scale-125 shadow-[0_0_12px_#fff]"
+                          : isPast
+                            ? "bg-gray-500/50"
+                            : "bg-[#10b981] shadow-[0_0_8px_rgba(16, 185, 129,0.8)]"
+                      }
                     `}
                       />
                     )}
@@ -206,7 +213,11 @@ export function AgendaSection() {
               </span>
               <span className="w-2 h-2 rounded-full bg-[#10b981] ml-4" />
               <span className="text-[10px] font-mono text-gray-300 uppercase tracking-widest">
-                Ada Kegiatan
+                Mendatang
+              </span>
+              <span className="w-2 h-2 rounded-full bg-gray-500/50 ml-4" />
+              <span className="text-[10px] font-mono text-gray-300 uppercase tracking-widest">
+                Selesai
               </span>
             </div>
             <span className="text-[10px] font-mono text-gray-300 uppercase tracking-widest">
@@ -271,7 +282,15 @@ export function AgendaSection() {
                             </span>
                           )}
 
-                          <h4 className="text-2xl font-bold text-white mb-4 group-hover:text-[#10b981] transition-colors leading-tight">
+                          <span className={`ml-2 text-[10px] inline-flex items-center font-mono font-bold tracking-widest uppercase px-2.5 py-0.5 rounded-full mb-3
+                            ${event.status === 'Completed' ? 'text-gray-400 bg-gray-400/10 border border-gray-400/30' : 
+                              event.status === 'Ongoing' ? 'text-blue-400 bg-blue-400/10 border border-blue-400/30 animate-pulse' : 
+                              'text-white/70 bg-white/5 border border-white/10'}
+                          `}>
+                            {event.status}
+                          </span>
+
+                          <h4 className={`text-2xl font-bold mb-4 transition-colors leading-tight ${event.status === 'Completed' ? 'text-gray-500 group-hover:text-gray-400' : 'text-white group-hover:text-[#10b981]'}`}>
                             {event.title}
                           </h4>
                           <p className="text-gray-300 text-sm leading-relaxed mb-6 border-l-2 border-[#10b981]/30 pl-4 py-1">
