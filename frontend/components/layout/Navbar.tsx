@@ -75,7 +75,7 @@ export function Navbar() {
           <div className="flex items-center">
             <a
               href={
-                process.env.NEXT_PUBLIC_IMS_URL || "https://ims.bemftunesa.org"
+                process.env.NEXT_PUBLIC_IMS_URL || "#"
               }
               target="_blank"
               rel="noopener noreferrer"
