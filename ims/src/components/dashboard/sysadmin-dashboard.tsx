@@ -194,16 +194,7 @@ export function SysAdminDashboard() {
     }, 900);
   };
 
-  const handleSelfTest = () => {
-    addManualLog(
-      "[DIAGNOSTIC] Running system self-test and checking MongoDB socket links...",
-    );
-    setTimeout(() => {
-      addManualLog(
-        "[DIAGNOSTIC] All services healthy. MongoDB cluster response: 12ms.",
-      );
-    }, 900);
-  };
+
 
   const metrics = [
     {
