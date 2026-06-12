@@ -6,8 +6,6 @@ services:
       dockerfile: backend/Dockerfile
     env_file:
       - .env
-    ports:
-      - "3001:3001"
     depends_on:
       redis:
         condition: service_healthy
@@ -26,3 +24,23 @@ services:
       retries: 10
       start_period: 5s
 
+  # === Caddy Reverse Proxy ===
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+    networks:
+      - default
+
+volumes:
+  caddy_data:
+  caddy_config:

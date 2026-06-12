@@ -1,0 +1,3 @@
+api.bemftunesa.org {
+    reverse_proxy api:3001
+}
