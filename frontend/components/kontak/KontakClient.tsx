@@ -48,6 +48,14 @@ export default function KontakClient() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleInvalid = (e: React.InvalidEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (e.target as HTMLInputElement).setCustomValidity("Mohon isi bidang ini.");
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (e.target as HTMLInputElement).setCustomValidity("");
+  };
+
   return (
     <>
       <div className="flex flex-col md:flex-row justify-between items-end gap-8 mb-20 relative">
@@ -145,6 +153,8 @@ export default function KontakClient() {
                     required
                     value={formData.name}
                     onChange={handleChange}
+                    onInvalid={handleInvalid}
+                    onInput={handleInput}
                     className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#10b981]/40 focus:bg-white/[0.05] transition-all font-mono placeholder:font-sans"
                     placeholder="Masukkan nama"
                   />
@@ -157,6 +167,8 @@ export default function KontakClient() {
                     required
                     value={formData.email}
                     onChange={handleChange}
+                    onInvalid={handleInvalid}
+                    onInput={handleInput}
                     className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#10b981]/40 focus:bg-white/[0.05] transition-all font-mono placeholder:font-sans"
                     placeholder="alamat@email.com"
                   />
@@ -171,6 +183,8 @@ export default function KontakClient() {
                   required
                   value={formData.subject}
                   onChange={handleChange}
+                  onInvalid={handleInvalid}
+                  onInput={handleInput}
                   className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#10b981]/40 focus:bg-white/[0.05] transition-all font-mono placeholder:font-sans"
                   placeholder="Hal yang ingin didiskusikan"
                 />
@@ -183,6 +197,8 @@ export default function KontakClient() {
                   required
                   value={formData.message}
                   onChange={handleChange}
+                  onInvalid={handleInvalid}
+                  onInput={handleInput}
                   rows={5}
                   className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-[#10b981]/40 focus:bg-white/[0.05] transition-all resize-none font-mono placeholder:font-sans"
                   placeholder="Tulis pesan Anda di sini..."
