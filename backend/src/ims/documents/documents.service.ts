@@ -66,7 +66,7 @@ export class DocumentsService {
     
     // Notify the creator
     await this.notifModel.create({
-      userId: doc.creatorId,
+      recipientId: doc.creatorId,
       title: 'Nomor Surat Turun',
       message: `Surat ${doc.title} telah diberi nomor ${documentNumber}. Silakan upload final PDF.`,
       type: 'document',
@@ -98,7 +98,7 @@ export class DocumentsService {
     const ketuaBEM = await this.userModel.findOne({ role: 'Ketua BEM', isActive: true });
     if (ketuaBEM) {
       await this.notifModel.create({
-        userId: ketuaBEM._id,
+        recipientId: ketuaBEM._id,
         title: 'Menunggu TTD Surat',
         message: `Surat ${doc.title} telah di-ACC Sekretaris. Menunggu Tanda Tangan Anda.`,
         type: 'document',
@@ -146,7 +146,7 @@ export class DocumentsService {
 
       // Notify the creator
       await this.notifModel.create({
-        userId: doc.creatorId,
+        recipientId: doc.creatorId,
         title: 'Surat Selesai (TTD)',
         message: `Surat ${doc.title} telah ditandatangani oleh Ketua BEM dan Selesai.`,
         type: 'document',
