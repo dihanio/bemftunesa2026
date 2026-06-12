@@ -25,23 +25,23 @@ export function Navbar() {
           {/* Left: Logo & Brand */}
           <Link href="/" className="flex items-center gap-4 group pl-1">
             <div className="flex items-center -space-x-3">
-              <div className="relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 transition-all duration-500 group-hover:scale-110 shrink-0">
+              <div className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 transition-all duration-500 group-hover:scale-110 shrink-0">
                 <Image
                   src="/logobemft.png"
                   alt="Logo BEM FT"
-                  width={52}
-                  height={52}
+                  width={64}
+                  height={64}
                   priority
                   className="object-contain drop-shadow-md"
                 />
               </div>
               {/* Logo Kabinet */}
-              <div className="relative flex items-center justify-center w-14 h-14 md:w-16 md:h-16 transition-all duration-500 group-hover:scale-110 shrink-0">
+              <div className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 transition-all duration-500 group-hover:scale-110 shrink-0">
                 <Image
                   src="/logo kabinet.png"
                   alt="Logo Kabinet Danadyaksa"
-                  width={62}
-                  height={62}
+                  width={74}
+                  height={74}
                   priority
                   className="object-contain drop-shadow-sm"
                 />

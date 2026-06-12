@@ -8,12 +8,12 @@ export function Footer() {
         <div className="md:col-span-1">
           {/* Logo side by side with Brand Text */}
           <div className="flex items-center gap-3.5 mb-6">
-            <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+            <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
               <Image
                 src="/logobemft.png"
                 alt="Logo BEM FT"
-                width={44}
-                height={44}
+                width={56}
+                height={56}
                 className="object-contain drop-shadow-md"
               />
             </div>
