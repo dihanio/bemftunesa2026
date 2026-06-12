@@ -9,6 +9,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      db:
+        condition: service_started
     networks:
       - default
     restart: unless-stopped
@@ -41,6 +43,20 @@ services:
     networks:
       - default
 
+  # === Database (MongoDB) ===
+  db:
+    image: mongo:6
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: bemft_db
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - default
+
 volumes:
   caddy_data:
   caddy_config:
+  mongodb_data:
