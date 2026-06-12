@@ -8,8 +8,7 @@ import {
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
-import { GetUser } from '../../auth/decorators/auth.decorator';
-import { Roles } from '../../auth/decorators/roles.decorator';
+import { GetUser, Roles } from '../../auth/decorators/auth.decorator';
 
 @ApiTags('IMS - Dashboard')
 @Controller('ims/dashboard')
