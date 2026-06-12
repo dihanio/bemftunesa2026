@@ -20,14 +20,18 @@ import {
   Stamp,
   FileText,
   AlertTriangle,
+  Move,
 } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import { useRef } from "react";
 
 export default function SuratDetailPage() {
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
   const id = params.id as string;
+  const constraintsRef = useRef<HTMLDivElement>(null);
 
   const { data: documentResponse, isLoading } = useQuery({
     queryKey: ["ims-document-detail", id],
@@ -164,7 +168,10 @@ export default function SuratDetailPage() {
       {/* Main Grid Detail */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Letter Preview Box */}
-        <Card className="lg:col-span-2 border-border/50 bg-card p-10 font-serif text-[#0f172a] shadow-xl min-h-[700px] border-t-8 border-t-accent">
+        <Card 
+          ref={constraintsRef}
+          className="lg:col-span-2 border-border/50 bg-card p-10 font-serif text-[#0f172a] shadow-xl min-h-[700px] border-t-8 border-t-accent relative overflow-hidden"
+        >
           {/* Letter Head */}
           <div className="text-center border-b-4 border-double border-foreground pb-4 mb-6">
             <h2 className="text-lg font-extrabold uppercase">
@@ -216,25 +223,37 @@ export default function SuratDetailPage() {
             </div>
 
             {/* Signature Block */}
-            <div className="flex justify-end pt-12">
-              <div className="text-center w-48">
-                <p>Mengetahui,</p>
-                <p className="font-bold mt-1">Ketua BEM FT UNESA</p>
-                <div className="h-16 flex items-center justify-center my-2 border border-border/50 rounded-lg text-xs font-semibold">
+            <motion.div 
+              className="absolute right-10 bottom-10 z-10 cursor-grab active:cursor-grabbing hover:bg-accent/5 p-4 rounded-xl border border-transparent hover:border-accent/30 transition-colors"
+              drag 
+              dragConstraints={constraintsRef}
+              dragElastic={0.1}
+              dragMomentum={false}
+              whileDrag={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" }}
+            >
+              <div className="text-center w-56 flex flex-col items-center">
+                <p className="text-sm">Mengetahui,</p>
+                <p className="font-bold mt-1 text-sm">Ketua BEM FT UNESA</p>
+                <div className="h-24 w-40 flex flex-col items-center justify-center my-3 border-2 border-dashed border-border/80 bg-background/50 rounded-lg text-xs font-semibold relative group backdrop-blur-sm">
                   {doc.status === "approved" ? (
-                    <div className="text-emerald-600 font-bold border-2 border-emerald-600 rounded-full px-4 py-1 rotate-12 uppercase scale-90">
-                      Disetujui
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-emerald-600 font-black border-4 border-emerald-600 rounded-full px-6 py-2 rotate-[-15deg] uppercase text-xl tracking-widest opacity-80 mix-blend-multiply">
+                        DISETUJUI
+                      </div>
                     </div>
                   ) : (
-                    <span className="text-muted-foreground italic text-[10px]">
-                      Menunggu Tanda Tangan
-                    </span>
+                    <>
+                      <Move className="w-5 h-5 text-muted-foreground mb-1 opacity-50 group-hover:text-accent transition-colors" />
+                      <span className="text-muted-foreground text-center px-2">
+                        Geser kotak ini untuk<br/>posisi Tanda Tangan
+                      </span>
+                    </>
                   )}
                 </div>
-                <p className="font-bold underline">AEC Danadyaksa</p>
-                <p className="text-[10px]">NIM. 22050974001</p>
+                <p className="font-bold underline text-sm">AEC Danadyaksa</p>
+                <p className="text-xs mt-0.5">NIM. 22050974001</p>
               </div>
-            </div>
+            </motion.div>
           </div>
         </Card>
 

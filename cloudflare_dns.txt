@@ -1,0 +1,5 @@
+$ORIGIN bemftunesa.org.
+@       1  IN  A   103.93.133.97
+www     1  IN  A   103.93.133.97
+ims     1  IN  A   103.93.133.97
+oprec   1  IN  A   103.93.133.97
