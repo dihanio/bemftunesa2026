@@ -2,6 +2,7 @@
 
 import { Mail, Phone, MapPin, Send, MessageSquare } from "lucide-react";
 import { useState } from "react";
+import { handleInvalid, handleInput } from "@/lib/utils";
 
 const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -46,14 +47,6 @@ export default function KontakClient() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleInvalid = (e: React.InvalidEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    (e.target as HTMLInputElement).setCustomValidity("Mohon isi bidang ini.");
-  };
-
-  const handleInput = (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    (e.target as HTMLInputElement).setCustomValidity("");
   };
 
   return (
