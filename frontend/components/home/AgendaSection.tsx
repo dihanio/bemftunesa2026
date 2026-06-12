@@ -284,7 +284,7 @@ export function AgendaSection() {
 
                           <span className={`ml-2 text-[10px] inline-flex items-center font-mono font-bold tracking-widest uppercase px-2.5 py-0.5 rounded-full mb-3
                             ${event.status === 'Completed' ? 'text-gray-400 bg-gray-400/10 border border-gray-400/30' : 
-                              event.status === 'Ongoing' ? 'text-blue-400 bg-blue-400/10 border border-blue-400/30 animate-pulse' : 
+                              event.status === 'Planned' ? 'text-blue-400 bg-blue-400/10 border border-blue-400/30 animate-pulse' : 
                               'text-white/70 bg-white/5 border border-white/10'}
                           `}>
                             {event.status}
