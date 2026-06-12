@@ -7,9 +7,9 @@ www.bemftunesa.org, bemftunesa.org {
 }
 
 ims.bemftunesa.org {
-    reverse_proxy ims_web:3000
+    reverse_proxy ims_web:3004
 }
 
 oprec.bemftunesa.org {
-    reverse_proxy oprec_web:3000
+    reverse_proxy oprec_web:3005
 }
