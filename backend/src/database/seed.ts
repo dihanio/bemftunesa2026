@@ -615,15 +615,22 @@ async function seed() {
       },
     ];
 
-    const users = rawUsers.map((u) => ({
-      ...u,
-      role: normalizeSeedRole(u.role),
-      email:
-        u.nim === '23051204212'
-          ? 'diha.23212@mhs.unesa.ac.id'
-          : `${u.nim}@mhs.unesa.ac.id`,
-      isActive: true,
-    }));
+    const users = rawUsers.map((u) => {
+      let emailStr = `${u.nim}@mhs.unesa.ac.id`;
+      if (u.nim === '23051204212') {
+        emailStr = 'diha.23212@mhs.unesa.ac.id';
+      } else if (u.nim.startsWith('23')) {
+        const firstName = u.name.split(' ')[0].toLowerCase();
+        const last3Digits = u.nim.slice(-3);
+        emailStr = `${firstName}.23${last3Digits}@mhs.unesa.ac.id`;
+      }
+      return {
+        ...u,
+        role: normalizeSeedRole(u.role),
+        email: emailStr,
+        isActive: true,
+      };
+    });
 
     // Inject Admin Sistem Account
     users.push({
