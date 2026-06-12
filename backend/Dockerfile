@@ -9,9 +9,8 @@ COPY . .
 # Install all dependencies (including workspaces)
 RUN bun install
 
-# Build the backend
+# Start the backend directly with Bun (resolves monorepo workspace issues automatically)
 WORKDIR /app/backend
-RUN bun run build
 
 EXPOSE 3001
-CMD ["bun", "dist/main.js"]
+CMD ["bun", "run", "src/main.ts"]
