@@ -19,7 +19,7 @@ COPY . .
 RUN bun install
 
 # Build the specific frontend app using Turbo
-RUN bunx turbo run build --filter=${APP_NAME}
+RUN bunx turbo run build --filter=@bemft/${APP_NAME}
 
 # Set the working directory to the app we just built
 WORKDIR /app/${APP_NAME}
