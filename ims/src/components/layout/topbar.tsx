@@ -154,7 +154,7 @@ export function Topbar({ onSearchClick, onMenuClick }: TopbarProps) {
         ) : (
           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[#10b981]/10 px-3 py-1.5 text-xs font-semibold text-[#a7f3d0]">
             <Shield className="h-3.5 w-3.5 text-[#10b981]" />
-            {activeRole || user?.role || "Guest"}
+            {activeRole || user?.role || "Tamu"}
           </div>
         )}
 

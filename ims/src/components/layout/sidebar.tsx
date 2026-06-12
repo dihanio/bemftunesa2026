@@ -36,10 +36,10 @@ import Image from "next/image";
 // Config-based hierarchical navigation
 const navGroups = [
   {
-    group: "Core Dashboard",
+    group: "Dasbor Utama",
     items: [
       {
-        name: "Dashboard",
+        name: "Dasbor",
         href: "/",
         icon: LayoutDashboard,
         permission: PERMISSIONS.dashboardRead,
@@ -69,30 +69,30 @@ const navGroups = [
       },
       {
         name: "Agenda Rapat",
-        href: "/meetings",
+        href: "/rapat",
         icon: QrCode,
         permission: PERMISSIONS.committeeRead,
       },
       {
         name: "Inventaris Aset",
-        href: "/assets",
+        href: "/aset",
         icon: Package,
         permission: PERMISSIONS.committeeRead,
       },
     ],
   },
   {
-    group: "Workspace",
+    group: "Ruang Kerja",
     items: [
       {
-        name: "Wiki & SOP",
-        href: "/wiki",
+        name: "Buku Panduan & SOP",
+        href: "/panduan",
         icon: BookOpen,
         permission: PERMISSIONS.documentsRead,
       },
       {
-        name: "Reward Points",
-        href: "/reward",
+        name: "Poin Penghargaan",
+        href: "/penghargaan",
         icon: Award,
         permission: PERMISSIONS.prokerRead,
       },
@@ -104,7 +104,7 @@ const navGroups = [
       },
       {
         name: "Keuangan",
-        href: "/finance",
+        href: "/keuangan",
         icon: Wallet,
         permission: PERMISSIONS.financeRead,
       },
@@ -121,19 +121,19 @@ const navGroups = [
       },
       {
         name: "Pengguna",
-        href: "/users",
+        href: "/pengguna",
         icon: UserCog,
         permission: PERMISSIONS.usersRead,
       },
       {
-        name: "Manajemen User",
-        href: "/admin/users",
+        name: "Manajemen Pengguna",
+        href: "/admin/pengguna",
         icon: Settings2,
         permission: PERMISSIONS.usersManage,
       },
       {
-        name: "Kebijakan Workflow",
-        href: "/admin/policies",
+        name: "Kebijakan Alur Kerja",
+        href: "/admin/kebijakan",
         icon: ScrollText,
         permission: PERMISSIONS.workflowManage,
       },
@@ -149,9 +149,9 @@ export function Sidebar() {
   const [collapsedGroups, setCollapsedGroups] = useState<
     Record<string, boolean>
   >({
-    "Core Dashboard": false,
+    "Dasbor Utama": false,
     Operasional: false,
-    Workspace: false,
+    "Ruang Kerja": false,
     Administrasi: false,
   });
 
@@ -206,7 +206,7 @@ export function Sidebar() {
           <div className="mx-3 rounded-xl border border-[#10b981]/20 bg-[#10b981]/5 p-3 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="flex items-center gap-2 px-1 text-[10px] font-bold uppercase tracking-wider text-[#a7f3d0]">
               <Layers className="h-3.5 w-3.5 text-[#10b981]" />
-              Workspace Panitia
+              Ruang Kerja Panitia
             </div>
             <div className="mt-2 space-y-1">
               <Link

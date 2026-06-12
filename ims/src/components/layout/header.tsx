@@ -38,7 +38,7 @@ export function Header({
   // Simple breadcrumb logic based on pathname
   const pathNameSegment =
     pathname === "/"
-      ? "Dashboard Overview"
+      ? "Ringkasan Dasbor"
       : pathname.split("/")[1].charAt(0).toUpperCase() +
         pathname.split("/")[1].slice(1);
 
@@ -74,7 +74,7 @@ export function Header({
         <div className="hidden sm:block">
           <div className="flex items-center gap-2 text-[10px] font-semibold uppercase text-[#10b981]">
             <ShieldCheck className="h-3.5 w-3.5" />
-            IMS Command Center
+            Pusat Kendali IMS
           </div>
           <h1 className="mt-1 text-lg font-semibold text-white">
             {pathNameSegment}
@@ -168,7 +168,7 @@ export function Header({
                     className="ml-2 text-sm font-semibold leading-6 text-white"
                     aria-hidden="true"
                   >
-                    {user?.name || "Guest User"}
+                    {user?.name || "Pengguna Tamu"}
                   </span>
                 </span>
               </div>
