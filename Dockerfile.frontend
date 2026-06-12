@@ -1,0 +1,31 @@
+FROM oven/bun:1-slim
+
+# Install system dependencies that might be required by Next.js (like sharp for image optimization)
+# CA certificates are needed for HTTPS requests inside the container
+RUN apt-get update && apt-get install -y ca-certificates libc6-compat && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Define the build argument to determine which app to build (e.g. frontend, ims, oprec)
+ARG APP_NAME
+ENV APP_NAME=${APP_NAME}
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Copy the entire monorepo so all local workspace packages are available
+COPY . .
+
+# Install all dependencies across the monorepo
+RUN bun install
+
+# Build the specific frontend app using Turbo
+RUN bunx turbo run build --filter=${APP_NAME}
+
+# Set the working directory to the app we just built
+WORKDIR /app/${APP_NAME}
+
+# Expose the standard Next.js port
+EXPOSE 3000
+
+# Start the Next.js production server
+CMD ["bun", "run", "start"]

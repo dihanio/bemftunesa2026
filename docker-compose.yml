@@ -26,6 +26,49 @@ services:
       retries: 10
       start_period: 5s
 
+  # === Frontends ===
+  public_web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        APP_NAME: frontend
+    env_file:
+      - .env
+    depends_on:
+      - api
+    networks:
+      - default
+    restart: unless-stopped
+
+  ims_web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        APP_NAME: ims
+    env_file:
+      - .env
+    depends_on:
+      - api
+    networks:
+      - default
+    restart: unless-stopped
+
+  oprec_web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        APP_NAME: oprec
+    env_file:
+      - .env
+    depends_on:
+      - api
+    networks:
+      - default
+    restart: unless-stopped
+
   # === Caddy Reverse Proxy ===
   caddy:
     image: caddy:2-alpine
