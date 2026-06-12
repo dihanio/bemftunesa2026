@@ -14,7 +14,7 @@ interface Settings {
 
 export function MaintenanceWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, isHydrated } = useAuth();
+  const { user, _hasHydrated: isHydrated } = useAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [apiDown, setApiDown] = useState(false);
