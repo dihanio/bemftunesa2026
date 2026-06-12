@@ -1,4 +1,5 @@
 import { apiClient } from "@bemft/api-client";
+import type { ApiResponse } from "@bemft/api-client";
 
 export interface INotification {
   _id: string;
@@ -12,30 +13,16 @@ export interface INotification {
   updatedAt: string;
 }
 
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: PaginationMeta;
-}
-
 export const notificationsApi = {
   getNotifications: async (params?: { page?: number; limit?: number }) => {
-    const res = await apiClient.get<PaginatedResponse<INotification>>("/notifications", {
-      params,
-    });
-    return res.data;
+    const res = await apiClient.get<ApiResponse<INotification[]>>("/notifications", params as Record<string, number | undefined>);
+    return res;
   },
 
   markAsRead: async (id: string) => {
-    const res = await apiClient.patch<{ data: INotification; message: string }>(
+    const res = await apiClient.patch<ApiResponse<INotification>>(
       `/notifications/${id}/read`
     );
-    return res.data;
+    return res;
   },
 };
