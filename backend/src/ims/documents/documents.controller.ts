@@ -43,8 +43,8 @@ export class DocumentsController {
   @Post()
   @RequirePermissions('documents.manage')
   @ApiOperation({ summary: 'Create draft surat baru' })
-  async create(@Body() body: any) {
-    return this.documentsService.create(body);
+  async create(@Body() body: any, @Request() req: any) {
+    return this.documentsService.create({ ...body, creatorId: req.user.userId });
   }
 
   @Put(':id')
@@ -56,11 +56,57 @@ export class DocumentsController {
   }
 
   @Patch(':id/approve')
-  @Roles('Super Admin')
+  @Roles('Super Admin', 'Ketua BEM')
   @RequirePermissions('documents.approve')
   @ApiOperation({ summary: 'Approve & sign surat' })
   async approve(@Param('id') id: string) {
     return this.documentsService.approve(id);
+  }
+
+  @Patch(':id/asistensi')
+  @Roles('Sekretaris', 'System Administrator')
+  @RequirePermissions('documents.manage')
+  @ApiOperation({ summary: 'Berikan Nomor Surat' })
+  async assistDocument(
+    @Param('id') id: string,
+    @Body() body: { documentNumber: string },
+    @Request() req: any,
+  ) {
+    return this.documentsService.assistDocument(id, body.documentNumber, req.user.userId);
+  }
+
+  @Patch(':id/upload-final')
+  @RequirePermissions('documents.manage')
+  @ApiOperation({ summary: 'Upload surat final bernomor' })
+  async uploadFinal(
+    @Param('id') id: string,
+    @Body() body: { finalFileUrl: string },
+    @Request() req: any,
+  ) {
+    return this.documentsService.uploadFinal(id, body.finalFileUrl, req.user.userId);
+  }
+
+  @Patch(':id/acc')
+  @Roles('Sekretaris', 'System Administrator')
+  @RequirePermissions('documents.manage')
+  @ApiOperation({ summary: 'ACC Sekretaris & Notifikasi Ketua' })
+  async accSekretaris(
+    @Param('id') id: string,
+    @Request() req: any,
+  ) {
+    return this.documentsService.accSekretaris(id, req.user.userId);
+  }
+
+  @Patch(':id/sign')
+  @Roles('Ketua BEM', 'System Administrator')
+  @RequirePermissions('documents.approve')
+  @ApiOperation({ summary: 'Tandatangani dokumen (Digital Signature)' })
+  async signDocument(
+    @Param('id') id: string,
+    @Body() body: { signatureX: number; signatureY: number; signatureImage?: string; stampImage?: string },
+    @Request() req: any,
+  ) {
+    return this.documentsService.signDocument(id, body, req.user.userId);
   }
 
   @Get(':id/pdf')

@@ -33,10 +33,30 @@ export class BEMDocument {
   @Prop()
   fileUrl?: string;
 
+  @Prop()
+  draftFileUrl?: string; // Surat awal (belum bernomor)
+
+  @Prop()
+  finalFileUrl?: string; // Surat final (sudah bernomor)
+
+  @Prop()
+  signedFileUrl?: string; // Surat yang sudah di TTD & Stempel
+
   @Prop({
     type: String,
-    enum: ['Draft', 'Pending', 'Approved', 'Rejected'],
-    default: 'Draft',
+    enum: [
+      'Draft',
+      'Pending',
+      'Approved',
+      'Rejected',
+      'Menunggu Asistensi',
+      'Revisi Nomor Surat',
+      'Menunggu ACC Sekretaris',
+      'Menunggu TTD Ketua',
+      'Selesai',
+      'Ditolak'
+    ],
+    default: 'Menunggu Asistensi',
   })
   status!: string;
 

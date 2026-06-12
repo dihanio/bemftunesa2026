@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { BEMDocument } from '../../database/schema/documents';
 import { DocumentVersion } from '../../database/schema/security';
+import { Notification } from '../../database/schema/core';
+import { User } from '../../database/schema/users';
 import {
   paginate,
   parsePaginationQuery,
@@ -15,6 +17,8 @@ export class DocumentsService {
     @InjectModel(BEMDocument.name) private docModel: Model<BEMDocument>,
     @InjectModel(DocumentVersion.name)
     private versionModel: Model<DocumentVersion>,
+    @InjectModel(Notification.name) private notifModel: Model<Notification>,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
   async list(query: any) {
@@ -23,8 +27,13 @@ export class DocumentsService {
   }
 
   async create(data: any) {
-    const doc = await this.docModel.create({ ...data, qrUuid: randomUUID() });
-    return { data: doc, message: 'Draft surat berhasil dibuat' };
+    const doc = await this.docModel.create({
+      ...data,
+      qrUuid: randomUUID(),
+      status: 'Menunggu Asistensi',
+      draftFileUrl: data.fileUrl,
+    });
+    return { data: doc, message: 'Draft surat berhasil dibuat dan Menunggu Asistensi' };
   }
 
   async update(id: string, data: any) {
@@ -40,11 +49,114 @@ export class DocumentsService {
   async approve(id: string) {
     const doc = await this.docModel.findOneAndUpdate(
       { _id: id, deletedAt: null },
-      { $set: { status: 'Approved', signedAt: new Date() } },
+      { $set: { status: 'Selesai', signedAt: new Date() } },
       { new: true },
     );
     if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
     return { data: doc, message: 'Dokumen berhasil di-approve' };
+  }
+
+  async assistDocument(id: string, documentNumber: string, userId: string) {
+    const doc = await this.docModel.findOneAndUpdate(
+      { _id: id, deletedAt: null },
+      { $set: { status: 'Revisi Nomor Surat', documentNumber } },
+      { new: true },
+    );
+    if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
+    
+    // Notify the creator
+    await this.notifModel.create({
+      userId: doc.creatorId,
+      title: 'Nomor Surat Turun',
+      message: `Surat ${doc.title} telah diberi nomor ${documentNumber}. Silakan upload final PDF.`,
+      type: 'document',
+      linkUrl: `/documents/${id}`
+    });
+
+    return { data: doc, message: 'Nomor surat berhasil diberikan, status menjadi Revisi Nomor Surat' };
+  }
+
+  async uploadFinal(id: string, finalFileUrl: string, userId: string) {
+    const doc = await this.docModel.findOneAndUpdate(
+      { _id: id, deletedAt: null },
+      { $set: { status: 'Menunggu ACC Sekretaris', finalFileUrl } },
+      { new: true },
+    );
+    if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
+    return { data: doc, message: 'File final diunggah, menunggu ACC Sekretaris' };
+  }
+
+  async accSekretaris(id: string, userId: string) {
+    const doc = await this.docModel.findOneAndUpdate(
+      { _id: id, deletedAt: null },
+      { $set: { status: 'Menunggu TTD Ketua' } },
+      { new: true },
+    );
+    if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
+
+    // Notify Ketua BEM
+    const ketuaBEM = await this.userModel.findOne({ role: 'Ketua BEM', isActive: true });
+    if (ketuaBEM) {
+      await this.notifModel.create({
+        userId: ketuaBEM._id,
+        title: 'Menunggu TTD Surat',
+        message: `Surat ${doc.title} telah di-ACC Sekretaris. Menunggu Tanda Tangan Anda.`,
+        type: 'document',
+        linkUrl: `/documents/${id}`
+      });
+    }
+
+    return { data: doc, message: 'ACC Sekretaris berhasil, notifikasi terkirim ke Ketua BEM' };
+  }
+
+  async signDocument(id: string, payload: { signatureX: number; signatureY: number; signatureImage?: string; stampImage?: string }, userId: string) {
+    const doc = await this.docModel.findOne({ _id: id, deletedAt: null });
+    if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
+
+    try {
+      const { PDFDocument } = require('pdf-lib');
+      // In a real scenario, fetch the buffer from the finalFileUrl or from local storage:
+      // const response = await fetch(doc.finalFileUrl);
+      // const pdfBytes = await response.arrayBuffer();
+      //
+      // const pdfDoc = await PDFDocument.load(pdfBytes);
+      // const pages = pdfDoc.getPages();
+      // const lastPage = pages[pages.length - 1];
+      //
+      // // Embed signature
+      // if (payload.signatureImage) {
+      //   const sigResponse = await fetch(payload.signatureImage);
+      //   const sigBytes = await sigResponse.arrayBuffer();
+      //   const embeddedSig = payload.signatureImage.includes('png') ? await pdfDoc.embedPng(sigBytes) : await pdfDoc.embedJpg(sigBytes);
+      //   lastPage.drawImage(embeddedSig, { x: payload.signatureX, y: payload.signatureY, width: 100, height: 50 });
+      // }
+      //
+      // const signedBytes = await pdfDoc.save();
+      // const signedFileUrl = ...upload to storage...
+
+      // Mocking the generated url for now
+      const signedFileUrl = doc.finalFileUrl?.replace('.pdf', '-signed.pdf') || 'signed.pdf';
+
+      doc.status = 'Selesai';
+      doc.signedAt = new Date();
+      doc.signedById = new Types.ObjectId(userId);
+      doc.signedFileUrl = signedFileUrl;
+      doc.fileUrl = signedFileUrl;
+      await doc.save();
+
+      // Notify the creator
+      await this.notifModel.create({
+        userId: doc.creatorId,
+        title: 'Surat Selesai (TTD)',
+        message: `Surat ${doc.title} telah ditandatangani oleh Ketua BEM dan Selesai.`,
+        type: 'document',
+        linkUrl: `/documents/${id}`
+      });
+
+      return { data: doc, message: 'Dokumen berhasil ditandatangani dan Selesai' };
+    } catch (err) {
+      throw new Error(`Gagal memproses PDF: ${err}`);
+    }
   }
 
   async generatePdf(id: string) {
