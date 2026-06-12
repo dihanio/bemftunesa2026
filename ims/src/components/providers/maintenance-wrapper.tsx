@@ -17,14 +17,17 @@ export function MaintenanceWrapper({ children }: { children: React.ReactNode }) 
   const { user, isHydrated } = useAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [apiDown, setApiDown] = useState(false);
 
   const fetchSettings = async () => {
     try {
       setLoading(true);
       const res = await api.get<{ data: Settings }>("/public/settings");
       setSettings(res.data);
+      setApiDown(false);
     } catch (err) {
       console.error("Failed to fetch settings", err);
+      setApiDown(true);
     } finally {
       setLoading(false);
     }
@@ -51,18 +54,19 @@ export function MaintenanceWrapper({ children }: { children: React.ReactNode }) 
     user?.role === "Super Admin" ||
     user?.role === "KaBEM";
 
-  if (settings?.maintenanceMode && !isSysAdmin) {
+  if ((settings?.maintenanceMode || apiDown) && !isSysAdmin) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[#091c11] px-6 text-center">
         <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-[#10b981]/10">
           <ShieldAlert className="h-12 w-12 text-[#10b981]" />
         </div>
         <h1 className="mb-4 text-4xl font-black tracking-tight text-white sm:text-5xl">
-          System Under Maintenance
+          {apiDown ? "Sistem Terputus" : "System Under Maintenance"}
         </h1>
         <p className="mx-auto mb-8 max-w-lg text-[#b8c4aa] sm:text-lg">
-          IMS BEM FT sedang dalam tahap pemeliharaan sistem oleh Administrator.
-          Mohon kembali beberapa saat lagi. Jika mendesak, silakan hubungi BPI atau Administrator.
+          {apiDown 
+            ? "IMS gagal terhubung ke backend server BEM FT. Terjadi kesalahan jaringan atau server sedang offline."
+            : "IMS BEM FT sedang dalam tahap pemeliharaan sistem oleh Administrator. Mohon kembali beberapa saat lagi. Jika mendesak, silakan hubungi BPI atau Administrator."}
         </p>
         <Button
           onClick={fetchSettings}
