@@ -2,7 +2,7 @@ FROM oven/bun:1-slim
 
 # Install system dependencies that might be required by Next.js (like sharp for image optimization)
 # CA certificates are needed for HTTPS requests inside the container
-RUN apt-get update && apt-get install -y ca-certificates libc6-compat && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
