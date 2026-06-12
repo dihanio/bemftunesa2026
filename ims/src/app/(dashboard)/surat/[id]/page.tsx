@@ -56,23 +56,80 @@ export default function SuratDetailPage() {
     },
   });
 
+  const assistMutation = useMutation({
+    mutationFn: (documentNumber: string) => documentsService.assistDocument(id, documentNumber),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ims-document-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["ims-documents"] });
+      alert("Nomor surat berhasil diberikan!");
+    },
+  });
+
+  const uploadFinalMutation = useMutation({
+    mutationFn: (finalFileUrl: string) => documentsService.uploadFinal(id, finalFileUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ims-document-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["ims-documents"] });
+      alert("Surat final berhasil diunggah!");
+    },
+  });
+
+  const accSekretarisMutation = useMutation({
+    mutationFn: () => documentsService.accSekretaris(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ims-document-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["ims-documents"] });
+      alert("Surat berhasil di-ACC Sekretaris!");
+    },
+  });
+
+  const signMutation = useMutation({
+    mutationFn: (payload: { signatureX: number; signatureY: number }) => documentsService.signDocument(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ims-document-detail", id] });
+      queryClient.invalidateQueries({ queryKey: ["ims-documents"] });
+      alert("Surat berhasil disetujui & ditandatangani!");
+    },
+  });
+
   const doc = documentResponse?.data;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "approved":
+      case "Approved":
+      case "Selesai":
         return (
           <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
-            Disetujui
+            {status}
           </Badge>
         );
-      case "pending":
+      case "Pending":
+      case "Menunggu TTD Ketua":
         return (
           <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20">
             Menunggu TTD
           </Badge>
         );
-      case "rejected":
+      case "Menunggu ACC Sekretaris":
+        return (
+          <Badge className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20">
+            Menunggu ACC Sekum
+          </Badge>
+        );
+      case "Revisi Nomor Surat":
+        return (
+          <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+            Upload Final
+          </Badge>
+        );
+      case "Menunggu Asistensi":
+        return (
+          <Badge className="bg-violet-500/10 text-violet-500 border-violet-500/20">
+            Asistensi Kestari
+          </Badge>
+        );
+      case "Rejected":
+      case "Ditolak":
         return (
           <Badge className="bg-red-500/10 text-red-500 border-red-500/20">
             Ditolak
@@ -81,7 +138,7 @@ export default function SuratDetailPage() {
       default:
         return (
           <Badge className="bg-slate-500/10 text-slate-500 border-slate-500/20">
-            Draft
+            {status || "Draft"}
           </Badge>
         );
     }
@@ -138,29 +195,6 @@ export default function SuratDetailPage() {
             >
               <Printer className="w-4 h-4 mr-2" /> Cetak Surat
             </Button>
-            {doc.status === "pending" && (
-              <>
-                <Button
-                  variant="outline"
-                  className="border-danger/30 hover:bg-danger/10 text-danger hover:text-danger"
-                  onClick={() => {
-                    if (confirm("Apakah Anda yakin ingin menolak surat ini?")) {
-                      deleteMutation.mutate();
-                    }
-                  }}
-                  disabled={deleteMutation.isPending}
-                >
-                  <X className="w-4 h-4 mr-2" /> Tolak
-                </Button>
-                <Button
-                  className="bg-accent hover:bg-accent/90 text-accent-foreground shadow-lg"
-                  onClick={() => approveMutation.mutate()}
-                  disabled={approveMutation.isPending}
-                >
-                  <Check className="w-4 h-4 mr-2" /> TTD & Setujui
-                </Button>
-              </>
-            )}
           </div>
         </div>
       </div>
@@ -172,11 +206,7 @@ export default function SuratDetailPage() {
           ref={constraintsRef}
           className="lg:col-span-2 border-border/50 bg-card p-10 font-serif text-[#0f172a] shadow-xl min-h-[700px] border-t-8 border-t-accent relative overflow-hidden"
         >
-          {/* Letter Head */}
-          <div className="text-center border-b-4 border-double border-foreground pb-4 mb-6">
-            <h2 className="text-lg font-extrabold uppercase">
-              Badan Eksekutif Mahasiswa
-            </h2>
+          <div className="mb-10 text-center border-b-4 border-double border-foreground pb-6">
             <h3 className="text-md font-bold uppercase">Fakultas Teknik</h3>
             <h4 className="text-sm uppercase tracking-wide">
               Universitas Negeri Surabaya
@@ -218,8 +248,30 @@ export default function SuratDetailPage() {
               <p>di Tempat</p>
             </div>
 
-            <div className="whitespace-pre-line min-h-[300px]">
-              {doc.content}
+            <div className="mt-8 text-justify leading-relaxed whitespace-pre-wrap min-h-[300px]">
+              {doc.finalFileUrl ? (
+                <div className="flex flex-col items-center justify-center h-full space-y-4">
+                  <FileText className="w-16 h-16 text-muted-foreground" />
+                  <p className="text-muted-foreground">Dokumen PDF Final telah diunggah.</p>
+                  <Button variant="outline" asChild>
+                    <a href={doc.finalFileUrl} target="_blank" rel="noreferrer">
+                      <Printer className="w-4 h-4 mr-2" /> Buka PDF Final
+                    </a>
+                  </Button>
+                </div>
+              ) : doc.draftFileUrl ? (
+                <div className="flex flex-col items-center justify-center h-full space-y-4">
+                  <FileText className="w-16 h-16 text-muted-foreground" />
+                  <p className="text-muted-foreground">Draft Dokumen PDF telah diunggah.</p>
+                  <Button variant="outline" asChild>
+                    <a href={doc.draftFileUrl} target="_blank" rel="noreferrer">
+                      <Printer className="w-4 h-4 mr-2" /> Buka Draft PDF
+                    </a>
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center italic mt-10">Isi surat belum tersedia / belum diunggah.</p>
+              )}
             </div>
 
             {/* Signature Block */}
@@ -235,7 +287,7 @@ export default function SuratDetailPage() {
                 <p className="text-sm">Mengetahui,</p>
                 <p className="font-bold mt-1 text-sm">Ketua BEM FT UNESA</p>
                 <div className="h-24 w-40 flex flex-col items-center justify-center my-3 border-2 border-dashed border-border/80 bg-background/50 rounded-lg text-xs font-semibold relative group backdrop-blur-sm">
-                  {doc.status === "approved" ? (
+                  {(doc.status === "Approved" || doc.status === "Selesai") ? (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="text-emerald-600 font-black border-4 border-emerald-600 rounded-full px-6 py-2 rotate-[-15deg] uppercase text-xl tracking-widest opacity-80 mix-blend-multiply">
                         DISETUJUI
@@ -272,7 +324,7 @@ export default function SuratDetailPage() {
                 <p>{doc.createdBy || "Fungsionaris BEM FT"}</p>
                 <p>{new Date(doc.createdAt).toLocaleString("id-ID")}</p>
               </div>
-              {doc.status === "approved" && (
+              {(doc.status === "Approved" || doc.status === "Selesai") && (
                 <div>
                   <p className="font-bold text-foreground">
                     Ditandatangani secara digital:

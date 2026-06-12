@@ -3,10 +3,25 @@ import { api } from "@bemft/api-client";
 export interface Document {
   _id: string;
   title: string;
-  type: "surat_masuk" | "surat_keluar" | "notulen" | "lainnya";
-  content: string;
-  status: "draft" | "pending" | "approved" | "rejected";
+  type: "Surat Keluar" | "Surat Masuk" | "Proposal" | "LPJ" | "Lainnya";
+  documentNumber?: string;
+  fileUrl?: string;
+  draftFileUrl?: string;
+  finalFileUrl?: string;
+  signedFileUrl?: string;
+  status:
+    | "Draft"
+    | "Pending"
+    | "Approved"
+    | "Rejected"
+    | "Menunggu Asistensi"
+    | "Revisi Nomor Surat"
+    | "Menunggu ACC Sekretaris"
+    | "Menunggu TTD Ketua"
+    | "Selesai"
+    | "Ditolak";
   createdBy: string;
+  creatorId?: string;
   createdAt: string;
   updatedAt: string;
   approvedAt?: string;
@@ -49,6 +64,33 @@ export const documentsService = {
     return api.patch<{ data: Document; message: string }>(
       `/ims/documents/${id}/approve`,
       {},
+    );
+  },
+
+  assistDocument: async (id: string, documentNumber: string) => {
+    return api.patch<{ data: Document; message: string }>(
+      `/ims/documents/${id}/asistensi`,
+      { documentNumber }
+    );
+  },
+
+  uploadFinal: async (id: string, finalFileUrl: string) => {
+    return api.patch<{ data: Document; message: string }>(
+      `/ims/documents/${id}/upload-final`,
+      { finalFileUrl }
+    );
+  },
+
+  accSekretaris: async (id: string) => {
+    return api.patch<{ data: Document; message: string }>(
+      `/ims/documents/${id}/acc`
+    );
+  },
+
+  signDocument: async (id: string, payload: { signatureX: number; signatureY: number; signatureImage?: string; stampImage?: string }) => {
+    return api.patch<{ data: Document; message: string }>(
+      `/ims/documents/${id}/sign`,
+      payload
     );
   },
 

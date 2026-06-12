@@ -54,19 +54,40 @@ export default function SuratPage() {
 
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case "approved":
+      case "Approved":
+      case "Selesai":
         return {
           color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
           icon: <FileCheck2 className="w-3 h-3 mr-1" />,
-          label: "Disetujui",
+          label: status,
         };
-      case "pending":
+      case "Pending":
+      case "Menunggu TTD Ketua":
         return {
           color: "bg-amber-500/10 text-amber-500 border-amber-500/20",
           icon: <Stamp className="w-3 h-3 mr-1" />,
           label: "Menunggu TTD",
         };
-      case "rejected":
+      case "Menunggu ACC Sekretaris":
+        return {
+          color: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
+          icon: <FileText className="w-3 h-3 mr-1" />,
+          label: "Menunggu ACC Sekum",
+        };
+      case "Revisi Nomor Surat":
+        return {
+          color: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+          icon: <FilePlus2 className="w-3 h-3 mr-1" />,
+          label: "Upload Final",
+        };
+      case "Menunggu Asistensi":
+        return {
+          color: "bg-violet-500/10 text-violet-500 border-violet-500/20",
+          icon: <Search className="w-3 h-3 mr-1" />,
+          label: "Asistensi Kestari",
+        };
+      case "Rejected":
+      case "Ditolak":
         return {
           color: "bg-red-500/10 text-red-500 border-red-500/20",
           icon: <FileX2 className="w-3 h-3 mr-1" />,
@@ -76,31 +97,22 @@ export default function SuratPage() {
         return {
           color: "bg-slate-500/10 text-slate-500 border-slate-500/20",
           icon: <FilePlus2 className="w-3 h-3 mr-1" />,
-          label: "Draft",
+          label: status || "Draft",
         };
     }
   };
 
   const getTypeLabel = (type: string) => {
-    switch (type) {
-      case "surat_masuk":
-        return "Surat Masuk";
-      case "surat_keluar":
-        return "Surat Keluar";
-      case "notulen":
-        return "Notulen";
-      default:
-        return "Lainnya";
-    }
+    return type || "Lainnya";
   };
 
-  const docTypes = ["all", "surat_masuk", "surat_keluar", "notulen", "lainnya"];
+  const docTypes = ["Semua", "Surat Masuk", "Surat Keluar", "Proposal", "LPJ", "Lainnya"];
 
   // Stats
   const totalDocs = documents.length;
-  const approvedDocs = documents.filter((d) => d.status === "approved").length;
-  const pendingDocs = documents.filter((d) => d.status === "pending").length;
-  const draftDocs = documents.filter((d) => d.status === "draft").length;
+  const approvedDocs = documents.filter((d) => ["Approved", "Selesai"].includes(d.status)).length;
+  const pendingDocs = documents.filter((d) => ["Pending", "Menunggu TTD Ketua", "Menunggu ACC Sekretaris", "Menunggu Asistensi", "Revisi Nomor Surat"].includes(d.status)).length;
+  const draftDocs = documents.filter((d) => d.status === "Draft").length;
 
   return (
     <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500 ease-out">
@@ -215,7 +227,7 @@ export default function SuratPage() {
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {type === "all" ? "Semua" : getTypeLabel(type)}
+                  {type}
                 </button>
               ))}
             </div>
