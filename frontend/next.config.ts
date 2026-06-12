@@ -41,10 +41,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    let apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    if (apiUrl.endsWith("/api/v1")) apiUrl = apiUrl.replace(/\/api\/v1$/, "");
-    else if (apiUrl.endsWith("/v1")) apiUrl = apiUrl.replace(/\/v1$/, "");
-    else if (apiUrl.endsWith("/")) apiUrl = apiUrl.slice(0, -1);
+    const apiUrl = process.env.BACKEND_API_URL || "https://api.bemftunesa.org";
 
     return [
       {
@@ -54,11 +51,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    let apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    if (apiUrl.endsWith("/api/v1")) apiUrl = apiUrl.replace(/\/api\/v1$/, "");
-    else if (apiUrl.endsWith("/v1")) apiUrl = apiUrl.replace(/\/v1$/, "");
-    else if (apiUrl.endsWith("/")) apiUrl = apiUrl.slice(0, -1);
-
+    const apiUrl = process.env.BACKEND_API_URL || "https://api.bemftunesa.org";
     const apiURLObj = new URL(apiUrl);
     const apiHost = apiURLObj.host;
     const apiProto = apiURLObj.protocol;
