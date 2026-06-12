@@ -4,16 +4,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    environment:
-      MONGODB_URI: ${MONGODB_URI:-mongodb://root:XA4FsP4xH4yVcJJVERElcHQJDy63VuN6UTd7RHEASBYwU2GMnMMfhYBPsfCxuWlp@s9rb1g12avyy0y3zpdj6z0a4:27017/bemft_db?authSource=admin&directConnection=true}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-super-secret-key}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://bemftunesa.org,https://ims.bemftunesa.org}
-      NODE_ENV: ${NODE_ENV:-production}
-      PORT: 3001
+    env_file:
+      - .env
     ports:
       - "3001:3001"
     depends_on:
