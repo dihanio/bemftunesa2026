@@ -129,8 +129,7 @@ export function MobileMenu({ isOpen, onClose, links }: MobileMenuProps) {
             <div className="p-10 border-t border-white/5 bg-white/1 space-y-10">
               <a
                 href={
-                  process.env.NEXT_PUBLIC_IMS_URL ||
-                  "https://ims.bemftunesa.org"
+                  process.env.NEXT_PUBLIC_IMS_URL || "https://ims.bemftunesa.org"
                 }
                 target="_blank"
                 rel="noopener noreferrer"

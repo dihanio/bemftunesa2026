@@ -107,7 +107,7 @@ export function Footer() {
             </li>
             <li>
               <a
-                href={process.env.NEXT_PUBLIC_IMS_URL || "#"}
+                href={process.env.NEXT_PUBLIC_IMS_URL || "https://ims.bemftunesa.org"}
                 className="hover:text-[#10b981] transition-colors"
               >
                 Portal PKKMB

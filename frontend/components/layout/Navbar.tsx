@@ -74,9 +74,7 @@ export function Navbar() {
           {/* Right: CTA Button & Mobile Menu */}
           <div className="flex items-center">
             <a
-              href={
-                process.env.NEXT_PUBLIC_IMS_URL || "#"
-              }
+              href={process.env.NEXT_PUBLIC_IMS_URL || "https://ims.bemftunesa.org"}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:flex items-center justify-center px-6 py-2.5 text-[11px] font-bold tracking-wider text-army-dark bg-white rounded-full hover:bg-army-accent transition-all duration-300 hover:shadow-[0_0_20px_rgba(16, 185, 129,0.3)] hover:-translate-y-0.5 uppercase relative overflow-hidden group"
