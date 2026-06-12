@@ -62,12 +62,24 @@ export class AuthService {
     token: string,
   ): Promise<{ email: string; name?: string; picture?: string }> {
     try {
-      const ticket = await this.googleClient.verifyIdToken({
-        idToken: token,
-        audience: this.googleClientId,
-      });
+      let payload: any;
 
-      const payload = ticket.getPayload();
+      if (token.startsWith('ya29.')) {
+        const response = await fetch(
+          `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`,
+        );
+        if (!response.ok) {
+          throw new UnauthorizedException('Token akses Google tidak valid.');
+        }
+        payload = await response.json();
+      } else {
+        const ticket = await this.googleClient.verifyIdToken({
+          idToken: token,
+          audience: this.googleClientId,
+        });
+        payload = ticket.getPayload();
+      }
+
       if (!payload || !payload.email) {
         throw new UnauthorizedException(
           'Token Google tidak valid: email tidak ditemukan.',
