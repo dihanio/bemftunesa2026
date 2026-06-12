@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { MaintenanceWrapper } from "@/components/providers/maintenance-wrapper";
 
 export default function RootLayout({
   children,
@@ -29,7 +30,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-[#091c11]">
         <AuthProvider>
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            <MaintenanceWrapper>{children}</MaintenanceWrapper>
+          </QueryProvider>
         </AuthProvider>
       </body>
     </html>

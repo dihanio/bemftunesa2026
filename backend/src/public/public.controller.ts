@@ -135,4 +135,12 @@ export class PublicController {
   async verifyDocument(@Param('uuid') uuid: string) {
     return this.publicService.verifyDocument(uuid);
   }
+
+  // --- Settings ---
+
+  @Get('settings')
+  @ApiOperation({ summary: 'Ambil public settings seperti maintenance mode' })
+  async getSettings() {
+    return this.publicService.getSettings();
+  }
 }

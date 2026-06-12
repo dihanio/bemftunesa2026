@@ -116,6 +116,13 @@ export const dashboardService = {
   getSysadminTelemetry: async () => {
     return api.get<{ data: SysadminTelemetry }>("/ims/dashboard/sysadmin");
   },
+
+  toggleSysadminFlag: async (key: string) => {
+    return api.patch<{ data: { key: string; value: boolean } }>(
+      "/ims/dashboard/sysadmin/flags",
+      { key }
+    );
+  },
 };
 
 export interface SysadminTelemetry {
@@ -129,4 +136,10 @@ export interface SysadminTelemetry {
   uptime: number;
   mongoStatus: string;
   auditCount: number;
+  flags: {
+    mfaEnforcement: boolean;
+    newBudgetEngine: boolean;
+    publicAspirationFlow: boolean;
+    maintenanceMode: boolean;
+  };
 }

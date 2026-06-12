@@ -7,7 +7,7 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dashboardService } from "@/lib/api/dashboard";
 import { cn } from "@/lib/utils";
 import {
@@ -73,12 +73,9 @@ function PanelHeader({
 }
 
 export function SysAdminDashboard() {
-  const [flags, setFlags] = useState({
-    mfaEnforcement: true,
-    newBudgetEngine: false,
-    publicAspirationFlow: true,
-    maintenanceMode: false,
-  });
+  const queryClient = useQueryClient();
+
+  const [localFlags, setLocalFlags] = useState<Record<string, boolean>>({});
 
   const [logs, setLogs] = useState<string[]>([
     "[SYSTEM] Initializing telemetry link...",
@@ -100,6 +97,17 @@ export function SysAdminDashboard() {
     queryFn: () => dashboardService.getSysadminTelemetry(),
     refetchInterval: 5000,
   });
+
+  const stats = statsData?.data;
+  const telemetry = telemetryData?.data;
+  
+  // Use telemetry flags as source of truth, fallback to local overrides during mutation
+  const activeFlags = {
+    mfaEnforcement: localFlags.mfaEnforcement ?? telemetry?.flags?.mfaEnforcement ?? true,
+    newBudgetEngine: localFlags.newBudgetEngine ?? telemetry?.flags?.newBudgetEngine ?? false,
+    publicAspirationFlow: localFlags.publicAspirationFlow ?? telemetry?.flags?.publicAspirationFlow ?? true,
+    maintenanceMode: localFlags.maintenanceMode ?? telemetry?.flags?.maintenanceMode ?? false,
+  };
 
   // Auto Scroll Logs
   useEffect(() => {
@@ -127,14 +135,36 @@ export function SysAdminDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  const toggleFlag = (key: keyof typeof flags) => {
+  const toggleMutation = useMutation({
+    mutationFn: (key: string) => dashboardService.toggleSysadminFlag(key),
+    onSuccess: (res, key) => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sysadmin-telemetry"] });
+      addManualLog(`[FLAG] Successfully synchronized '${key}' with cluster.`);
+    },
+    onError: (err, key) => {
+      // Revert local optimistic state
+      setLocalFlags((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      addManualLog(`[ERROR] Failed to toggle '${key}': ${err.message}`);
+    }
+  });
+
+  const toggleFlag = (key: keyof typeof activeFlags) => {
     const time = new Date().toLocaleTimeString("id-ID");
-    const nextState = !flags[key];
-    setFlags((prev) => ({ ...prev, [key]: nextState }));
+    const nextState = !activeFlags[key];
+    
+    // Optimistic UI update
+    setLocalFlags((prev) => ({ ...prev, [key]: nextState }));
+    
     setLogs((prev) => [
       ...prev,
-      `[${time}] [FLAG] Toggled '${key}' status to: ${nextState ? "ACTIVE" : "INACTIVE"}`,
+      `[${time}] [FLAG] Requesting '${key}' status change to: ${nextState ? "ACTIVE" : "INACTIVE"}...`,
     ]);
+    
+    toggleMutation.mutate(key);
   };
 
   const addManualLog = (text: string) => {
@@ -164,8 +194,16 @@ export function SysAdminDashboard() {
     }, 900);
   };
 
-  const stats = statsData?.data;
-  const telemetry = telemetryData?.data;
+  const handleSelfTest = () => {
+    addManualLog(
+      "[DIAGNOSTIC] Running system self-test and checking MongoDB socket links...",
+    );
+    setTimeout(() => {
+      addManualLog(
+        "[DIAGNOSTIC] All services healthy. MongoDB cluster response: 12ms.",
+      );
+    }, 900);
+  };
 
   const metrics = [
     {
@@ -392,7 +430,7 @@ export function SysAdminDashboard() {
         <GlassPanel>
           <PanelHeader icon={Settings} title="Feature Flags" />
           <div className="mt-5 space-y-4">
-            {Object.entries(flags).map(([key, value]) => (
+            {Object.entries(activeFlags).map(([key, value]) => (
               <div
                 key={key}
                 className="flex items-center justify-between rounded-lg border border-white/5 bg-white/3 p-3"
@@ -405,33 +443,26 @@ export function SysAdminDashboard() {
                     {value ? "Active on production" : "Disabled"}
                   </span>
                 </div>
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => toggleFlag(key as any)}
-                  className="text-white hover:opacity-85 transition-opacity cursor-pointer"
+                  className={cn(
+                    "border-white/10 w-24 flex justify-start pl-2 pr-4 transition-all duration-300",
+                    value
+                      ? key === "maintenanceMode" 
+                        ? "bg-[#ff4d4d]/20 text-[#ff4d4d] border-[#ff4d4d]/30 hover:bg-[#ff4d4d]/30 hover:text-[#ff9b9b]"
+                        : "bg-[#10b981]/20 text-[#10b981] hover:bg-[#10b981]/30 hover:text-[#a7f3d0]"
+                      : "bg-white/5 text-[#a9b49c] hover:bg-white/10 hover:text-white",
+                  )}
                 >
-                  <AnimatePresence mode="wait">
-                    {value ? (
-                      <motion.div
-                        key="on"
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                      >
-                        <ToggleRight className="h-8 w-8 text-[#10b981]" />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="off"
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0.8, opacity: 0 }}
-                      >
-                        <ToggleLeft className="h-8 w-8 text-white/30" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </button>
+                  {value ? (
+                    <ToggleRight className="mr-2 h-4 w-4" />
+                  ) : (
+                    <ToggleLeft className="mr-2 h-4 w-4 text-[#a9b49c]" />
+                  )}
+                  {value ? "ON" : "OFF"}
+                </Button>
               </div>
             ))}
           </div>

@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { Proker, Meeting, Committee } from '../../database/schema/proker';
 import { Department, User } from '../../database/schema/users';
 import { LPJ, Proposal, RAB, SPJ } from '../../database/schema/finance';
-import { Activity } from '../../database/schema/core';
+import { Activity, SiteSetting } from '../../database/schema/core';
 
 @Injectable()
 export class DashboardService {
@@ -19,6 +19,7 @@ export class DashboardService {
     @InjectModel(RAB.name) private rabModel: Model<RAB>,
     @InjectModel(SPJ.name) private spjModel: Model<SPJ>,
     @InjectModel(Activity.name) private activityModel: Model<Activity>,
+    @InjectModel(SiteSetting.name) private siteSettingModel: Model<SiteSetting>,
   ) {}
 
   async getStats(user: any) {
@@ -593,6 +594,24 @@ export class DashboardService {
     // Dynamic network bandwidth fluctuation (always update)
     const networkBandwidth = Math.floor(Math.random() * 20) + 10;
 
+    // Fetch dynamic feature flags
+    const settings = await this.siteSettingModel.find({
+      key: { $in: ['mfaEnforcement', 'newBudgetEngine', 'publicAspirationFlow', 'maintenanceMode'] }
+    });
+    
+    const flags = {
+      mfaEnforcement: true,
+      newBudgetEngine: false,
+      publicAspirationFlow: true,
+      maintenanceMode: false,
+    };
+    
+    settings.forEach(s => {
+      if (s.key in flags) {
+        (flags as any)[s.key] = s.value;
+      }
+    });
+
     return {
       data: {
         status: mongoStatus === 'connected' ? 'HEALTHY' : 'DEGRADED',
@@ -605,8 +624,22 @@ export class DashboardService {
         uptime: process.uptime(),
         mongoStatus,
         auditCount,
+        flags,
       },
     };
+  }
+
+  async toggleFlag(key: string) {
+    let setting = await this.siteSettingModel.findOne({ key });
+    let nextValue = true;
+    if (setting) {
+      nextValue = !setting.value;
+      setting.value = nextValue;
+      await setting.save();
+    } else {
+      setting = await this.siteSettingModel.create({ key, value: true, type: 'boolean' });
+    }
+    return { data: { key, value: nextValue }, message: `Flag ${key} status changed to ${nextValue}` };
   }
 
   async getMemberWorkload() {

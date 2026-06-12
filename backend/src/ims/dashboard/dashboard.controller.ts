@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Patch, Body } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -9,6 +9,7 @@ import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { GetUser } from '../../auth/decorators/auth.decorator';
+import { Roles } from '../../auth/decorators/roles.decorator';
 
 @ApiTags('IMS - Dashboard')
 @Controller('ims/dashboard')
@@ -84,5 +85,12 @@ export class DashboardController {
   @ApiOperation({ summary: 'Get sysadmin telemetry' })
   async getSysadminTelemetry() {
     return this.dashboardService.getSysadminTelemetry();
+  }
+
+  @Patch('sysadmin/flags')
+  @Roles('Super Admin', 'System Administrator')
+  @ApiOperation({ summary: 'Toggle sysadmin feature flags' })
+  async toggleFlag(@Body('key') key: string) {
+    return this.dashboardService.toggleFlag(key);
   }
 }

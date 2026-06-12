@@ -8,8 +8,8 @@ import { GalleryAlbum, GalleryPhoto } from '../database/schema/gallery';
 import { Proker } from '../database/schema/proker';
 import { Event } from '../database/schema/proker';
 import { BEMDocument } from '../database/schema/documents';
-import { User } from '../database/schema/users';
-import { Department } from '../database/schema/users';
+import { User, Department } from '../database/schema/users';
+import { SiteSetting } from '../database/schema/core';
 import {
   escapeRegex,
   paginate,
@@ -37,8 +37,28 @@ export class PublicService {
     @InjectModel(BEMDocument.name) private documentModel: Model<BEMDocument>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Department.name) private departmentModel: Model<Department>,
+    @InjectModel(SiteSetting.name) private siteSettingModel: Model<SiteSetting>,
     @Inject(CACHE_MANAGER) private cacheManager: any,
   ) {}
+
+  async getSettings() {
+    const settings = await this.siteSettingModel.find({
+      key: { $in: ['maintenanceMode', 'publicAspirationFlow'] }
+    });
+    
+    const flags = {
+      maintenanceMode: false,
+      publicAspirationFlow: true,
+    };
+    
+    settings.forEach(s => {
+      if (s.key in flags) {
+        (flags as any)[s.key] = s.value;
+      }
+    });
+
+    return { data: flags };
+  }
 
   private getPaginationConfig(query: any, defaultSortBy: string) {
     const options = parsePaginationQuery(query ?? {});
