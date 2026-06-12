@@ -25,6 +25,21 @@ import {
   Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNotifications, useMarkNotificationRead } from "@/hooks/useNotifications";
+
+function getTimeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diffInSeconds < 60) return "Baru saja";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes} menit lalu`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} jam lalu`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays} hari lalu`;
+}
+
 
 interface TopbarProps {
   onSearchClick: () => void;
@@ -36,6 +51,12 @@ export function Topbar({ onSearchClick, onMenuClick }: TopbarProps) {
   const router = useRouter();
   const { user, activeRole, setActiveRole, logout } = useAuth();
   const [scrolled, setScrolled] = useState(false);
+
+  const { data: notifData } = useNotifications({ limit: 5 });
+  const { mutate: markAsRead } = useMarkNotificationRead();
+
+  const notifications = notifData?.data || [];
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   // Monitor scroll for glass styling
   useEffect(() => {
@@ -167,7 +188,11 @@ export function Topbar({ onSearchClick, onMenuClick }: TopbarProps) {
               className="relative h-10 w-10 rounded-full border border-white/10 bg-white/5 hover:bg-white/8 text-[#a9b49c] hover:text-white"
             >
               <Bell className="h-4.5 w-4.5" />
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#ff7a7a]" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#10b981] text-[8px] font-bold text-white ring-2 ring-[#091c11]">
+                  {unreadCount}
+                </span>
+              )}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -176,14 +201,41 @@ export function Topbar({ onSearchClick, onMenuClick }: TopbarProps) {
           >
             <DropdownMenuLabel className="flex items-center justify-between text-xs text-[#a9b49c]">
               <span>Notifikasi Terbaru</span>
-              <span className="cursor-pointer hover:text-white">
-                Tandai dibaca
-              </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/10" />
-            <div className="p-3 text-center text-xs text-[#a9b49c]">
-              Tidak ada notifikasi baru
-            </div>
+            {notifications.length === 0 ? (
+              <div className="p-3 text-center text-xs text-[#a9b49c]">
+                Tidak ada notifikasi baru
+              </div>
+            ) : (
+              notifications.map((notif) => (
+                <DropdownMenuItem
+                  key={notif._id}
+                  onClick={() => {
+                    if (!notif.isRead) markAsRead(notif._id);
+                    if (notif.actionData?.link) {
+                      router.push(notif.actionData.link as string);
+                    }
+                  }}
+                  className={`flex cursor-pointer flex-col items-start gap-1 rounded-lg p-3 hover:bg-white/8 ${!notif.isRead ? "bg-white/5" : ""}`}
+                >
+                  <div className="flex w-full items-start justify-between gap-2">
+                    <span className={`font-bold text-xs ${!notif.isRead ? "text-white" : "text-[#a9b49c]"}`}>
+                      {notif.title}
+                    </span>
+                    {!notif.isRead && (
+                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#10b981]" />
+                    )}
+                  </div>
+                  <span className={`text-[10px] leading-normal ${!notif.isRead ? "text-[#b8c4aa]" : "text-[#a9b49c]/70"}`}>
+                    {notif.message}
+                  </span>
+                  <span className="mt-1 text-[8px] font-semibold text-[#10b981]">
+                    {getTimeAgo(notif.createdAt)}
+                  </span>
+                </DropdownMenuItem>
+              ))
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 

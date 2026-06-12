@@ -23,6 +23,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
+import { useNotifications, useMarkNotificationRead } from "@/hooks/useNotifications";
+
+function getTimeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diffInSeconds < 60) return "Baru saja";
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes} menit lalu`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} jam lalu`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays} hari lalu`;
+}
 
 export function Header({
   setSidebarOpen,
@@ -42,20 +56,11 @@ export function Header({
       : pathname.split("/")[1].charAt(0).toUpperCase() +
         pathname.split("/")[1].slice(1);
 
-  const mockNotifications = [
-    {
-      id: 1,
-      title: "Proposal disetujui!",
-      desc: "Proposal PKKMB 2026 disetujui Bendahara BEM.",
-      time: "5 menit lalu",
-    },
-    {
-      id: 2,
-      title: "Undangan Surat",
-      desc: "Anda diundang ke rapat Pleno Koordinasi Mid-Term.",
-      time: "1 jam lalu",
-    },
-  ];
+  const { data: notifData } = useNotifications({ limit: 5 });
+  const { mutate: markAsRead } = useMarkNotificationRead();
+
+  const notifications = notifData?.data || [];
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between border-b border-white/10 bg-[#091c11]/62 px-4 shadow-[0_18px_60px_rgba(0,0,0,0.22)] backdrop-blur-2xl sm:px-6 lg:px-8">
@@ -106,12 +111,13 @@ export function Header({
                 variant="ghost"
                 size="icon"
                 className="relative text-[#b8c4aa] hover:bg-white/8 hover:text-white"
-                onClick={() => setUnreadNotifications(false)}
               >
                 <span className="sr-only">View notifications</span>
                 <Bell className="h-5 w-5" aria-hidden="true" />
-                {unreadNotifications && (
-                  <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#10b981] ring-2 ring-[#091c11]"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#10b981] text-[8px] font-bold text-white ring-2 ring-[#091c11]">
+                    {unreadCount}
+                  </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
@@ -120,25 +126,42 @@ export function Header({
               className="w-80 border-white/10 bg-[#091c11]/95 p-2 text-white backdrop-blur-xl"
             >
               <DropdownMenuLabel className="font-bold text-sm">
-                Notifikasi
+                Notifikasi Terbaru
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {mockNotifications.map((notif) => (
-                <DropdownMenuItem
-                  key={notif.id}
-                  className="flex flex-col items-start gap-1 rounded-lg p-3 hover:bg-white/8"
-                >
-                  <span className="font-bold text-xs text-foreground">
-                    {notif.title}
-                  </span>
-                  <span className="text-[10px] text-[#a9b49c] leading-normal">
-                    {notif.desc}
-                  </span>
-                  <span className="mt-1 text-[8px] text-[#10b981]">
-                    {notif.time}
-                  </span>
-                </DropdownMenuItem>
-              ))}
+              <DropdownMenuSeparator className="bg-white/10" />
+              {notifications.length === 0 ? (
+                <div className="p-4 text-center text-xs text-[#a9b49c]">
+                  Tidak ada notifikasi baru
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <DropdownMenuItem
+                    key={notif._id}
+                    onClick={() => {
+                      if (!notif.isRead) markAsRead(notif._id);
+                      if (notif.actionData?.link) {
+                        router.push(notif.actionData.link as string);
+                      }
+                    }}
+                    className={`flex cursor-pointer flex-col items-start gap-1 rounded-lg p-3 hover:bg-white/8 ${!notif.isRead ? "bg-white/5" : ""}`}
+                  >
+                    <div className="flex w-full items-start justify-between gap-2">
+                      <span className={`font-bold text-xs ${!notif.isRead ? "text-white" : "text-[#a9b49c]"}`}>
+                        {notif.title}
+                      </span>
+                      {!notif.isRead && (
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#10b981]" />
+                      )}
+                    </div>
+                    <span className={`text-[10px] leading-normal ${!notif.isRead ? "text-[#b8c4aa]" : "text-[#a9b49c]/70"}`}>
+                      {notif.message}
+                    </span>
+                    <span className="mt-1 text-[8px] font-semibold text-[#10b981]">
+                      {getTimeAgo(notif.createdAt)}
+                    </span>
+                  </DropdownMenuItem>
+                ))
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
