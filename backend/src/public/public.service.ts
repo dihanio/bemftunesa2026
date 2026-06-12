@@ -452,6 +452,7 @@ export class PublicService {
     const members = await this.userModel.countDocuments({
       isActive: true,
       deletedAt: null,
+      role: { $nin: ['Guest', 'Admin Sistem'] },
     });
     const proker = await this.prokerModel.countDocuments({ deletedAt: null });
 
