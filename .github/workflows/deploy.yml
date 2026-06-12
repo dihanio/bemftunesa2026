@@ -24,4 +24,12 @@ jobs:
           script: |
             cd bemftunesa2026
             git pull origin main
-            docker compose up -d --build
+            
+            # Build services sequentially to prevent VPS out of memory (OOM)
+            docker compose build api
+            docker compose build public_web
+            docker compose build ims_web
+            docker compose build oprec_web
+            
+            # Start all services
+            docker compose up -d
