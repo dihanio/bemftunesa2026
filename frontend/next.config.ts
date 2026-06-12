@@ -41,7 +41,11 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    let apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    if (apiUrl.endsWith("/api/v1")) apiUrl = apiUrl.replace(/\/api\/v1$/, "");
+    else if (apiUrl.endsWith("/v1")) apiUrl = apiUrl.replace(/\/v1$/, "");
+    else if (apiUrl.endsWith("/")) apiUrl = apiUrl.slice(0, -1);
+
     return [
       {
         source: "/api/v1/:path*",
@@ -50,8 +54,11 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    let apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+    if (apiUrl.endsWith("/api/v1")) apiUrl = apiUrl.replace(/\/api\/v1$/, "");
+    else if (apiUrl.endsWith("/v1")) apiUrl = apiUrl.replace(/\/v1$/, "");
+    else if (apiUrl.endsWith("/")) apiUrl = apiUrl.slice(0, -1);
+
     const apiURLObj = new URL(apiUrl);
     const apiHost = apiURLObj.host;
     const apiProto = apiURLObj.protocol;
