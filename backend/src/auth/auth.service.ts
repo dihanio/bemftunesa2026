@@ -120,11 +120,11 @@ export class AuthService {
 
     // If student email, validate NIM format pattern
     if (isMhs) {
-      const mhsPattern = /^[a-zA-Z0-9.-]+\.[0-9]{3}@mhs\.unesa\.ac\.id$/;
+      const mhsPattern = /^[a-zA-Z0-9.-]+\.[0-9]{3,6}@mhs\.unesa\.ac\.id$/;
       const nimPattern = /^[0-9]+@mhs\.unesa\.ac\.id$/;
       if (!mhsPattern.test(email) && !nimPattern.test(email)) {
         throw new UnauthorizedException(
-          'Format email UNESA Anda tidak valid (gunakan format nama.3digitNIM@mhs.unesa.ac.id atau NIM@mhs.unesa.ac.id).',
+          'Format email UNESA Anda tidak valid (gunakan format nama.2digitAngkatan3digitNIM@mhs.unesa.ac.id atau NIM@mhs.unesa.ac.id).',
         );
       }
     }
