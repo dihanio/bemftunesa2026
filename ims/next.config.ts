@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.bemftunesa.org/v1";
+    const apiUrl = process.env.BACKEND_API_URL || "https://api.bemftunesa.org";
     return [
       {
         source: "/api/v1/:path*",
@@ -40,8 +40,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || "https://api.bemftunesa.org/v1";
+    const apiUrl = process.env.BACKEND_API_URL || "https://api.bemftunesa.org";
     const apiURLObj = new URL(apiUrl);
     const apiHost = apiURLObj.host;
     const apiProto = apiURLObj.protocol;
