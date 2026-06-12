@@ -4,13 +4,13 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { google, drive_v3 } from 'googleapis';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Readable } from 'stream';
 
 @Injectable()
 export class UploadService {
-  private drive: drive_v3.Drive | null = null;
-  private folderId: string | undefined;
+  private supabase: SupabaseClient | null = null;
+  private readonly defaultBucket = 'media';
   private readonly maxImageSizeBytes = 5 * 1024 * 1024; // 5MB
   private readonly maxDocumentSizeBytes = 10 * 1024 * 1024; // 10MB
   private readonly allowedImageMimeTypes = new Set([
@@ -26,31 +26,20 @@ export class UploadService {
   ]);
 
   constructor(private configService: ConfigService) {
-    this.initGoogleDrive();
+    this.initSupabase();
   }
 
-  private initGoogleDrive() {
-    const clientEmail = this.configService.get<string>(
-      'GOOGLE_DRIVE_CLIENT_EMAIL',
-    );
-    const privateKey = this.configService.get<string>(
-      'GOOGLE_DRIVE_PRIVATE_KEY',
-    );
-    this.folderId = this.configService.get<string>('GOOGLE_DRIVE_FOLDER_ID');
+  private initSupabase() {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (clientEmail && privateKey) {
-      const auth = new google.auth.JWT({
-        email: clientEmail,
-        key: privateKey.replace(/\\n/g, '\n'),
-        scopes: ['https://www.googleapis.com/auth/drive.file'],
-      });
-
-      this.drive = google.drive({ version: 'v3', auth });
+    if (supabaseUrl && supabaseKey) {
+      this.supabase = createClient(supabaseUrl, supabaseKey);
     }
   }
 
   private isConfigured(): boolean {
-    return !!(this.drive && this.folderId);
+    return !!this.supabase;
   }
 
   private bufferFromBase64(base64String: string): Buffer {
@@ -115,42 +104,34 @@ export class UploadService {
       this.validateUpload(mimeType, buffer.length, 'image');
       if (!this.isConfigured()) {
         throw new BadRequestException(
-          'Google Drive belum dikonfigurasi. Set GOOGLE_DRIVE_CLIENT_EMAIL, GOOGLE_DRIVE_PRIVATE_KEY, dan GOOGLE_DRIVE_FOLDER_ID di .env',
+          'Supabase belum dikonfigurasi. Set SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY di .env',
         );
       }
-      const fileName =
-        data.fileName || `img-${Date.now()}.${mimeType.split('/')[1] || 'jpg'}`;
+      const extension = mimeType.split('/')[1] || 'jpg';
+      const fileName = data.fileName || `img-${Date.now()}.${extension}`;
+      const bucketName = data.bucket || this.defaultBucket;
 
-      const response = await this.drive!.files.create({
-        requestBody: {
-          name: fileName,
-          parents: [this.folderId!],
-        },
-        media: {
-          mimeType,
-          body: this.bufferToStream(buffer),
-        },
-        fields: 'id, name, webViewLink, webContentLink',
-      });
+      const { data: uploadData, error } = await this.supabase!.storage
+        .from(bucketName)
+        .upload(fileName, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
 
-      // Set file to be publicly readable
-      await this.drive!.permissions.create({
-        fileId: response.data.id!,
-        requestBody: {
-          role: 'reader',
-          type: 'anyone',
-        },
-      });
+      if (error) {
+        throw new InternalServerErrorException('Gagal upload ke Supabase: ' + error.message);
+      }
 
-      const fileId = response.data.id;
-      const publicUrl = `https://drive.google.com/uc?id=${fileId}&export=view`;
+      const { data: publicUrlData } = this.supabase!.storage
+        .from(bucketName)
+        .getPublicUrl(uploadData.path);
 
       return {
         data: {
-          fileId,
-          url: publicUrl,
-          name: response.data.name,
-          webViewLink: response.data.webViewLink,
+          fileId: uploadData.path,
+          url: publicUrlData.publicUrl,
+          name: fileName,
+          webViewLink: publicUrlData.publicUrl,
         },
         message: 'Image berhasil diupload',
       };
@@ -159,7 +140,7 @@ export class UploadService {
         throw err;
       }
       throw new InternalServerErrorException(
-        'Gagal upload ke Google Drive: ' + (err.message || 'Unknown error'),
+        'Gagal upload ke Supabase: ' + (err.message || 'Unknown error'),
       );
     }
   }
@@ -178,40 +159,33 @@ export class UploadService {
       this.validateUpload(mimeType, buffer.length, 'document');
       if (!this.isConfigured()) {
         throw new BadRequestException(
-          'Google Drive belum dikonfigurasi. Set GOOGLE_DRIVE_CLIENT_EMAIL, GOOGLE_DRIVE_PRIVATE_KEY, dan GOOGLE_DRIVE_FOLDER_ID di .env',
+          'Supabase belum dikonfigurasi. Set SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY di .env',
         );
       }
       const fileName = data.fileName || `doc-${Date.now()}.pdf`;
+      const bucketName = data.bucket || 'documents';
 
-      const response = await this.drive!.files.create({
-        requestBody: {
-          name: fileName,
-          parents: [this.folderId!],
-        },
-        media: {
-          mimeType,
-          body: this.bufferToStream(buffer),
-        },
-        fields: 'id, name, webViewLink, webContentLink',
-      });
+      const { data: uploadData, error } = await this.supabase!.storage
+        .from(bucketName)
+        .upload(fileName, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
 
-      // Set file to be publicly readable
-      await this.drive!.permissions.create({
-        fileId: response.data.id!,
-        requestBody: {
-          role: 'reader',
-          type: 'anyone',
-        },
-      });
+      if (error) {
+        throw new InternalServerErrorException('Gagal upload dokumen ke Supabase: ' + error.message);
+      }
 
-      const fileId = response.data.id;
+      const { data: publicUrlData } = this.supabase!.storage
+        .from(bucketName)
+        .getPublicUrl(uploadData.path);
 
       return {
         data: {
-          fileId,
-          url: `https://drive.google.com/uc?id=${fileId}&export=download`,
-          previewUrl: response.data.webViewLink,
-          name: response.data.name,
+          fileId: uploadData.path,
+          url: publicUrlData.publicUrl,
+          previewUrl: publicUrlData.publicUrl,
+          name: fileName,
         },
         message: 'Dokumen berhasil diupload',
       };
@@ -220,26 +194,31 @@ export class UploadService {
         throw err;
       }
       throw new InternalServerErrorException(
-        'Gagal upload ke Google Drive: ' + (err.message || 'Unknown error'),
+        'Gagal upload ke Supabase: ' + (err.message || 'Unknown error'),
       );
     }
   }
 
-  async deleteFile(fileId: string) {
+  async deleteFile(fileId: string, bucket: string = this.defaultBucket) {
     if (!fileId) throw new BadRequestException('File ID wajib diisi');
 
     if (!this.isConfigured()) {
       throw new BadRequestException(
-        'Google Drive belum dikonfigurasi. Set GOOGLE_DRIVE_CLIENT_EMAIL, GOOGLE_DRIVE_PRIVATE_KEY, dan GOOGLE_DRIVE_FOLDER_ID di .env',
+        'Supabase belum dikonfigurasi. Set SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY di .env',
       );
     }
 
     try {
-      await this.drive!.files.delete({ fileId });
-      return { message: `File ${fileId} berhasil dihapus dari Google Drive` };
+      const { error } = await this.supabase!.storage.from(bucket).remove([fileId]);
+      
+      if (error) {
+        throw new InternalServerErrorException('Gagal menghapus file dari Supabase: ' + error.message);
+      }
+      
+      return { message: `File ${fileId} berhasil dihapus dari Supabase Storage` };
     } catch (err: any) {
-      if (err.code === 404) {
-        throw new BadRequestException('File tidak ditemukan di Google Drive');
+      if (err instanceof BadRequestException) {
+        throw err;
       }
       throw new InternalServerErrorException(
         'Gagal menghapus file: ' + (err.message || 'Unknown error'),
