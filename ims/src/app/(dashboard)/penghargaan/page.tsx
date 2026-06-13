@@ -1,5 +1,7 @@
 "use client";
 
+import { useAuth } from "@/hooks/useAuth";
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { pointsService, Points, GivePointsDto } from "@/lib/api/points";
 import {
@@ -38,6 +40,7 @@ export default function RewardPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const { activeRole } = useAuth();
 
   const { data: leaderboardResponse, isLoading: isLeaderboardLoading } =
     useQuery({
@@ -89,13 +92,17 @@ export default function RewardPage() {
             <History className="w-4 h-4" />
             Riwayat Poin
           </Button>
-          <Button
-            onClick={() => setIsFormOpen(true)}
-            className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Berikan Poin
-          </Button>
+          {["Kadep", "KaBEM", "WaKaBEM", "Admin Sistem", "Super Admin"].includes(
+            activeRole || "",
+          ) && (
+            <Button
+              onClick={() => setIsFormOpen(true)}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Berikan Poin
+            </Button>
+          )}
         </div>
       </div>
 
