@@ -22,9 +22,10 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           command_timeout: 30m
           script: |
+            set -e
             cd bemftunesa2026
-            git pull origin main
-            
+            git fetch origin main
+            git reset --hard origin/main
             # Build services sequentially to prevent VPS out of memory (OOM)
             docker compose build api
             docker compose build public_web
