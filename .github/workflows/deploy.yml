@@ -26,17 +26,6 @@ jobs:
             cd bemftunesa2026
             git fetch origin main
             git reset --hard origin/main
-            
-            # Auto-generate permanent JWT_SECRET if missing
-            if [ -f .env ] && ! grep -q "^JWT_SECRET=" .env; then
-              echo "" >> .env
-              echo "JWT_SECRET=$(openssl rand -hex 32)" >> .env
-              echo "✅ Auto-generated permanent JWT_SECRET in VPS .env"
-            elif [ ! -f .env ]; then
-              echo "JWT_SECRET=$(openssl rand -hex 32)" > .env
-              echo "✅ Created .env and auto-generated permanent JWT_SECRET"
-            fi
-
             # Build services sequentially to prevent VPS out of memory (OOM)
             docker compose build api
             docker compose build public_web
