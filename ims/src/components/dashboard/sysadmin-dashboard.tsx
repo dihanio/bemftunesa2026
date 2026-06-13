@@ -78,11 +78,7 @@ export function SysAdminDashboard() {
   const [localFlags, setLocalFlags] = useState<Record<string, boolean>>({});
 
   const [logs, setLogs] = useState<string[]>([
-    "[SYSTEM] Initializing telemetry link...",
-    "[SECURITY] Pre-hydrated Zustand persistent session store successfully.",
-    "[DATABASE] MongoDB pool allocated: HEALTHY",
-    "[NETWORK] Socket.io gateway listening on port 3001.",
-    "[IMS] Core modules hot-reloaded using Next.js Turbopack.",
+    "[SYSTEM] Console initialized. Awaiting live system events...",
   ]);
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
@@ -92,7 +88,7 @@ export function SysAdminDashboard() {
     queryFn: () => dashboardService.getStats(),
   });
 
-  const { data: telemetryData, refetch } = useQuery({
+  const { data: telemetryData, refetch, isError } = useQuery({
     queryKey: ["dashboard-sysadmin-telemetry"],
     queryFn: () => dashboardService.getSysadminTelemetry(),
     refetchInterval: 5000,
@@ -100,6 +96,7 @@ export function SysAdminDashboard() {
 
   const stats = statsData?.data;
   const telemetry = telemetryData?.data;
+  const isServerOffline = isError || !telemetryData;
   
   // Use telemetry flags as source of truth, fallback to local overrides during mutation
   const activeFlags = {
@@ -113,27 +110,6 @@ export function SysAdminDashboard() {
   useEffect(() => {
     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
-
-  // Periodic Random System Logs
-  useEffect(() => {
-    const randomLogs = [
-      "[TELEMETRY] Node cpu usage checked: normal.",
-      "[HEALTH] API latency stable at 14ms.",
-      "[SEC] Client JWT token authenticated from ims-auth-storage.",
-      "[CACHE] Redis asp-cache hit ratio: 94.2%",
-      "[NOTIF] Service-worker pushed pending approvals alert.",
-      "[API] GET /ims/dashboard/sysadmin - 200 OK",
-    ];
-
-    const interval = setInterval(() => {
-      const time = new Date().toLocaleTimeString("id-ID");
-      const randomLine =
-        randomLogs[Math.floor(Math.random() * randomLogs.length)];
-      setLogs((prev) => [...prev, `[${time}] ${randomLine}`].slice(-40));
-    }, 9000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const toggleMutation = useMutation({
     mutationFn: (key: string) => dashboardService.toggleSysadminFlag(key),
@@ -199,32 +175,32 @@ export function SysAdminDashboard() {
   const metrics = [
     {
       title: "System Status",
-      value: telemetry?.status ?? "HEALTHY",
-      description: "All services fully active",
+      value: isServerOffline ? "OFFLINE" : (telemetry?.status ?? "HEALTHY"),
+      description: isServerOffline ? "Connection to backend failed" : "All services fully active",
       icon: ShieldCheck,
-      trend: "Online",
-      color: "#10b981",
-      blinker: true,
+      trend: isServerOffline ? "Down" : "Online",
+      color: isServerOffline ? "#ff4d4d" : "#10b981",
+      blinker: !isServerOffline,
     },
     {
       title: "API Average Latency",
-      value: `${telemetry?.latency ?? 14} ms`,
-      description: "P95 gateway latency under target",
+      value: telemetry?.latency ? `${telemetry.latency} ms` : "N/A",
+      description: "P95 gateway latency",
       icon: Activity,
-      trend: "Optimal",
+      trend: telemetry?.latency ? "Optimal" : "Unknown",
       color: "#a7f3d0",
     },
     {
       title: "Active Sessions",
-      value: telemetry?.activeSessions ?? 8,
+      value: telemetry?.activeSessions ?? "N/A",
       description: "Across portals & devices",
       icon: Users,
-      trend: "+2",
+      trend: "-",
       color: "#9dc3ff",
     },
     {
       title: "Security Audits",
-      value: telemetry?.auditCount ?? stats?.auditCount ?? 78,
+      value: telemetry?.auditCount ?? stats?.auditCount ?? 0,
       description: "Immutable ledger checked",
       icon: Database,
       trend: "Verified",
@@ -267,18 +243,18 @@ export function SysAdminDashboard() {
             </div>
           </div>
 
-          <div className="flex flex-col justify-center rounded-lg border border-[#10b981]/20 bg-[#10b981]/6 p-4">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#a7f3d0]">
+          <div className={cn("flex flex-col justify-center rounded-lg border p-4", isServerOffline ? "border-red-500/20 bg-red-500/10" : "border-[#10b981]/20 bg-[#10b981]/6")}>
+            <span className={cn("text-[10px] font-bold uppercase tracking-wider", isServerOffline ? "text-red-400" : "text-[#a7f3d0]")}>
               DATABASE CLUSTER
             </span>
             <div className="mt-2 text-2xl font-black text-white flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#10b981] animate-pulse" />
-              ONLINE
+              <span className={cn("h-2.5 w-2.5 rounded-full", isServerOffline ? "bg-red-500" : "bg-[#10b981] animate-pulse")} />
+              {isServerOffline ? "OFFLINE" : "ONLINE"}
             </div>
             <div className="mt-3 text-xs text-[#c8d2bd] font-medium leading-relaxed">
               Mongoose link pooled:{" "}
-              <strong className="text-white">Active</strong>. Status cluster
-              MongoDB sehat.
+              <strong className="text-white">{isServerOffline ? "Disconnected" : "Active"}</strong>. Status cluster
+              MongoDB {isServerOffline ? "tidak dapat dijangkau" : "sehat"}.
             </div>
           </div>
         </div>
@@ -354,14 +330,14 @@ export function SysAdminDashboard() {
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-semibold">
                   <span className="text-white">CPU Node Workload</span>
-                  <span className="text-[#10b981]">
-                    {telemetry?.cpuWorkload ?? 24}%
+                  <span className={cn(telemetry?.cpuWorkload !== undefined ? "text-[#10b981]" : "text-gray-500")}>
+                    {telemetry?.cpuWorkload !== undefined ? `${telemetry.cpuWorkload}%` : "N/A"}
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-white/8 overflow-hidden">
                   <div
-                    className="h-full bg-[#10b981] rounded-full transition-all duration-500"
-                    style={{ width: `${telemetry?.cpuWorkload ?? 24}%` }}
+                    className={cn("h-full rounded-full transition-all duration-500", telemetry?.cpuWorkload !== undefined ? "bg-[#10b981]" : "bg-transparent")}
+                    style={{ width: `${telemetry?.cpuWorkload ?? 0}%` }}
                   />
                 </div>
               </div>
@@ -370,14 +346,14 @@ export function SysAdminDashboard() {
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-semibold">
                   <span className="text-white">RAM Consumption</span>
-                  <span className="text-[#a7f3d0]">
-                    {telemetry?.memoryUsage ?? 42}%
+                  <span className={cn(telemetry?.memoryUsage !== undefined ? "text-[#a7f3d0]" : "text-gray-500")}>
+                    {telemetry?.memoryUsage !== undefined ? `${telemetry.memoryUsage}%` : "N/A"}
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-white/8 overflow-hidden">
                   <div
-                    className="h-full bg-[#a7f3d0] rounded-full transition-all duration-500"
-                    style={{ width: `${telemetry?.memoryUsage ?? 42}%` }}
+                    className={cn("h-full rounded-full transition-all duration-500", telemetry?.memoryUsage !== undefined ? "bg-[#a7f3d0]" : "bg-transparent")}
+                    style={{ width: `${telemetry?.memoryUsage ?? 0}%` }}
                   />
                 </div>
               </div>
@@ -386,14 +362,14 @@ export function SysAdminDashboard() {
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-semibold">
                   <span className="text-white">Database Storage Limit</span>
-                  <span className="text-[#f0c36a]">
-                    {telemetry?.databaseStorage ?? 34}%
+                  <span className={cn(telemetry?.databaseStorage !== undefined ? "text-[#f0c36a]" : "text-gray-500")}>
+                    {telemetry?.databaseStorage !== undefined ? `${telemetry.databaseStorage}%` : "N/A"}
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-white/8 overflow-hidden">
                   <div
-                    className="h-full bg-[#f0c36a] rounded-full transition-all duration-500"
-                    style={{ width: `${telemetry?.databaseStorage ?? 34}%` }}
+                    className={cn("h-full rounded-full transition-all duration-500", telemetry?.databaseStorage !== undefined ? "bg-[#f0c36a]" : "bg-transparent")}
+                    style={{ width: `${telemetry?.databaseStorage ?? 0}%` }}
                   />
                 </div>
               </div>
@@ -402,14 +378,14 @@ export function SysAdminDashboard() {
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-semibold">
                   <span className="text-white">Network Bandwidth</span>
-                  <span className="text-[#9dc3ff]">
-                    {telemetry?.networkBandwidth ?? 14}%
+                  <span className={cn(telemetry?.networkBandwidth !== undefined ? "text-[#9dc3ff]" : "text-gray-500")}>
+                    {telemetry?.networkBandwidth !== undefined ? `${telemetry.networkBandwidth}%` : "N/A"}
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-white/8 overflow-hidden">
                   <div
-                    className="h-full bg-[#9dc3ff] rounded-full transition-all duration-500"
-                    style={{ width: `${telemetry?.networkBandwidth ?? 14}%` }}
+                    className={cn("h-full rounded-full transition-all duration-500", telemetry?.networkBandwidth !== undefined ? "bg-[#9dc3ff]" : "bg-transparent")}
+                    style={{ width: `${telemetry?.networkBandwidth ?? 0}%` }}
                   />
                 </div>
               </div>
