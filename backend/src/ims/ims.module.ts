@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { UploadModule } from '../upload/upload.module';
 import { ProkerController } from './proker/proker.controller';
 import { ProkerService } from './proker/proker.service';
 import { PointsController } from './points/points.controller';
@@ -29,7 +30,7 @@ import { PermissionsModule } from '../permissions/permissions.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [PermissionsModule, NotificationsModule],
+  imports: [PermissionsModule, NotificationsModule, UploadModule],
   controllers: [
     ProkerController,
     PointsController,
