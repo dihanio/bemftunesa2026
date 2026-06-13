@@ -14,9 +14,9 @@ export function MaintenanceWrapper({ children }: { children: React.ReactNode }) 
   const [loading, setLoading] = useState(true);
   const [apiDown, setApiDown] = useState(false);
 
-  const fetchSettings = async () => {
+  const fetchSettings = async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
       const res = await api.get<{ data: Settings }>("/public/settings");
       setSettings(res.data);
       setApiDown(false);
@@ -24,14 +24,14 @@ export function MaintenanceWrapper({ children }: { children: React.ReactNode }) 
       console.error("Failed to fetch settings", err);
       setApiDown(true);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSettings();
+    fetchSettings(true);
     // Poll every 30 seconds
-    const interval = setInterval(fetchSettings, 30000);
+    const interval = setInterval(() => fetchSettings(false), 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -59,7 +59,7 @@ export function MaintenanceWrapper({ children }: { children: React.ReactNode }) 
             : "Website Publik BEM FT sedang dalam pemeliharaan sistem. Mohon kembali dalam beberapa saat lagi."}
         </p>
         <button
-          onClick={fetchSettings}
+          onClick={() => fetchSettings(true)}
           className="flex items-center rounded-full bg-white px-8 py-3 font-semibold text-[#091c11] hover:bg-[#a7f3d0] transition-colors"
         >
           <RefreshCw className="mr-2 h-4 w-4" />

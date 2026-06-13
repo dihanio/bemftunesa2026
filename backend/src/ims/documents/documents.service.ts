@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { BEMDocument } from '../../database/schema/documents';
@@ -10,6 +10,7 @@ import {
   parsePaginationQuery,
 } from '../../common/helpers/pagination.helper';
 import { randomUUID } from 'crypto';
+import { UploadService } from '../../upload/upload.service';
 
 @Injectable()
 export class DocumentsService {
@@ -19,6 +20,7 @@ export class DocumentsService {
     private versionModel: Model<DocumentVersion>,
     @InjectModel(Notification.name) private notifModel: Model<Notification>,
     @InjectModel(User.name) private userModel: Model<User>,
+    private uploadService: UploadService,
   ) {}
 
   async list(query: any) {
@@ -69,8 +71,8 @@ export class DocumentsService {
       recipientId: doc.creatorId,
       title: 'Nomor Surat Turun',
       message: `Surat ${doc.title} telah diberi nomor ${documentNumber}. Silakan upload final PDF.`,
-      type: 'document',
-      linkUrl: `/documents/${id}`
+      category: 'ims',
+      actionData: { link: `/surat/${id}` }
     });
 
     return { data: doc, message: 'Nomor surat berhasil diberikan, status menjadi Revisi Nomor Surat' };
@@ -101,8 +103,8 @@ export class DocumentsService {
         recipientId: ketuaBEM._id,
         title: 'Menunggu TTD Surat',
         message: `Surat ${doc.title} telah di-ACC Sekretaris. Menunggu Tanda Tangan Anda.`,
-        type: 'document',
-        linkUrl: `/documents/${id}`
+        category: 'ims',
+        actionData: { link: `/surat/${id}` }
       });
     }
 
@@ -114,28 +116,44 @@ export class DocumentsService {
     if (!doc) throw new NotFoundException('Dokumen tidak ditemukan');
 
     try {
-      const { PDFDocument } = require('pdf-lib');
-      // In a real scenario, fetch the buffer from the finalFileUrl or from local storage:
-      // const response = await fetch(doc.finalFileUrl);
-      // const pdfBytes = await response.arrayBuffer();
-      //
-      // const pdfDoc = await PDFDocument.load(pdfBytes);
-      // const pages = pdfDoc.getPages();
-      // const lastPage = pages[pages.length - 1];
-      //
-      // // Embed signature
-      // if (payload.signatureImage) {
-      //   const sigResponse = await fetch(payload.signatureImage);
-      //   const sigBytes = await sigResponse.arrayBuffer();
-      //   const embeddedSig = payload.signatureImage.includes('png') ? await pdfDoc.embedPng(sigBytes) : await pdfDoc.embedJpg(sigBytes);
-      //   lastPage.drawImage(embeddedSig, { x: payload.signatureX, y: payload.signatureY, width: 100, height: 50 });
-      // }
-      //
-      // const signedBytes = await pdfDoc.save();
-      // const signedFileUrl = ...upload to storage...
+      const { PDFDocument, rgb } = require('pdf-lib');
+      
+      if (!doc.finalFileUrl) throw new BadRequestException('URL File Final tidak ditemukan');
 
-      // Mocking the generated url for now
-      const signedFileUrl = doc.finalFileUrl?.replace('.pdf', '-signed.pdf') || 'signed.pdf';
+      // Fetch the final PDF buffer
+      const response = await fetch(doc.finalFileUrl);
+      if (!response.ok) throw new Error(`Gagal mengunduh PDF: ${response.statusText}`);
+      const pdfBytes = await response.arrayBuffer();
+
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const pages = pdfDoc.getPages();
+      const lastPage = pages[pages.length - 1];
+
+      // Draw digital signature mark
+      lastPage.drawText('DISETUJUI SECARA DIGITAL OLEH', {
+        x: payload.signatureX || 100,
+        y: (payload.signatureY || 100) + 20,
+        size: 10,
+        color: rgb(0, 0.5, 0),
+      });
+      lastPage.drawText('KETUA BEM FT UNESA', {
+        x: payload.signatureX || 100,
+        y: payload.signatureY || 100,
+        size: 10,
+        color: rgb(0, 0.5, 0),
+      });
+
+      const signedBytes = await pdfDoc.save();
+      const base64Pdf = Buffer.from(signedBytes).toString('base64');
+      const dataUri = `data:application/pdf;base64,${base64Pdf}`;
+
+      // Upload to Supabase using UploadService
+      const uploadRes = await this.uploadService.uploadDocument({
+        file: dataUri,
+        fileName: `signed-${doc._id}.pdf`,
+      });
+
+      const signedFileUrl = uploadRes.data.url;
 
       doc.status = 'Selesai';
       doc.signedAt = new Date();
@@ -149,8 +167,8 @@ export class DocumentsService {
         recipientId: doc.creatorId,
         title: 'Surat Selesai (TTD)',
         message: `Surat ${doc.title} telah ditandatangani oleh Ketua BEM dan Selesai.`,
-        type: 'document',
-        linkUrl: `/documents/${id}`
+        category: 'ims',
+        actionData: { link: `/surat/${id}` }
       });
 
       return { data: doc, message: 'Dokumen berhasil ditandatangani dan Selesai' };

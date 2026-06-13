@@ -253,21 +253,17 @@ export default function SuratDetailPage() {
                 <div className="flex flex-col items-center justify-center h-full space-y-4">
                   <FileText className="w-16 h-16 text-muted-foreground" />
                   <p className="text-muted-foreground">Dokumen PDF Final telah diunggah.</p>
-                  <Button variant="outline" asChild>
-                    <a href={doc.finalFileUrl} target="_blank" rel="noreferrer">
-                      <Printer className="w-4 h-4 mr-2" /> Buka PDF Final
-                    </a>
-                  </Button>
+                  <a href={doc.finalFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                    <Printer className="w-4 h-4 mr-2" /> Buka PDF Final
+                  </a>
                 </div>
               ) : doc.draftFileUrl ? (
                 <div className="flex flex-col items-center justify-center h-full space-y-4">
                   <FileText className="w-16 h-16 text-muted-foreground" />
                   <p className="text-muted-foreground">Draft Dokumen PDF telah diunggah.</p>
-                  <Button variant="outline" asChild>
-                    <a href={doc.draftFileUrl} target="_blank" rel="noreferrer">
-                      <Printer className="w-4 h-4 mr-2" /> Buka Draft PDF
-                    </a>
-                  </Button>
+                  <a href={doc.draftFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
+                    <Printer className="w-4 h-4 mr-2" /> Buka Draft PDF
+                  </a>
                 </div>
               ) : (
                 <p className="text-muted-foreground text-center italic mt-10">Isi surat belum tersedia / belum diunggah.</p>
