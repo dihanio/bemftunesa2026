@@ -92,7 +92,7 @@ export default function RewardPage() {
             <History className="w-4 h-4" />
             Riwayat Poin
           </Button>
-          {["Kadep", "KaBEM", "WaKaBEM", "Admin Sistem", "Super Admin"].includes(
+          {["Sekretaris", "WaKaBEM", "KaBEM", "Admin Sistem", "Super Admin"].includes(
             activeRole || "",
           ) && (
             <Button

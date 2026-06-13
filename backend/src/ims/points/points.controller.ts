@@ -51,7 +51,7 @@ export class PointsController {
   }
 
   @Post()
-  @Roles('Kadep')
+  @Roles('Sekretaris')
   @ApiOperation({ summary: 'Award / deduct points' })
   @UsePipes(new ZodValidationPipe(AwardPointsSchema))
   async awardPoints(@Body() body: any, @Request() req: any) {
