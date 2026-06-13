@@ -14,24 +14,12 @@ import { PermissionsModule } from '../permissions/permissions.module';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        let secret = configService.get<string>('JWT_SECRET');
-        const isProd = configService.get<string>('NODE_ENV') === 'production';
-        
-        if (isProd && (!secret || secret === 'default-secret')) {
-          console.warn('⚠️ WARNING: JWT_SECRET is missing in production .env!');
-          console.warn('⚠️ Auto-generating a secure temporary secret...');
-          console.warn('⚠️ Note: All users will be forcibly logged out every time the server restarts until you set a permanent JWT_SECRET.');
-          secret = require('crypto').randomBytes(32).toString('hex');
-        }
-
-        return {
-          secret: secret || 'default-secret',
-          signOptions: {
-            expiresIn: configService.get<string>('JWT_EXPIRES_IN', '7d') as any,
-          },
-        };
-      },
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET', 'default-secret'),
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '7d') as any,
+        },
+      }),
       inject: [ConfigService],
     }),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
