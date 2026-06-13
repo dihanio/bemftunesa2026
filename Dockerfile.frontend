@@ -12,11 +12,23 @@ ENV APP_NAME=${APP_NAME}
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy the entire monorepo so all local workspace packages are available
-COPY . .
+# Copy package.json files and lockfile first to leverage Docker layer caching
+COPY package.json bun.lock ./
+COPY backend/package.json ./backend/
+COPY frontend/package.json ./frontend/
+COPY ims/package.json ./ims/
+COPY oprec/package.json ./oprec/
+COPY packages/api-client/package.json ./packages/api-client/
+COPY packages/permissions/package.json ./packages/permissions/
+COPY packages/types/package.json ./packages/types/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/workflow/package.json ./packages/workflow/
 
 # Install all dependencies across the monorepo
 RUN bun install
+
+# Copy the entire monorepo so all local workspace packages are available
+COPY . .
 
 # Build the specific frontend app using Turbo
 RUN bunx turbo run build --filter=@bemft/${APP_NAME}
