@@ -14,12 +14,21 @@ import { PermissionsModule } from '../permissions/permissions.module';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET', 'default-secret'),
-        signOptions: {
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '7d') as any,
-        },
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        const isProd = configService.get<string>('NODE_ENV') === 'production';
+        
+        if (isProd && (!secret || secret === 'default-secret')) {
+          throw new Error('FATAL: JWT_SECRET must be provided and cannot be default-secret in production');
+        }
+
+        return {
+          secret: secret || 'default-secret',
+          signOptions: {
+            expiresIn: configService.get<string>('JWT_EXPIRES_IN', '7d') as any,
+          },
+        };
+      },
       inject: [ConfigService],
     }),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
