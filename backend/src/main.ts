@@ -42,13 +42,10 @@ async function bootstrap() {
     'http://127.0.0.1:3004',
     'http://127.0.0.1:3005',
   ];
-  const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
   const allowedOrigins =
     configuredOrigins.length > 0
       ? configuredOrigins
-      : nodeEnv === 'production'
-        ? defaultOrigins
-        : [...defaultOrigins, ...devOrigins];
+      : [...defaultOrigins, ...devOrigins];
   app.enableCors({
     origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -85,6 +82,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/v1/docs', app, document);
 
   await app.listen(port);
+  const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
 
 
   console.log(`
