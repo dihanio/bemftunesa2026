@@ -68,7 +68,7 @@ const modeLabel = {
 };
 
 export default function DashboardPage() {
-  const { user, activeRole, logout } = useAuth();
+  const { user, activeRole, logout, hasPermission } = useAuth();
   const [budgetMode, setBudgetMode] = useState<"used" | "planned" | "approved">(
     "used",
   );
@@ -279,14 +279,14 @@ export default function DashboardPage() {
       trend: stats?.activeProker ? "+1" : "0",
       color: "#10b981",
     },
-    {
+    hasPermission("users.read") ? {
       title: "Total Anggota",
       value: stats?.activeCommittees ?? "0",
       description: "Fungsionaris aktif",
       icon: Users,
       trend: "0",
       color: "#a7f3d0",
-    },
+    } : null,
     {
       title: "Poin Anda",
       value: stats?.userPoints ?? "0",
@@ -299,7 +299,7 @@ export default function DashboardPage() {
         : "0",
       color: "#f0c36a",
     },
-    {
+    hasPermission("finance.read") ? {
       title: "Serapan Anggaran",
       value: formatCompactIdr(totalBudget),
       description: `${formatCompactIdr(remainingBudget)} tersisa`,
@@ -308,8 +308,8 @@ export default function DashboardPage() {
         ? `${stats.monthlyBudgetChange >= 0 ? "+" : ""}${stats.monthlyBudgetChange}%`
         : "0%",
       color: "#9dc3ff",
-    },
-  ];
+    } : null,
+  ].filter((m) => m !== null) as any[];
 
   if (
     activeRole === "Admin Sistem" ||
@@ -364,38 +364,36 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <SignalTile
-              label="Approval Queue"
-              value={stats?.pendingRAB ?? 0}
-              icon={FileCheck2}
-              tone="warning"
-            />
-            <SignalTile
-              label="Finance Health"
-              value={
-                (stats?.usedBudget || 0) + (stats?.remainingBudget || 0) > 0
-                  ? `${Math.round(
-                      ((stats?.remainingBudget || 0) /
-                        ((stats?.usedBudget || 0) +
-                          (stats?.remainingBudget || 0))) *
-                        100,
-                    )}%`
-                  : "100%"
-              }
-              icon={CircleDollarSign}
-              tone="success"
-            />
+            {(hasPermission("finance.approve") || hasPermission("documents.approve")) && (
+              <SignalTile
+                label="Approval Queue"
+                value={stats?.pendingRAB ?? 0}
+                icon={FileCheck2}
+                tone="warning"
+              />
+            )}
+            {hasPermission("finance.read") && (
+              <SignalTile
+                label="Finance Health"
+                value={
+                  (stats?.usedBudget || 0) + (stats?.remainingBudget || 0) > 0
+                    ? `${Math.round(
+                        ((stats?.remainingBudget || 0) /
+                          ((stats?.usedBudget || 0) +
+                            (stats?.remainingBudget || 0))) *
+                          100,
+                      )}%`
+                    : "100%"
+                }
+                icon={CircleDollarSign}
+                tone="success"
+              />
+            )}
             <SignalTile
               label="Workflow Active"
               value={stats?.activeProker ?? 0}
               icon={ShieldCheck}
               tone="accent"
-            />
-            <SignalTile
-              label="Audit Events"
-              value={stats?.auditCount ?? 0}
-              icon={ActivityIcon}
-              tone="info"
             />
           </div>
         </div>
@@ -419,62 +417,64 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.85fr)]">
-        <GlassPanel className="min-h-[420px]">
-          <PanelHeader
-            icon={LineChart}
-            title="Arus Anggaran"
-            action={
-              <div className="flex rounded-full border border-white/10 bg-white/6 p-1">
-                {(["used", "planned", "approved"] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setBudgetMode(mode)}
-                    className={cn(
-                      "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
-                      budgetMode === mode
-                        ? "bg-white text-[#091c11]"
-                        : "text-[#b8c4aa] hover:text-white",
-                    )}
-                  >
-                    {modeLabel[mode]}
-                  </button>
-                ))}
-              </div>
-            }
-          />
-          <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_210px]">
-            <BudgetLineChart
-              data={budget}
-              mode={budgetMode}
-              activeIndex={Math.min(activeBudgetIndex, budget.length - 1)}
-              onActiveIndex={setActiveBudgetIndex}
+      <div className={cn("grid gap-5", hasPermission("finance.read") ? "xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.85fr)]" : "xl:grid-cols-1")}>
+        {hasPermission("finance.read") && (
+          <GlassPanel className="min-h-[420px]">
+            <PanelHeader
+              icon={LineChart}
+              title="Arus Anggaran"
+              action={
+                <div className="flex rounded-full border border-white/10 bg-white/6 p-1">
+                  {(["used", "planned", "approved"] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setBudgetMode(mode)}
+                      className={cn(
+                        "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
+                        budgetMode === mode
+                          ? "bg-white text-[#091c11]"
+                          : "text-[#b8c4aa] hover:text-white",
+                      )}
+                    >
+                      {modeLabel[mode]}
+                    </button>
+                  ))}
+                </div>
+              }
             />
-            <div className="rounded-lg border border-white/10 bg-[#091c11]/50 p-4">
-              <div className="text-xs font-semibold uppercase text-[#10b981]">
-                {activeBudget.month}
-              </div>
-              <div className="mt-2 text-2xl font-black text-white">
-                {formatCompactIdr(activeBudget[budgetMode])}
-              </div>
-              <div className="mt-4 space-y-3">
-                <MiniStat
-                  label="Direncanakan"
-                  value={formatCompactIdr(activeBudget.planned)}
-                />
-                <MiniStat
-                  label="Diserap"
-                  value={formatCompactIdr(activeBudget.used)}
-                />
-                <MiniStat
-                  label="Disetujui"
-                  value={formatCompactIdr(activeBudget.approved)}
-                />
+            <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_210px]">
+              <BudgetLineChart
+                data={budget}
+                mode={budgetMode}
+                activeIndex={Math.min(activeBudgetIndex, budget.length - 1)}
+                onActiveIndex={setActiveBudgetIndex}
+              />
+              <div className="rounded-lg border border-white/10 bg-[#091c11]/50 p-4">
+                <div className="text-xs font-semibold uppercase text-[#10b981]">
+                  {activeBudget.month}
+                </div>
+                <div className="mt-2 text-2xl font-black text-white">
+                  {formatCompactIdr(activeBudget[budgetMode])}
+                </div>
+                <div className="mt-4 space-y-3">
+                  <MiniStat
+                    label="Direncanakan"
+                    value={formatCompactIdr(activeBudget.planned)}
+                  />
+                  <MiniStat
+                    label="Diserap"
+                    value={formatCompactIdr(activeBudget.used)}
+                  />
+                  <MiniStat
+                    label="Disetujui"
+                    value={formatCompactIdr(activeBudget.approved)}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </GlassPanel>
+          </GlassPanel>
+        )}
 
         <GlassPanel className="relative">
           <PanelHeader icon={PieChart} title="Lifecycle Proker" />
@@ -489,16 +489,20 @@ export default function DashboardPage() {
         </GlassPanel>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-3">
-        <GlassPanel>
-          <PanelHeader icon={BarChart3} title="Alokasi Departemen" />
-          <AllocationBars items={allocation} loading={isAllocationLoading} />
-        </GlassPanel>
+      <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+        {hasPermission("finance.read") && (
+          <GlassPanel>
+            <PanelHeader icon={BarChart3} title="Alokasi Departemen" />
+            <AllocationBars items={allocation} loading={isAllocationLoading} />
+          </GlassPanel>
+        )}
 
-        <GlassPanel>
-          <PanelHeader icon={Users} title="Workload Matrix" />
-          <WorkloadMatrix items={workload} loading={isWorkloadLoading} />
-        </GlassPanel>
+        {hasPermission("users.read") && (
+          <GlassPanel>
+            <PanelHeader icon={Users} title="Workload Matrix" />
+            <WorkloadMatrix items={workload} loading={isWorkloadLoading} />
+          </GlassPanel>
+        )}
 
         <GlassPanel>
           <PanelHeader icon={CalendarDays} title="Agenda Terdekat" />
@@ -506,35 +510,10 @@ export default function DashboardPage() {
         </GlassPanel>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_420px]">
+      <div className="grid gap-5 xl:grid-cols-1">
         <GlassPanel>
           <PanelHeader icon={ActivityIcon} title="Aktivitas Terkini" />
           <ActivityFeed items={activities} loading={isActivitiesLoading} />
-        </GlassPanel>
-
-        <GlassPanel>
-          <PanelHeader icon={AlertTriangle} title="Risk Signals" />
-          <div className="space-y-3">
-            {isRisksLoading ? (
-              <SkeletonRows count={4} />
-            ) : risks.length > 0 ? (
-              risks.map((risk: any, i: number) => (
-                <RiskRow
-                  key={i}
-                  label={risk.label}
-                  value={risk.value}
-                  status={risk.status}
-                />
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 bg-white/5 py-8 text-center">
-                <ShieldCheck className="h-8 w-8 text-[#71d39b]" />
-                <p className="mt-2 text-xs text-[#71d39b]">
-                  Semua sistem berjalan aman
-                </p>
-              </div>
-            )}
-          </div>
         </GlassPanel>
       </div>
     </div>

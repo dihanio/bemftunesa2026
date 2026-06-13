@@ -170,18 +170,21 @@ export const DEFAULT_ROLE_GRANTS: Record<string, readonly PermissionGrant[]> = {
     PERMISSIONS.cmsManage,
   ].map((permission) => ({ permission, effect: "allow" })),
   WaKaBEM: [
-    PERMISSIONS.dashboardRead,
-    PERMISSIONS.usersRead,
-    PERMISSIONS.workflowRead,
-    PERMISSIONS.auditRead,
-    PERMISSIONS.prokerRead,
-    PERMISSIONS.prokerManage,
-    PERMISSIONS.committeeRead,
-    PERMISSIONS.committeeManage,
-    PERMISSIONS.documentsRead,
-    PERMISSIONS.documentsApprove,
-    PERMISSIONS.cmsRead,
-  ].map((permission) => ({ permission, effect: "allow" })),
+    ...[
+      PERMISSIONS.dashboardRead,
+      PERMISSIONS.usersRead,
+      PERMISSIONS.workflowRead,
+      PERMISSIONS.auditRead,
+      PERMISSIONS.prokerRead,
+      PERMISSIONS.prokerManage,
+      PERMISSIONS.committeeRead,
+      PERMISSIONS.committeeManage,
+      PERMISSIONS.documentsRead,
+      PERMISSIONS.documentsApprove,
+      PERMISSIONS.cmsRead,
+    ].map((permission) => ({ permission, effect: "allow" } as const)),
+    { permission: PERMISSIONS.financeRead, effect: "deny" } as const,
+  ],
   "Admin Sistem": [
     PERMISSIONS.dashboardRead,
     PERMISSIONS.usersRead,
@@ -303,15 +306,25 @@ export function listPermissionsForRoles(
   roles: readonly string[],
 ): PermissionKey[] {
   const allRoles = getInheritedRoles(roles);
-  return Array.from(
-    new Set(
-      allRoles.flatMap((role) =>
-        (DEFAULT_ROLE_GRANTS[role] || [])
-          .filter((grant) => grant.effect === "allow")
-          .map((grant) => grant.permission),
-      ),
-    ),
-  );
+  const allowed = new Set<string>();
+  const denied = new Set<string>();
+
+  for (const role of allRoles) {
+    const grants = DEFAULT_ROLE_GRANTS[role] || [];
+    for (const grant of grants) {
+      if (grant.effect === "deny") {
+        denied.add(grant.permission);
+      } else if (grant.effect === "allow") {
+        allowed.add(grant.permission);
+      }
+    }
+  }
+
+  for (const p of denied) {
+    allowed.delete(p);
+  }
+
+  return Array.from(allowed);
 }
 
 export function evaluatePermission(
