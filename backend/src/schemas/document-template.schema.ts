@@ -24,6 +24,9 @@ export class DocumentTemplate {
   @Prop({ required: true, default: 1 })
   version: number;
 
+  @Prop({ default: 0 })
+  order: number;
+
   @Prop({ required: true, enum: ['draft', 'validated', 'published', 'deprecated'], default: 'draft' })
   status: string;
 

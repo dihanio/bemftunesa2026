@@ -221,7 +221,8 @@ async function seed() {
     const DocumentTemplate = mongoose.connection.collection('document_templates');
     
     let count = 0;
-    for (const tpl of suratTemplates) {
+    for (let i = 0; i < suratTemplates.length; i++) {
+      const tpl = suratTemplates[i];
       await DocumentTemplate.updateOne(
         { code: tpl.id },
         {
@@ -235,6 +236,7 @@ async function seed() {
             status: 'published',
             sourceType: 'DOCX',
             googleDriveUrl: tpl.googleDriveUrl,
+            order: i,
             updatedAt: new Date()
           },
           $setOnInsert: {
