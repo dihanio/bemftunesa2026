@@ -1,0 +1,81 @@
+{
+  "schemaVersion": "ecc.install.v1",
+  "installedAt": "2026-06-16T12:23:31.027Z",
+  "target": {
+    "id": "gemini-project",
+    "target": "gemini",
+    "kind": "project",
+    "root": "D:\\Codingan\\Website\\bemft-unesa-web\\.gemini",
+    "installStatePath": "D:\\Codingan\\Website\\bemft-unesa-web\\.gemini\\ecc-install-state.json"
+  },
+  "request": {
+    "profile": "developer",
+    "modules": [],
+    "includeComponents": [],
+    "excludeComponents": [],
+    "legacyLanguages": [],
+    "legacyMode": false
+  },
+  "resolution": {
+    "selectedModules": [
+      "platform-configs"
+    ],
+    "skippedModules": [
+      "rules-core",
+      "agents-core",
+      "commands-core",
+      "hooks-runtime",
+      "framework-language",
+      "database",
+      "workflow-quality",
+      "orchestration"
+    ]
+  },
+  "source": {
+    "repoVersion": "2.0.0",
+    "repoCommit": "e25f2d463383a98ab40e627288dd123e005fd8e0",
+    "manifestVersion": 1
+  },
+  "operations": [
+    {
+      "kind": "copy-file",
+      "moduleId": "platform-configs",
+      "sourcePath": "D:\\Codingan\\Website\\bemft-unesa-web\\ecc_temp\\.gemini\\GEMINI.md",
+      "sourceRelativePath": ".gemini\\GEMINI.md",
+      "destinationPath": "D:\\Codingan\\Website\\bemft-unesa-web\\.gemini\\GEMINI.md",
+      "strategy": "sync-root-children",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "platform-configs",
+      "sourcePath": "D:\\Codingan\\Website\\bemft-unesa-web\\ecc_temp\\mcp-configs\\mcp-servers.json",
+      "sourceRelativePath": "mcp-configs\\mcp-servers.json",
+      "destinationPath": "D:\\Codingan\\Website\\bemft-unesa-web\\.gemini\\mcp-configs\\mcp-servers.json",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "platform-configs",
+      "sourcePath": "D:\\Codingan\\Website\\bemft-unesa-web\\ecc_temp\\scripts\\auto-update.js",
+      "sourceRelativePath": "scripts/auto-update.js",
+      "destinationPath": "D:\\Codingan\\Website\\bemft-unesa-web\\.gemini\\scripts\\auto-update.js",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    },
+    {
+      "kind": "copy-file",
+      "moduleId": "platform-configs",
+      "sourcePath": "D:\\Codingan\\Website\\bemft-unesa-web\\ecc_temp\\scripts\\setup-package-manager.js",
+      "sourceRelativePath": "scripts/setup-package-manager.js",
+      "destinationPath": "D:\\Codingan\\Website\\bemft-unesa-web\\.gemini\\scripts\\setup-package-manager.js",
+      "strategy": "preserve-relative-path",
+      "ownership": "managed",
+      "scaffoldOnly": false
+    }
+  ]
+}

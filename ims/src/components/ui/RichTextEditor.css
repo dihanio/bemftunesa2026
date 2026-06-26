@@ -1,0 +1,82 @@
+.rich-text-wrapper {
+  /* Override Quill Toolbar Styles to match our design */
+}
+
+.rich-text-wrapper .ql-toolbar.ql-snow {
+  border: 1px solid rgba(138, 180, 153, 0.2); /* sage/20 */
+  border-top-left-radius: 0.75rem; /* xl */
+  border-top-right-radius: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.2); /* glass-subtle */
+  padding: 12px;
+  font-family: inherit;
+}
+
+.rich-text-wrapper .ql-container.ql-snow {
+  border: 1px solid rgba(138, 180, 153, 0.2);
+  border-bottom-left-radius: 0.75rem;
+  border-bottom-right-radius: 0.75rem;
+  border-top: none;
+  background-color: rgba(0, 0, 0, 0.1);
+  font-family: inherit;
+  font-size: 0.875rem; /* text-sm */
+  color: var(--foreground);
+}
+
+.rich-text-wrapper .ql-editor {
+  min-height: 300px;
+  padding: 16px;
+}
+
+.rich-text-wrapper .ql-editor.ql-blank::before {
+  color: rgba(255, 255, 255, 0.3); /* text-foreground/30 */
+  font-style: normal;
+}
+
+/* Icon & Button colors */
+.rich-text-wrapper .ql-snow .ql-stroke {
+  stroke: rgba(255, 255, 255, 0.6);
+}
+.rich-text-wrapper .ql-snow .ql-fill {
+  fill: rgba(255, 255, 255, 0.6);
+}
+.rich-text-wrapper .ql-snow .ql-picker {
+  color: rgba(255, 255, 255, 0.6);
+}
+.rich-text-wrapper .ql-snow .ql-picker-options {
+  background-color: #1a1a1a;
+  border-color: rgba(138, 180, 153, 0.2);
+}
+
+.rich-text-wrapper .ql-snow .ql-picker.ql-expanded .ql-picker-label,
+.rich-text-wrapper .ql-snow .ql-picker.ql-expanded .ql-picker-options {
+  border-color: rgba(138, 180, 153, 0.4);
+}
+
+.rich-text-wrapper .ql-snow .ql-toolbar button:hover .ql-stroke,
+.rich-text-wrapper .ql-snow.ql-toolbar button:hover .ql-stroke,
+.rich-text-wrapper .ql-snow .ql-toolbar button:focus .ql-stroke,
+.rich-text-wrapper .ql-snow.ql-toolbar button:focus .ql-stroke,
+.rich-text-wrapper .ql-snow .ql-toolbar button.ql-active .ql-stroke,
+.rich-text-wrapper .ql-snow.ql-toolbar button.ql-active .ql-stroke {
+  stroke: #8ab499; /* sage */
+}
+
+.rich-text-wrapper .ql-snow .ql-toolbar button:hover .ql-fill,
+.rich-text-wrapper .ql-snow.ql-toolbar button:hover .ql-fill,
+.rich-text-wrapper .ql-snow .ql-toolbar button:focus .ql-fill,
+.rich-text-wrapper .ql-snow.ql-toolbar button:focus .ql-fill,
+.rich-text-wrapper .ql-snow .ql-toolbar button.ql-active .ql-fill,
+.rich-text-wrapper .ql-snow.ql-toolbar button.ql-active .ql-fill {
+  fill: #8ab499;
+}
+
+.rich-text-wrapper .ql-snow .ql-picker.ql-expanded .ql-picker-label {
+  color: #8ab499;
+}
+.rich-text-wrapper .ql-snow .ql-picker.ql-expanded .ql-picker-label .ql-stroke {
+  stroke: #8ab499;
+}
+.rich-text-wrapper .ql-snow .ql-picker-item:hover,
+.rich-text-wrapper .ql-snow .ql-picker-item.ql-selected {
+  color: #8ab499;
+}

@@ -1,0 +1,1 @@
+import * as React from "react"; export const Label = React.forwardRef(({ className, ...props }: any, ref: any) => { return <label className={className} ref={ref} {...props} /> }); Label.displayName = "Label";
