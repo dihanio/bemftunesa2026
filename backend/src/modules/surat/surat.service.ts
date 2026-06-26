@@ -38,9 +38,12 @@ export class SuratService {
   // ==========================================
 
   async createDraft(dto: CreateSuratDraftDto, userId: string): Promise<SuratDocument> {
-    const template = await this.templateModel.findById(dto.templateId);
-    if (!template || template.status !== 'published') {
-      throw new NotFoundException('Template not found or inactive');
+    let template = null;
+    if (dto.templateId && dto.templateId !== 'blank') {
+      template = await this.templateModel.findById(dto.templateId);
+      if (!template || template.status !== 'published') {
+        throw new NotFoundException('Template not found or inactive');
+      }
     }
 
     // Create workflow instance
@@ -70,7 +73,7 @@ export class SuratService {
       category: dto.category,
       sender: dto.sender,
       recipient: dto.recipient,
-      template: template._id,
+      template: template ? template._id : undefined,
       summary: dto.summary || '',
       department: dto.departmentId || undefined,
       cabinetPeriod: dto.cabinetPeriodId || undefined,
