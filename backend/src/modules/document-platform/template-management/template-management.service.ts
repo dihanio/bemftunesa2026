@@ -27,7 +27,8 @@ export class TemplateManagementService {
           latestTemplate: { $first: "$$ROOT" }
         }
       },
-      { $replaceRoot: { newRoot: "$latestTemplate" } }
+      { $replaceRoot: { newRoot: "$latestTemplate" } },
+      { $sort: { order: 1, name: 1 } }
     ]);
     return templates;
   }
