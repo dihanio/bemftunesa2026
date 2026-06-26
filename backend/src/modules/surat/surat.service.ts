@@ -38,7 +38,7 @@ export class SuratService {
   // ==========================================
 
   async createDraft(dto: CreateSuratDraftDto, userId: string): Promise<SuratDocument> {
-    let template = null;
+    let template: any = null;
     if (dto.templateId && dto.templateId !== 'blank') {
       template = await this.templateModel.findById(dto.templateId);
       if (!template || template.status !== 'published') {
@@ -47,7 +47,7 @@ export class SuratService {
     }
 
     // Create workflow instance
-    let workflowDef = null;
+    let workflowDef: any = null;
     if (dto.workflowDefinitionId) {
       workflowDef = await this.workflowDefinitionModel.findById(dto.workflowDefinitionId);
     } else {
