@@ -5,9 +5,10 @@ import { SuratApi } from './api/surat';
 import { ProkerApi } from './api/proker';
 import { KeuanganApi } from './api/keuangan';
 import { RapatApi } from './api/rapat';
+import { TemplateApiService, DocumentTemplate } from './api/template';
 
 export { API_BASE_URL };
-export type { ApiResponse };
+export type { ApiResponse, DocumentTemplate };
 
 export interface RoleAssignment {
   _id: string;
@@ -242,10 +243,14 @@ export class ImsApiService extends BaseImsApiService {
   static getUsers = AuthApi.getUsers;
   static switchRole = AuthApi.switchRole;
 
+  // Template Api Methods
+  static getTemplates = TemplateApiService.getTemplates;
+
   // Surat Api Methods
   static getSuratList = SuratApi.getSuratList.bind(SuratApi);
   static getSuratDetail = SuratApi.getDetail.bind(SuratApi);
   static createSurat = SuratApi.createSurat.bind(SuratApi);
+  static uploadDocumentVersion = SuratApi.uploadVersion.bind(SuratApi);
   static updateSurat = SuratApi.update.bind(SuratApi);
   static submitSurat = SuratApi.submit.bind(SuratApi);
   static approveSurat = SuratApi.approve.bind(SuratApi);
