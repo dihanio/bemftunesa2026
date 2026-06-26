@@ -114,54 +114,6 @@ function LoginContent() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 my-8">
-        <div className="h-[1px] flex-1 bg-sage/10" />
-        <span className="text-[10px] uppercase font-bold text-foreground/30 tracking-widest">Developer Options</span>
-        <div className="h-[1px] flex-1 bg-sage/10" />
-      </div>
-
-      {/* Dev Bypass Panel */}
-      <div className="glass-subtle rounded-3xl p-1 overflow-hidden transition-all duration-300">
-        <button 
-          onClick={() => setShowBypass(!showBypass)}
-          className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-foreground/5 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-accent-gold/10 flex items-center justify-center text-accent-gold">
-              <AlertCircle className="w-4 h-4" />
-            </div>
-            <div className="text-left">
-              <span className="block text-xs font-bold text-foreground">Bypass Login</span>
-              <span className="block text-[10px] text-foreground/50">Simulasi hak akses (Testing)</span>
-            </div>
-          </div>
-          {showBypass ? <ChevronDown className="w-4 h-4 text-foreground/50" /> : <ChevronRight className="w-4 h-4 text-foreground/50" />}
-        </button>
-
-        {showBypass && (
-          <div className="flex flex-col gap-1 p-2 pt-0">
-            <div className="h-[1px] w-full bg-sage/10 mb-2" />
-            {bypassUsers.map((user, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleBypassLogin(user.email)}
-                className={`w-full flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-sage/20 bg-transparent hover:bg-foreground/5 text-left text-sm transition-all duration-300 cursor-pointer group`}
-              >
-                <div className="flex flex-col gap-0.5">
-                  <span className="font-bold text-foreground text-xs group-hover:text-sage transition-colors">{user.name}</span>
-                  <span className="text-[10px] text-foreground/50">{user.email}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-[9px] font-bold text-foreground/60 bg-foreground/5 px-2.5 py-1 rounded-md uppercase tracking-wider">
-                    {user.role}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Clean footer */}
       <div className="mt-8 text-center lg:hidden">
         <p className="text-[10px] font-semibold text-foreground/30 uppercase tracking-widest">
