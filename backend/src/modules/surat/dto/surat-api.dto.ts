@@ -39,25 +39,25 @@ export class CreateSuratDraftDto {
   @IsString()
   summary?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  fileUrl: string;
+  fileUrl?: string;
 
+  @IsOptional()
   @IsNumber()
-  @IsNotEmpty()
-  fileSize: number;
+  fileSize?: number;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  mimeType: string;
+  mimeType?: string;
 
   @IsString()
   @IsOptional()
   fileHash?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  workflowDefinitionId: string;
+  workflowDefinitionId?: string;
 }
 
 export class UploadDocumentVersionDto {

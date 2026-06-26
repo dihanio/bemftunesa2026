@@ -17,9 +17,14 @@ export class TemplateManagementService {
   ) {}
 
   async findAll(filters?: any): Promise<any[]> {
+    const matchFilters = { ...filters };
+    if (!matchFilters.status) {
+      matchFilters.status = 'published';
+    }
+    
     // Return latest version of each code by default, unless specific filters are applied
     const templates = await this.templateModel.aggregate([
-      { $match: filters || {} },
+      { $match: matchFilters },
       { $sort: { version: -1 } },
       {
         $group: {

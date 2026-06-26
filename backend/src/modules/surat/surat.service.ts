@@ -47,7 +47,13 @@ export class SuratService {
     }
 
     // Create workflow instance
-    const workflowDef = await this.workflowDefinitionModel.findById(dto.workflowDefinitionId);
+    let workflowDef = null;
+    if (dto.workflowDefinitionId) {
+      workflowDef = await this.workflowDefinitionModel.findById(dto.workflowDefinitionId);
+    } else {
+      // Fallback to the first published workflow definition if not provided
+      workflowDef = await this.workflowDefinitionModel.findOne({ status: 'published' });
+    }
     
     if (!workflowDef || workflowDef.status !== 'published') {
       throw new InternalServerErrorException('Invalid or inactive workflow definition');
@@ -81,24 +87,26 @@ export class SuratService {
       workflowInstance: workflowInstance._id,
     });
 
-    const documentVersion = new this.documentVersionModel({
-      documentId: surat._id,
-      documentModel: 'Surat',
-      versionNumber: 1,
-      versionType: 'draft',
-      fileUrl: dto.fileUrl,
-      fileHash: dto.fileHash,
-      fileSize: dto.fileSize,
-      mimeType: dto.mimeType,
-      uploadedBy: userId,
-      isCurrent: true,
-      relatedWorkflowStage: initialStageId,
-    });
+    if (dto.fileUrl) {
+      const documentVersion = new this.documentVersionModel({
+        documentId: surat._id,
+        documentModel: 'Surat',
+        versionNumber: 1,
+        versionType: 'draft',
+        fileUrl: dto.fileUrl,
+        fileHash: dto.fileHash,
+        fileSize: dto.fileSize,
+        mimeType: dto.mimeType,
+        uploadedBy: userId,
+        isCurrent: true,
+        relatedWorkflowStage: initialStageId,
+      });
 
-    await documentVersion.save();
-    
-    surat.currentVersion = documentVersion._id as Types.ObjectId;
-    surat.attachments = [dto.fileUrl]; // Storing as initial attachment optionally
+      await documentVersion.save();
+      
+      surat.currentVersion = documentVersion._id as Types.ObjectId;
+      surat.attachments = [dto.fileUrl]; // Storing as initial attachment optionally
+    }
 
     workflowInstance.documentId = surat._id as Types.ObjectId;
 
