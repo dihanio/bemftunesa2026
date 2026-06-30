@@ -58,4 +58,10 @@ export class TemplateManagementController {
   async updateTemplateData(@Param('id') id: string, @Body() body: any) {
     return this.templateService.updateTemplateData(id, body);
   }
+
+  @Post(':id/deprecate')
+  @RequiredPermissions('manage:templates')
+  async deprecateTemplate(@Param('id') id: string) {
+    return this.templateService.deprecateTemplate(id);
+  }
 }

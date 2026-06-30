@@ -18,8 +18,8 @@ export class TemplateManagementService {
 
   async findAll(filters?: any): Promise<any[]> {
     const matchFilters = { ...filters };
-    if (!matchFilters.status) {
-      matchFilters.status = 'published';
+    if (matchFilters.status === 'all') {
+      delete matchFilters.status;
     }
     
     // Return latest version of each code by default, unless specific filters are applied
@@ -159,5 +159,14 @@ export class TemplateManagementService {
       <p>This template is hosted on Google Drive.</p>
       ${template.googleDriveUrl ? `<a href="${template.googleDriveUrl}" target="_blank" style="color: blue; text-decoration: underline;">View on Google Drive</a>` : ''}
     </div>`;
+  }
+
+  async deprecateTemplate(id: string): Promise<DocumentTemplateDocument> {
+    const template = await this.findById(id);
+    if (template.status !== 'published') {
+      throw new BadRequestException('Only published templates can be deprecated');
+    }
+    template.status = 'deprecated';
+    return template.save();
   }
 }
