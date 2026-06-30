@@ -47,7 +47,6 @@ export function Navbar() {
       name: "Informasi",
       isDropdown: true,
       children: [
-        { name: "Program Kerja", path: "/proker" },
         { name: "Berita & Artikel", path: "/berita" },
         { name: "Galeri Kegiatan", path: "/galeri" },
         { name: "Open Recruitment", path: "/oprec" },

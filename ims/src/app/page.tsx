@@ -2,10 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import DashboardShell from "@/components/DashboardShell";
-import { DashboardRenderer } from "@/components/dashboard/DashboardRenderer";
-import { getDashboardConfig } from "@/config/dashboard-registry";
 import { ImsApiService, type UserProfile } from "@/lib/api";
-import Image from "next/image";
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -39,16 +36,24 @@ export default function DashboardPage() {
     );
   }
 
-  // Determine active role slug based on activeContext or profile role
-  const roleObj = typeof profile?.role === 'object' ? profile?.role : null;
-  const roleSlug = profile?.activeContext?.role?.slug || roleObj?.slug || (typeof profile?.role === 'string' ? profile?.role : 'staf');
-  
-  // Get layout config for the current role
-  const dashboardConfig = getDashboardConfig(roleSlug);
+  const roleName = typeof profile?.role === 'object' ? profile?.role?.name : (profile?.role || 'Fungsionaris');
 
   return (
     <DashboardShell>
-      <DashboardRenderer config={dashboardConfig} profile={profile} />
+      <div className="flex flex-col gap-6 w-full max-w-4xl mx-auto py-8">
+        <div className="glass-active rounded-3xl p-8 md:p-12 border border-sage/15 shadow-xl relative overflow-hidden bg-forest/5 backdrop-blur-md">
+          {/* Accent Glow */}
+          <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-accent-gold/10 blur-3xl pointer-events-none" />
+          
+          <span className="text-xs font-semibold text-accent-gold uppercase tracking-[0.2em] block mb-3">IMS BEM FT UNESA</span>
+          <h1 className="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-4">
+            Selamat Datang, <span className="text-sage">{profile?.name || 'Fungsionaris'}</span>!
+          </h1>
+          <p className="text-sm text-foreground/75 leading-relaxed max-w-2xl mb-2">
+            Anda masuk sebagai <strong className="text-accent-gold">{roleName}</strong>. Seluruh modul operasional IMS telah dinonaktifkan sesuai kebijakan terbaru. Portal informasi publik tetap berjalan dinamis.
+          </p>
+        </div>
+      </div>
     </DashboardShell>
   );
 }

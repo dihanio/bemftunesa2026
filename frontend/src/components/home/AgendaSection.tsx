@@ -46,13 +46,6 @@ export function AgendaSection() {
             Agenda & Kegiatan Terdekat
           </h2>
         </div>
-        <Link
-          href="/proker"
-          className="text-xs font-bold uppercase tracking-widest text-accent-gold hover:text-sage flex items-center gap-2 transition-colors duration-300 group"
-        >
-          <span className="text-[10px] font-bold uppercase tracking-wider group-hover:pr-1 transition-all">Lihat Kalender Proker</span>
-          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1.5" />
-        </Link>
       </div>
 
       {/* Content */}

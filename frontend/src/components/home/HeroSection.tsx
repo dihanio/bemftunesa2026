@@ -67,14 +67,10 @@ export function HeroSection() {
                 </p>
 
                 {/* Micro highlights to populate empty space cleanly */}
-                <div className="grid grid-cols-3 gap-3 border-t border-sage/10 pt-5 mt-2">
+                <div className="grid grid-cols-2 gap-3 border-t border-sage/10 pt-5 mt-2">
                   <div className="flex flex-col">
                     <span className="text-base md:text-lg font-extrabold text-sage font-mono tracking-tight">{stats.departments}</span>
                     <span className="text-[8px] font-bold text-foreground/50 tracking-wider uppercase">Departemen</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-base md:text-lg font-extrabold text-sage font-mono tracking-tight">{stats.proker}{stats.proker > 0 ? '+' : ''}</span>
-                    <span className="text-[8px] font-bold text-foreground/50 tracking-wider uppercase">Program Kerja</span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-base md:text-lg font-extrabold text-sage font-mono tracking-tight">{stats.konstituen}</span>

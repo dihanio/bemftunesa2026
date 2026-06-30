@@ -44,9 +44,6 @@ export function Footer() {
               <Link href="/struktur" className="text-xs text-foreground/75 hover:text-accent-gold transition-colors">Struktur Kabinet</Link>
             </li>
             <li>
-              <Link href="/proker" className="text-xs text-foreground/75 hover:text-accent-gold transition-colors">Program Kerja</Link>
-            </li>
-            <li>
               <Link href="/berita" className="text-xs text-foreground/75 hover:text-accent-gold transition-colors">Portal Berita</Link>
             </li>
           </ul>

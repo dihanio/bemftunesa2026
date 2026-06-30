@@ -36,12 +36,6 @@ export function StatsSection() {
       desc: "Fungsionaris BEM FT 2026"
     },
     {
-      label: "Program Kerja",
-      value: loading ? "0" : stats?.proker ?? 0,
-      icon: Briefcase,
-      desc: "Agenda strategis terdaftar"
-    },
-    {
       label: "Aspirasi Terproses",
       value: loading ? "0/0" : `${stats?.aspirations?.resolved ?? 0}/${stats?.aspirations?.total ?? 0}`,
       icon: FileText,
@@ -54,7 +48,7 @@ export function StatsSection() {
       {/* Background ambient lighting */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4/5 h-[80px] rounded-full bg-accent-gold/5 blur-[80px] pointer-events-none -z-10" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {statsItems.map((stat, index) => {
           const Icon = stat.icon;
           return (
