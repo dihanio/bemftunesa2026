@@ -18,9 +18,7 @@ export const sidebarRegistry: Record<string, SidebarSection[]> = {
       id: 'persuratan',
       label: 'PERSURATAN',
       items: [
-        { name: 'Dashboard', path: '/surat/dashboard', icon: 'layout-dashboard', status: 'active' },
-        { name: 'Surat', path: '/surat', icon: 'file-text', status: 'active' },
-        { name: 'Arsip', path: '/surat/archive', icon: 'archive', status: 'active' },
+        { name: 'Daftar Surat', path: '/surat', icon: 'file-text', status: 'active' },
       ]
     },
     {
@@ -57,9 +55,7 @@ export const sidebarRegistry: Record<string, SidebarSection[]> = {
       id: 'persuratan',
       label: 'PERSURATAN',
       items: [
-        { name: 'Dashboard', path: '/surat/dashboard', icon: 'layout-dashboard', status: 'active' },
-        { name: 'Surat', path: '/surat', icon: 'file-text', status: 'active' },
-        { name: 'Arsip', path: '/surat/archive', icon: 'archive', status: 'active' },
+        { name: 'Daftar Surat', path: '/surat', icon: 'file-text', status: 'active' },
       ]
     },
     {
@@ -114,9 +110,7 @@ export const sidebarRegistry: Record<string, SidebarSection[]> = {
       id: 'persuratan',
       label: 'PERSURATAN',
       items: [
-        { name: 'Dashboard', path: '/surat/dashboard', icon: 'layout-dashboard', status: 'active' },
-        { name: 'Surat', path: '/surat', icon: 'file-text', status: 'active' },
-        { name: 'Arsip', path: '/surat/archive', icon: 'archive', status: 'active' },
+        { name: 'Daftar Surat', path: '/surat', icon: 'file-text', status: 'active' },
       ]
     },
     {
