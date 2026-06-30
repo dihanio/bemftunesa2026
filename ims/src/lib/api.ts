@@ -1,6 +1,6 @@
 // Standalone API Client for BEM FT UNESA IMS (Integrated Management System)
 import { BaseImsApiService, ApiResponse, API_BASE_URL } from './api/client';
-import { AuthApi } from './api/auth';
+import { AuthApi, UserItem, RoleItem, CabinetPeriodItem, PermissionItem, UserPayload } from './api/auth';
 import { SuratApi } from './api/surat';
 import { ProkerApi } from './api/proker';
 import { KeuanganApi } from './api/keuangan';
@@ -8,7 +8,7 @@ import { RapatApi } from './api/rapat';
 import { TemplateApiService, DocumentTemplate } from './api/template';
 
 export { API_BASE_URL };
-export type { ApiResponse, DocumentTemplate };
+export type { ApiResponse, DocumentTemplate, UserItem, RoleItem, CabinetPeriodItem, PermissionItem, UserPayload };
 
 export interface RoleAssignment {
   _id: string;
@@ -241,6 +241,14 @@ export class ImsApiService extends BaseImsApiService {
   // Auth Api Methods
   static getProfile = AuthApi.getProfile;
   static getUsers = AuthApi.getUsers;
+  static createUser = AuthApi.createUser;
+  static updateUser = AuthApi.updateUser;
+  static deleteUser = AuthApi.deleteUser;
+  static getRoles = AuthApi.getRoles;
+  static createRole = AuthApi.createRole;
+  static updateRole = AuthApi.updateRole;
+  static deleteRole = AuthApi.deleteRole;
+  static getCabinetPeriods = AuthApi.getCabinetPeriods;
   static switchRole = AuthApi.switchRole;
 
   // Template Api Methods

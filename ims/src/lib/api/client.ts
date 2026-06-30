@@ -4,6 +4,12 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL as string;
 export interface ApiResponse<T> {
   data: T;
   message?: string;
+  meta?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+    totalPages?: number;
+  };
 }
 
 export class BaseImsApiService {
