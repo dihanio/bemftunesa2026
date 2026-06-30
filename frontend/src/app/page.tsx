@@ -1,7 +1,7 @@
 import React from "react";
 import HeroSection from "@/components/home/HeroSection";
 import StatsSection from "@/components/home/StatsSection";
-import AgendaSection from "@/components/home/AgendaSection";
+import SambutanSection from "@/components/home/SambutanSection";
 import NewsSection from "@/components/home/NewsSection";
 import PartnersSection from "@/components/home/PartnersSection";
 import AspirasiSection from "@/components/home/AspirasiSection";
@@ -19,8 +19,8 @@ export default function Home() {
       {/* Stats counter details */}
       <StatsSection />
 
-      {/* Timetable agenda & events */}
-      <AgendaSection />
+      {/* Welcoming greetings from leadership */}
+      <SambutanSection />
 
       {/* Recent news articles list */}
       <NewsSection />
