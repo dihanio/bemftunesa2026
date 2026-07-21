@@ -16,16 +16,16 @@ Repositori ini merupakan pusat **Ekosistem Digital BEM FT UNESA (Kabinet Danadya
 
 ```mermaid
 graph TD
-    subgraph Client Layer (Frontend)
+    subgraph ClientLayer ["Client Layer (Frontend)"]
         Public["🌐 Public Portal (Next.js)<br>bemftunesa.org"]
         IMS["💼 IMS Dashboard (Next.js)<br>ims.bemftunesa.org"]
     end
 
-    subgraph API Gateway & Logic Layer
+    subgraph APILayer ["API Gateway & Logic Layer"]
         Backend["⚡ NestJS Backend API<br>api.bemftunesa.org"]
     end
 
-    subgraph Infrastructure & Storage Layer
+    subgraph InfraLayer ["Infrastructure & Storage Layer"]
         DB[("🍃 MongoDB 6<br>Primary Database")]
         Cache[("⚡ Redis 7<br>Cache & Queue/BullMQ")]
         Storage["📦 Supabase Storage<br>File & PDF Uploads"]
