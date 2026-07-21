@@ -43,58 +43,58 @@ export async function SambutanSection() {
         {/* Left Side: Large Photos popping out */}
         <div className="w-full lg:w-1/2 flex gap-4 lg:gap-6 relative z-20 items-start pb-12 lg:pb-0">
           {/* Ketua Photo */}
-          <div className="relative w-1/2 aspect-[3/4] rounded-2xl overflow-visible transition-all duration-500 mt-8 lg:mt-0">
-            <div className="absolute inset-0 top-12 rounded-2xl bg-slate-200/50 dark:bg-slate-800/20 border-4 border-background/50 shadow-2xl group-hover:shadow-accent-gold/20 transition-all duration-500" />
+          <div className="relative w-1/2 aspect-[3/4] rounded-2xl overflow-visible transition-all duration-500 mt-8 lg:mt-0 group/ketua">
+            <div className="absolute inset-0 top-12 rounded-2xl bg-slate-200/50 dark:bg-slate-800/20 border-4 border-background/50 shadow-2xl group-hover/ketua:shadow-accent-gold/20 transition-all duration-500" />
             
             {ketua && getAvatarUrl(ketua.name, ketua.avatar) ? (
-              <div className="absolute inset-0 z-10 transition-transform duration-700 group-hover:-translate-y-2">
+              <div className="absolute inset-0 z-10 transition-transform duration-700 group-hover/ketua:-translate-y-4">
                 <Image 
                   src={getAvatarUrl(ketua.name, ketua.avatar)!} 
                   alt={ketua.name} 
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
-                  className="object-contain object-bottom filter contrast-110 drop-shadow-2xl rounded-b-xl scale-[1.25] origin-bottom" 
+                  className="object-contain object-bottom filter contrast-110 drop-shadow-2xl rounded-b-xl scale-[1.25] origin-bottom transition-transform duration-700 group-hover/ketua:scale-[1.30]" 
                 />
               </div>
             ) : (
-              <div className="absolute inset-0 top-12 flex items-center justify-center bg-slate-900/50 rounded-2xl z-10">
+              <div className="absolute inset-0 top-12 flex items-center justify-center bg-slate-900/50 rounded-2xl z-10 transition-transform duration-700 group-hover/ketua:-translate-y-2">
                 <User className="w-16 h-16 text-accent-blue/40" />
               </div>
             )}
             
             {/* Name Badge */}
-            <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-b-2xl z-20 overflow-hidden">
+            <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-b-2xl z-20 overflow-hidden transition-all duration-500 group-hover/ketua:pb-6">
               <h4 className="text-white text-sm md:text-base font-extrabold tracking-tight drop-shadow-md">
-                {ketua?.name || "Achmad Yusuf"}
+                {ketua?.name || "Diha Anfeu Nio Julaynda"}
               </h4>
               <p className="text-accent-gold text-[10px] uppercase font-bold tracking-widest mt-0.5">Ketua BEM</p>
             </div>
           </div>
 
           {/* Wakil Photo */}
-          <div className="relative w-1/2 aspect-[3/4] rounded-2xl overflow-visible transition-all duration-500 mt-20 lg:mt-16">
-            <div className="absolute inset-0 top-12 rounded-2xl bg-slate-200/50 dark:bg-slate-800/20 border-4 border-background/50 shadow-2xl group-hover:shadow-accent-blue/20 transition-all duration-500" />
+          <div className="relative w-1/2 aspect-[3/4] rounded-2xl overflow-visible transition-all duration-500 mt-20 lg:mt-16 group/wakil">
+            <div className="absolute inset-0 top-12 rounded-2xl bg-slate-200/50 dark:bg-slate-800/20 border-4 border-background/50 shadow-2xl group-hover/wakil:shadow-accent-blue/20 transition-all duration-500" />
             
             {wakil && getAvatarUrl(wakil.name, wakil.avatar) ? (
-              <div className="absolute inset-0 z-10 transition-transform duration-700 group-hover:-translate-y-2">
+              <div className="absolute inset-0 z-10 transition-transform duration-700 group-hover/wakil:-translate-y-4">
                 <Image 
                   src={getAvatarUrl(wakil.name, wakil.avatar)!} 
                   alt={wakil.name} 
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
-                  className="object-contain object-bottom filter contrast-110 drop-shadow-2xl rounded-b-xl scale-[1.25] origin-bottom" 
+                  className="object-contain object-bottom filter contrast-110 drop-shadow-2xl rounded-b-xl scale-[1.25] origin-bottom transition-transform duration-700 group-hover/wakil:scale-[1.30]" 
                 />
               </div>
             ) : (
-              <div className="absolute inset-0 top-12 flex items-center justify-center bg-slate-900/50 rounded-2xl z-10">
+              <div className="absolute inset-0 top-12 flex items-center justify-center bg-slate-900/50 rounded-2xl z-10 transition-transform duration-700 group-hover/wakil:-translate-y-2">
                 <User className="w-16 h-16 text-accent-blue/40" />
               </div>
             )}
             
             {/* Name Badge */}
-            <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-b-2xl z-20 overflow-hidden">
+            <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-b-2xl z-20 overflow-hidden transition-all duration-500 group-hover/wakil:pb-6">
               <h4 className="text-white text-sm md:text-base font-extrabold tracking-tight drop-shadow-md">
-                {wakil?.name || "Belum Ditentukan"}
+                {wakil?.name || "Syahrul Fath"}
               </h4>
               <p className="text-accent-blue text-[10px] uppercase font-bold tracking-widest mt-0.5">Wakil Ketua BEM</p>
             </div>
