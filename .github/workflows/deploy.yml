@@ -6,24 +6,89 @@ on:
       - main
 
 jobs:
-  deploy:
+  changes:
     runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      ims: ${{ steps.filter.outputs.ims }}
+      pkkmb: ${{ steps.filter.outputs.pkkmb }}
+      backend: ${{ steps.filter.outputs.backend }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            ims:
+              - 'ims/**'
+            pkkmb:
+              - 'pkkmb/**'
+            backend:
+              - 'backend/**'
+            shared:
+              - 'packages/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'docker-compose.yml'
+              - 'Dockerfile.*'
+              - 'Caddyfile'
 
+  deploy:
+    needs: changes
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          FRONTEND_CHANGED: ${{ needs.changes.outputs.frontend }}
+          IMS_CHANGED: ${{ needs.changes.outputs.ims }}
+          PKKMB_CHANGED: ${{ needs.changes.outputs.pkkmb }}
+          BACKEND_CHANGED: ${{ needs.changes.outputs.backend }}
+          SHARED_CHANGED: ${{ needs.changes.outputs.shared }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           command_timeout: 30m
+          envs: FRONTEND_CHANGED,IMS_CHANGED,PKKMB_CHANGED,BACKEND_CHANGED,SHARED_CHANGED
           script: |
             cd ~/bemftunesa2026
             git pull origin main
-            # Clear host next build caches to avoid copying them into container
-            rm -rf frontend/.next ims/.next
-            docker compose down
-            docker compose build
-            docker compose up -d
+            
+            SERVICES_TO_BUILD=""
+            
+            if [ "$SHARED_CHANGED" == "true" ]; then
+                # Jika file core/shared berubah, rebuild semuanya
+                SERVICES_TO_BUILD="api public_web ims_web pkkmb_web"
+            else
+                if [ "$BACKEND_CHANGED" == "true" ]; then SERVICES_TO_BUILD="$SERVICES_TO_BUILD api"; fi
+                if [ "$FRONTEND_CHANGED" == "true" ]; then SERVICES_TO_BUILD="$SERVICES_TO_BUILD public_web"; fi
+                if [ "$IMS_CHANGED" == "true" ]; then SERVICES_TO_BUILD="$SERVICES_TO_BUILD ims_web"; fi
+                if [ "$PKKMB_CHANGED" == "true" ]; then SERVICES_TO_BUILD="$SERVICES_TO_BUILD pkkmb_web"; fi
+            fi
+            
+            if [ -z "$SERVICES_TO_BUILD" ]; then
+                echo "Tidak ada service yang terdeteksi berubah. Deployment dilewati."
+            else
+                echo "Melakukan build dan restart untuk services: $SERVICES_TO_BUILD"
+                
+                # Hapus cache Next.js lama hanya untuk modul yang akan di-build ulang
+                if [[ " $SERVICES_TO_BUILD " =~ " public_web " ]]; then rm -rf frontend/.next; fi
+                if [[ " $SERVICES_TO_BUILD " =~ " ims_web " ]]; then rm -rf ims/.next; fi
+                if [[ " $SERVICES_TO_BUILD " =~ " pkkmb_web " ]]; then rm -rf pkkmb/.next; fi
+                
+                # Build & recreate only the changed services (Zero downtime for others)
+                docker compose up -d --build $SERVICES_TO_BUILD
+            fi
+            
+            # Restart Caddy jika Caddyfile atau file shared berubah
+            if [ "$SHARED_CHANGED" == "true" ]; then
+                docker compose restart caddy
+            fi
+            
+            # Bersihkan cache docker lama yang tidak terpakai
             docker system prune -f
