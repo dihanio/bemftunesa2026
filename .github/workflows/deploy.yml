@@ -62,7 +62,6 @@ jobs:
             SERVICES_TO_BUILD=""
             
             if [ "$SHARED_CHANGED" == "true" ]; then
-                # Jika file core/shared berubah, rebuild semuanya
                 SERVICES_TO_BUILD="api public_web ims_web pkkmb_web"
             else
                 if [ "$BACKEND_CHANGED" == "true" ]; then SERVICES_TO_BUILD="$SERVICES_TO_BUILD api"; fi
@@ -81,14 +80,14 @@ jobs:
                 if [[ " $SERVICES_TO_BUILD " =~ " ims_web " ]]; then rm -rf ims/.next; fi
                 if [[ " $SERVICES_TO_BUILD " =~ " pkkmb_web " ]]; then rm -rf pkkmb/.next; fi
                 
-                # Build & recreate only the changed services (Zero downtime for others)
-                docker compose up -d --build $SERVICES_TO_BUILD
+                # Build & recreate services SECARA BERGILIRAN (Sequential) agar RAM VPS tidak jebol
+                for service in $SERVICES_TO_BUILD; do
+                    echo "Building and starting $service..."
+                    docker compose up -d --build $service
+                done
             fi
             
             # Restart Caddy jika Caddyfile atau file shared berubah
             if [ "$SHARED_CHANGED" == "true" ]; then
                 docker compose restart caddy
             fi
-            
-            # Bersihkan cache docker lama yang tidak terpakai
-            docker system prune -f
