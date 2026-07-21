@@ -62,6 +62,44 @@ function AnimatedCounter({ value }: { value: number }) {
   return <span ref={ref}>{display}</span>;
 }
 
+function DragScrollContainer({ children, className }: { children: React.ReactNode, className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (!ref.current) return;
+    setIsDragging(true);
+    startX.current = e.pageX - ref.current.offsetLeft;
+    scrollLeft.current = ref.current.scrollLeft;
+  };
+
+  const onMouseLeave = () => setIsDragging(false);
+  const onMouseUp = () => setIsDragging(false);
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !ref.current) return;
+    e.preventDefault();
+    const x = e.pageX - ref.current.offsetLeft;
+    const walk = (x - startX.current) * 2;
+    ref.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  return (
+    <div
+      ref={ref}
+      onMouseDown={onMouseDown}
+      onMouseLeave={onMouseLeave}
+      onMouseUp={onMouseUp}
+      onMouseMove={onMouseMove}
+      className={cn("cursor-grab active:cursor-grabbing", className, isDragging ? "[&_*]:pointer-events-none" : "")}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function StrukturPage() {
   const [data, setData] = useState<StructureData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -252,7 +290,7 @@ export default function StrukturPage() {
 
                       {/* Photos Slideshow */}
                       <div className="w-full md:w-7/12 relative z-10 flex overflow-visible">
-                        <div className="flex overflow-x-auto gap-4 pb-6 pt-4 px-2 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mask-linear-fade w-full">
+                        <DragScrollContainer className="flex overflow-x-auto gap-4 pb-6 pt-4 px-2 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] mask-linear-fade w-full">
                           
                           {/* Kadep */}
                           {head && (
@@ -290,7 +328,7 @@ export default function StrukturPage() {
                                </div>
                              ));
                           })()}
-                        </div>
+                        </DragScrollContainer>
                       </div>
                     </div>
                   </div>
