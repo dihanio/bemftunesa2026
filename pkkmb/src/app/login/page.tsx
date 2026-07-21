@@ -65,7 +65,6 @@ function LoginContent() {
           </div>
           
           <div className="auth-hero-title">
-            <div className="auth-hero-title-badge animate-enter delay-2">PKKMB FT 26</div>
             <h1 className="animate-enter delay-3"><span>ADRATA</span></h1>
             <p className="animate-enter delay-4">Portal Pengenalan Kehidupan Kampus bagi Mahasiswa Baru Fakultas Teknik Universitas Negeri Surabaya.</p>
           </div>
