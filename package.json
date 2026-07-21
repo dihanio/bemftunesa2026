@@ -1,0 +1,22 @@
+{
+  "name": "bemft-unesa-web-ecosystem",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "npm@11.13.0",
+  "workspaces": [
+    "frontend",
+    "ims",
+    "backend",
+    "pkkmb",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.4"
+  }
+}

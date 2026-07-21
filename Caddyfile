@@ -1,0 +1,15 @@
+api.bemftunesa.org {
+    reverse_proxy api:4000
+}
+
+www.bemftunesa.org, bemftunesa.org {
+    reverse_proxy public_web:3000
+}
+
+ims.bemftunesa.org {
+    reverse_proxy ims_web:3000
+}
+
+pkkmb.bemftunesa.org {
+    reverse_proxy pkkmb_web:3000
+}

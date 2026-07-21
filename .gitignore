@@ -1,0 +1,80 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+/tests/e2e/test-results/
+/tests/e2e/playwright-report/
+/tests/e2e/blob-report/
+/tests/e2e/.playwright-artifacts/
+
+# next.js
+.next/
+*/.next/
+out/
+build/
+
+# production / build artifacts
+dist/
+*/dist/
+.turbo/
+*/.turbo/
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+next-env.d.ts
+
+# User Generated Content / Uploads
+backend/uploads/
+backend/public/uploads/
+ims/public/uploads/
+frontend/public/uploads/
+
+# misc
+.DS_Store
+*.pem
+*.key
+*.cert
+*.crt
+
+# debug & logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+logs/
+*.log
+
+# env files (NEVER commit secrets)
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+!.env.example
+
+# vercel
+.vercel
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Linting caches
+.eslintcache
+.stylelintcache
+
+# Claude Code / Agent Tools (if local only)
+# (uncomment to ignore agent states)
+# .agent/
+# .gemini/

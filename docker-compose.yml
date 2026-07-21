@@ -1,0 +1,133 @@
+services:
+  # === API Backend (NestJS) ===
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    env_file:
+      - .env
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+    depends_on:
+      db:
+        condition: service_started
+    volumes:
+      - uploads_data:/app/backend/public/uploads
+    networks:
+      - default
+    restart: unless-stopped
+
+  # === Public Website (Next.js) ===
+  public_web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        APP_NAME: frontend
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_PUBLIC_URL: ${NEXT_PUBLIC_PUBLIC_URL}
+        NEXT_PUBLIC_IMS_URL: ${NEXT_PUBLIC_IMS_URL}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+    environment:
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      - api
+    networks:
+      - default
+    restart: unless-stopped
+
+  # === IMS Dashboard (Next.js) ===
+  ims_web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        APP_NAME: ims
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_PUBLIC_URL: ${NEXT_PUBLIC_PUBLIC_URL}
+        NEXT_PUBLIC_IMS_URL: ${NEXT_PUBLIC_IMS_URL}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+    environment:
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      - api
+    networks:
+      - default
+    restart: unless-stopped
+
+  # === PKKMB Student Portal (Next.js) ===
+  pkkmb_web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        APP_NAME: pkkmb
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_PUBLIC_URL: ${NEXT_PUBLIC_PUBLIC_URL}
+        NEXT_PUBLIC_IMS_URL: ${NEXT_PUBLIC_IMS_URL}
+        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+    environment:
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      - api
+    networks:
+      - default
+    restart: unless-stopped
+
+  # === Caddy Reverse Proxy (auto-SSL) ===
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - public_web
+      - ims_web
+      - pkkmb_web
+    networks:
+      - default
+
+  # === Database (MongoDB 6) ===
+  db:
+    image: mongo:6
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password}
+      MONGO_INITDB_DATABASE: bemft-cms
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - default
+
+  # === Redis Cache ===
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - default
+    command: redis-server --appendonly yes
+
+volumes:
+  caddy_data:
+  caddy_config:
+  mongodb_data:
+  redis_data:
+  uploads_data:

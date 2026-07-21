@@ -1,0 +1,16 @@
+{
+  "name": "PKKMB FT UNESA",
+  "short_name": "PKKMB",
+  "description": "Portal Presensi dan Penugasan Mahasiswa Baru Fakultas Teknik UNESA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#18181b",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

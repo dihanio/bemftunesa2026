@@ -1,0 +1,435 @@
+/* ==========================================
+   COMPONENT STYLES (Stisla + Linear Design)
+   IMS - BEM FT UNESA 2026
+   ========================================== */
+
+/* ==========================================
+   BUTTONS
+   ========================================== */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 8px 14px;
+  border-radius: var(--rounded-md);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.button--primary {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.button--primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.button--primary:focus-visible {
+  outline: 2px solid var(--color-primary-focus);
+  outline-offset: 2px;
+}
+
+.button--primary:active {
+  transform: scale(0.97);
+}
+
+.button--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.button--secondary {
+  background-color: var(--color-surface-1);
+  color: var(--color-ink);
+  border: 1px solid var(--color-hairline);
+}
+
+.button--secondary:hover {
+  background-color: var(--color-surface-2);
+  border-color: var(--color-hairline-strong);
+}
+
+.button--secondary:active {
+  transform: scale(0.97);
+}
+
+.button--tertiary {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+.button--tertiary:hover {
+  background-color: var(--color-surface-1);
+}
+
+.button--danger {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-semantic-danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.button--danger:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.button--lg {
+  padding: 12px 20px;
+  font-size: 16px;
+}
+
+.button--sm {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+/* ==========================================
+   CARDS
+   ========================================== */
+
+.card {
+  background-color: var(--color-surface-1);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-lg);
+  padding: var(--spacing-lg);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  background-color: var(--color-surface-2);
+  border-color: var(--color-hairline-strong);
+}
+
+.card--feature {
+  background-color: var(--color-surface-1);
+}
+
+.card--pricing {
+  background-color: var(--color-surface-1);
+}
+
+.card--featured {
+  background-color: var(--color-surface-2);
+  border-color: var(--color-hairline-strong);
+}
+
+.card__header {
+  margin-bottom: var(--spacing-md);
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.4px;
+  color: var(--color-ink);
+  margin-bottom: var(--spacing-sm);
+}
+
+.card__body {
+  color: var(--color-ink-muted);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.card__footer {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-hairline);
+}
+
+/* Glass Effect Panels */
+.glass {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-lg);
+}
+
+.glass-subtle {
+  background: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-lg);
+  transition: all 0.2s ease-in-out;
+}
+
+.glass-active {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--rounded-lg);
+}
+
+/* ==========================================
+   NAVIGATION
+   ========================================== */
+
+.navbar {
+  background-color: var(--color-canvas);
+  border-bottom: 1px solid var(--color-hairline);
+  padding: var(--spacing-md) 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar__container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.navbar__logo {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-ink);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.navbar__logo:hover {
+  color: var(--color-primary);
+}
+
+.navbar__menu {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.navbar__link {
+  color: var(--color-ink-muted);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.navbar__link:hover {
+  color: var(--color-ink);
+}
+
+.navbar__link--active {
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.navbar__actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+/* ==========================================
+   FORMS & INPUTS
+   ========================================== */
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  background-color: var(--color-surface-1);
+  color: var(--color-ink);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--rounded-md);
+  padding: 8px 12px;
+  font-family: var(--font-text);
+  font-size: 16px;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--color-primary-focus);
+  box-shadow: 0 0 0 2px rgba(94, 106, 210, 0.2);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-ink-subtle);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form__group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form__label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-ink);
+  margin-bottom: var(--spacing-xs);
+}
+
+.form__error {
+  font-size: 12px;
+  color: var(--color-semantic-danger);
+  margin-top: var(--spacing-xs);
+}
+
+/* ==========================================
+   LAYOUT SECTIONS
+   ========================================== */
+
+.hero {
+  padding: var(--spacing-section) 0;
+  text-align: center;
+}
+
+.hero__title {
+  margin-bottom: var(--spacing-lg);
+}
+
+.hero__subtitle {
+  font-size: 18px;
+  color: var(--color-ink-muted);
+  max-width: 600px;
+  margin: 0 auto var(--spacing-xl);
+}
+
+.hero__actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+}
+
+.features {
+  padding: var(--spacing-section) 0;
+}
+
+.section__title {
+  text-align: center;
+  margin-bottom: var(--spacing-xxl);
+}
+
+.features__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+/* ==========================================
+   FOOTER
+   ========================================== */
+
+.footer {
+  background-color: var(--color-canvas);
+  border-top: 1px solid var(--color-hairline);
+  padding: var(--spacing-xxl) 0;
+  text-align: center;
+  color: var(--color-ink-subtle);
+  font-size: 14px;
+}
+
+/* ==========================================
+   UTILITIES
+   ========================================== */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-hairline-strong);
+  border-radius: var(--rounded-pill);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.4s ease-out;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
+@media (max-width: 768px) {
+  .navbar__menu {
+    display: none; /* Hamburger menu implementation needed */
+  }
+  
+  .hero__actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .features__grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+}

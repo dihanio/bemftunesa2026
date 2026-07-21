@@ -1,0 +1,1 @@
+import * as React from "react"; export const Label = React.forwardRef(({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>, ref: React.ForwardedRef<HTMLLabelElement>) => { return <label className={className} ref={ref} {...props} /> }); Label.displayName = "Label";

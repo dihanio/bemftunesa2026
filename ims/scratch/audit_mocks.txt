@@ -1,0 +1,4 @@
+./services/UsersService.ts:10:    // A dummy check. In real implementation we'd probably try fetching.
+./mocks/dashboard/index.ts:38:// 2. Dummy Data Store
+./mocks/dashboard/index.ts:39:export const mockDashboardData = {
+./components/dashboards/widgets/index.tsx:6:import type { StatItem, ActivityItem, TaskItem, AgendaItem } from '@/mocks/dashboard';

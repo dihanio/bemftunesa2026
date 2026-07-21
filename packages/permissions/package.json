@@ -1,0 +1,20 @@
+{
+  "name": "@bemft/permissions",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@bemft/types": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.2.5",
+    "@types/jest": "^30.0.0"
+  }
+}
