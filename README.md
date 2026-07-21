@@ -19,6 +19,7 @@ graph TD
     subgraph ClientLayer ["Client Layer (Frontend)"]
         Public["🌐 Public Portal (Next.js)<br>bemftunesa.org"]
         IMS["💼 IMS Dashboard (Next.js)<br>ims.bemftunesa.org"]
+        PKKMB["🎓 PKKMB Portal (Next.js)<br>pkkmb.bemftunesa.org"]
     end
 
     subgraph APILayer ["API Gateway & Logic Layer"]
@@ -34,6 +35,7 @@ graph TD
 
     Public -->|HTTP / REST Client| Backend
     IMS -->|HTTP / REST Client| Backend
+    PKKMB -->|HTTP / REST Client| Backend
     Backend --> DB
     Backend --> Cache
     Backend --> Storage
@@ -104,8 +106,19 @@ ERP (Enterprise Resource Planning) organisasi mahasiswa sebagai pusat pengelolaa
 
 ---
 
-### 3. ⚡ Backend API (`backend/`)
-Mesin utama ekosistem digital yang melayani API RESTful, otorisasi data, antrean latar belakang, dan integrasi penyimpanan objek.
+### 3. 🎓 PKKMB Portal (`pkkmb/`)
+Sistem informasi khusus untuk rangkaian Pengenalan Kehidupan Kampus bagi Mahasiswa Baru (PKKMB) Fakultas Teknik UNESA.
+
+*   📅 **Manajemen Jadwal & Agenda**: Informasi jadwal kegiatan PKKMB secara *real-time*.
+*   📝 **Sistem Penugasan (Assignments)**: Portal distribusi dan pengumpulan tugas mahasiswa baru.
+*   ✅ **Sistem Presensi Terpusat**: Pencatatan riwayat kehadiran mahasiswa baru di setiap sesi acara.
+*   🏆 **Poin Kelulusan & Rapor**: Kalkulasi akumulasi poin peserta untuk menentukan kelulusan rangkaian PKKMB.
+*   👥 **Pembagian Gugus & Kelompok**: Informasi pembagian kelompok beserta mentor/pendamping masing-masing gugus.
+*   📸 **Galeri Dokumentasi**: Pusat dokumentasi kegiatan selama PKKMB berlangsung.
+
+---
+
+### 4. ⚡ Backend API (`backend/`)
 
 *   🛡️ **Granular RBAC Engine**:
     *   Sistem perizinan hak akses berbasis peran bertingkat: *Super Admin, Ketua BEM, Wakil Ketua BEM, Administrator, Sekretaris, Bendahara, Kepala Departemen, Wakil Kepala Departemen, Staf Divisi,* dan *Tamu*.
