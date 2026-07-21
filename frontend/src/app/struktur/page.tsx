@@ -71,7 +71,7 @@ export default function StrukturPage() {
   const [isDeptDrawerOpen, setIsDeptDrawerOpen] = useState(false);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: 'center', skipSnaps: false }, [
-    Autoplay({ delay: 4000, stopOnInteraction: true })
+    Autoplay({ delay: 4000, stopOnInteraction: true, stopOnMouseEnter: true })
   ]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
