@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+
 REPO_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 DEPLOY_PATH="${DEPLOY_PATH:-$REPO_DIR}"
 LOG_DIR="$DEPLOY_PATH/deploy-logs"
@@ -48,6 +52,10 @@ ln -sfn "$CACHE_DIR/.turbo" .turbo
 
 # determine turbo since
 TURBO_SINCE=""
+
+log "Installing dependencies..."
+npm ci || npm install
+
 if [ -n "$PREV_SHA" ]; then
   TURBO_SINCE="$PREV_SHA"
 fi
