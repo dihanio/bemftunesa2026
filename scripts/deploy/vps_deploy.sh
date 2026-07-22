@@ -44,11 +44,7 @@ fi
 
 # ensure cache dir
 CACHE_DIR="$DEPLOY_PATH/cache"
-mkdir -p "$CACHE_DIR"
-if [ -d .turbo ]; then
-  rm -rf .turbo || true
-fi
-ln -sfn "$CACHE_DIR/.turbo" .turbo
+mkdir -p "$CACHE_DIR/.turbo"
 
 # determine turbo since
 TURBO_SINCE=""
@@ -62,10 +58,10 @@ fi
 
 log "Running incremental build with turbo since: ${TURBO_SINCE:-full}"
 if [ -n "$TURBO_SINCE" ]; then
-  npx turbo run build --filter="...[$TURBO_SINCE]" | tee build-output.log
+  npx turbo run build --cache-dir="$CACHE_DIR/.turbo" --filter="...[$TURBO_SINCE]" | tee build-output.log
   BUILD_EXIT=${PIPESTATUS[0]}
 else
-  npx turbo run build | tee build-output.log
+  npx turbo run build --cache-dir="$CACHE_DIR/.turbo" | tee build-output.log
   BUILD_EXIT=${PIPESTATUS[0]}
 fi
 
