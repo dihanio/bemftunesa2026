@@ -1,0 +1,27 @@
+name: Image Cleanup
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Run every Sunday at midnight
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  prune-ghcr:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    strategy:
+      matrix:
+        service: [api, public_web, ims_web, pkkmb_web]
+    steps:
+      - name: Prune untagged and old images for ${{ matrix.service }}
+        uses: vlaurin/action-ghcr-prune@v0.6.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          organization: dihanio # Assuming dihanio is a user/org. Update if different.
+          container: bemftunesa2026-${{ matrix.service }}
+          dry-run: false
+          keep-younger-than: 14 # days
+          keep-last: 5 # keep at least 5 versions
+          untagged: true
