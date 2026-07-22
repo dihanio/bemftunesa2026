@@ -62,7 +62,13 @@ export function Footer() {
               <Link href="/kontak" className="text-xs text-foreground/75 hover:text-accent-gold transition-colors">Pusat Bantuan & FAQ</Link>
             </li>
             <li>
-              <a href="https://unesa.ac.id" target="_blank" rel="noopener noreferrer" className="text-xs text-foreground/75 hover:text-accent-gold transition-colors">Website UNESA</a>
+              <a href="https://ft.unesa.ac.id" target="_blank" rel="noopener noreferrer" className="text-xs text-foreground/75 hover:text-accent-gold transition-colors">Website FT UNESA</a>
+            </li>
+            <li>
+              <a href={process.env.NEXT_PUBLIC_PKKMB_URL || "https://pkkmb.bemftunesa.org"} target="_blank" rel="noopener noreferrer" className="text-xs text-foreground/75 hover:text-accent-gold transition-colors">Portal PKKMB Adrata</a>
+            </li>
+            <li>
+              <a href={process.env.NEXT_PUBLIC_IMS_URL || "https://ims.bemftunesa.org"} target="_blank" rel="noopener noreferrer" className="text-xs text-foreground/75 hover:text-accent-gold transition-colors">IMS Fungsionaris</a>
             </li>
           </ul>
         </div>
