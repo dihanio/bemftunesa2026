@@ -65,8 +65,10 @@ function LoginContent() {
           </div>
           
           <div className="auth-hero-title">
-            <Image src="/logo_adrata.png" alt="PKKMB Adrata" width={96} height={96} className="mb-4 animate-enter delay-2 logo-img" />
-            <h1 className="animate-enter delay-3"><span>ADRATA</span></h1>
+            <div className="flex items-center gap-6 mb-6">
+              <Image src="/logo_adrata.png" alt="PKKMB Adrata" width={80} height={80} className="animate-enter delay-2 logo-img shrink-0" />
+              <h1 className="animate-enter delay-3" style={{ margin: 0 }}><span>ADRATA</span></h1>
+            </div>
             <p className="animate-enter delay-4">Portal Pengenalan Kehidupan Kampus bagi Mahasiswa Baru Fakultas Teknik Universitas Negeri Surabaya.</p>
           </div>
         </div>
