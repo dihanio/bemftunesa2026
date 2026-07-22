@@ -65,10 +65,10 @@ if [ "$RESTART_ALL" = true ]; then
   SERVICES_TO_RESTART=("frontend" "backend" "ims" "pkkmb")
 else
   # Check individual apps
-  if echo "$CHANGED_FILES" | grep -q '^apps/fe/'; then SERVICES_TO_RESTART+=("frontend"); fi
-  if echo "$CHANGED_FILES" | grep -q '^apps/be/'; then SERVICES_TO_RESTART+=("backend"); fi
-  if echo "$CHANGED_FILES" | grep -q '^apps/ims/'; then SERVICES_TO_RESTART+=("ims"); fi
-  if echo "$CHANGED_FILES" | grep -q '^apps/pkkmb/'; then SERVICES_TO_RESTART+=("pkkmb"); fi
+  if echo "$CHANGED_FILES" | grep -q '^frontend/'; then SERVICES_TO_RESTART+=("frontend"); fi
+  if echo "$CHANGED_FILES" | grep -q '^backend/'; then SERVICES_TO_RESTART+=("backend"); fi
+  if echo "$CHANGED_FILES" | grep -q '^ims/'; then SERVICES_TO_RESTART+=("ims"); fi
+  if echo "$CHANGED_FILES" | grep -q '^pkkmb/'; then SERVICES_TO_RESTART+=("pkkmb"); fi
 fi
 
 # ensure .env exists to prevent docker compose env_file error
