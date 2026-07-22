@@ -8,7 +8,7 @@ import { apiClient } from '@/shared/api/axios';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function GroupHub({ groupId, userRole }: { groupId: string; userRole: string }) {
-  const [sessions, setSessions] = useState<unknown[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
