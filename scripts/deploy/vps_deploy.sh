@@ -42,73 +42,34 @@ else
   git reset --hard "$TARGET_SHA" || true
 fi
 
-# ensure cache dir
-CACHE_DIR="$DEPLOY_PATH/cache"
-mkdir -p "$CACHE_DIR/.turbo"
-
-# determine turbo since
-TURBO_SINCE=""
-
-log "Installing dependencies..."
-npm ci || npm install
-
-if [ -n "$PREV_SHA" ]; then
-  TURBO_SINCE="$PREV_SHA"
-fi
-
-log "Running incremental build with turbo since: ${TURBO_SINCE:-full}"
-if [ -n "$TURBO_SINCE" ]; then
-  npx turbo run build --cache-dir="$CACHE_DIR/.turbo" --filter="...[$TURBO_SINCE]" --dry-run=json > build-plan.json
+# Lightweight change detection without using Node/npm on the VPS
+if [ -z "$PREV_SHA" ]; then
+  # If no previous SHA, restart all services
+  CHANGED_FILES=$(git ls-tree -r --name-only HEAD)
 else
-  npx turbo run build --cache-dir="$CACHE_DIR/.turbo" --dry-run=json > build-plan.json
+  CHANGED_FILES=$(git diff --name-only $PREV_SHA $TARGET_SHA)
 fi
 
-# In this CI/CD setup, Docker images are pre-built by GitHub Actions and pushed to GHCR.
-# We do not build from source on the VPS.
-BUILD_EXIT=0
+log "Changed files detected."
 
-if [ "$BUILD_EXIT" -ne 0 ]; then
-  log "Build failed, starting rollback"
-  ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"
-  exit 1
-fi
-
-# parse changed packages from turbo dry-run json output
-CHANGED_PKGS=$(jq -r '.tasks[].package' build-plan.json 2>/dev/null | sort -u | sed 's/^@bemft\///' || true)
-
-if [ -z "$CHANGED_PKGS" ]; then
-  # fallback to git diff if turbo json was empty or failed
-  if [ -n "$PREV_SHA" ]; then
-    CHANGED_FILES=$(git diff --name-only $PREV_SHA $TARGET_SHA)
-  else
-    CHANGED_FILES=$(git ls-tree -r --name-only HEAD)
-  fi
-  CHANGED_PKGS=$(printf "%s\n" "$CHANGED_FILES" | awk -F/ '{print $1}' | sort -u)
-fi
-
-log "Changed packages:
-$CHANGED_PKGS"
-
-# map packages to services - simple rule: package folder names map to docker compose service names
 SERVICES_TO_RESTART=()
-for pkg in $CHANGED_PKGS; do
-  case "$pkg" in
-    frontend|backend|ims|pkkmb)
-      SERVICES_TO_RESTART+=("$pkg")
-      ;;
-    *)
-      # ignore
-      ;;
-  esac
-done
+RESTART_ALL=false
 
-if [ ${#SERVICES_TO_RESTART[@]} -eq 0 ]; then
-  log "No services changed. Exiting."
-  echo "$TARGET_SHA" > "$CURRENT_SHA_FILE"
-  exit 0
+# Check if any core/shared packages changed
+if echo "$CHANGED_FILES" | grep -qE '^packages/|^turbo.json|^package.json|^package-lock.json'; then
+  log "Core files or shared packages changed. Will restart all services."
+  RESTART_ALL=true
 fi
 
-log "Services to restart: ${SERVICES_TO_RESTART[*]}"
+if [ "$RESTART_ALL" = true ]; then
+  SERVICES_TO_RESTART=("frontend" "backend" "ims" "pkkmb")
+else
+  # Check individual apps
+  if echo "$CHANGED_FILES" | grep -q '^apps/fe/'; then SERVICES_TO_RESTART+=("frontend"); fi
+  if echo "$CHANGED_FILES" | grep -q '^apps/be/'; then SERVICES_TO_RESTART+=("backend"); fi
+  if echo "$CHANGED_FILES" | grep -q '^apps/ims/'; then SERVICES_TO_RESTART+=("ims"); fi
+  if echo "$CHANGED_FILES" | grep -q '^apps/pkkmb/'; then SERVICES_TO_RESTART+=("pkkmb"); fi
+fi
 
 # ensure .env exists to prevent docker compose env_file error
 touch .env
