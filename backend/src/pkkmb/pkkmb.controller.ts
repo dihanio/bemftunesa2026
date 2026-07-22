@@ -9,6 +9,7 @@ import {
   Res,
   BadRequestException,
   Query,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -231,9 +232,11 @@ export class PkkmbController {
 
   @Get('dashboard/panitia')
   @Roles('Panitia')
-  @ApiOperation({ summary: 'Mendapatkan data agregasi untuk Dashboard Panitia' })
-  async getPanitiaDashboard(@CurrentUser() user: UserDocument) {
-    const data = await this.pkkmbService.getPanitiaDashboard(user._id.toString());
+  @ApiOperation({
+    summary: 'Mendapatkan data agregasi untuk Dashboard Panitia',
+  })
+  async getPanitiaDashboard() {
+    const data = await this.pkkmbService.getPanitiaDashboard();
     return { success: true, data };
   }
 
