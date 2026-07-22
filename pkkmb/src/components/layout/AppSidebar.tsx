@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { getNavItems } from './navigation';
 import { GraduationCap } from 'lucide-react';
+import Image from 'next/image';
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -19,8 +20,8 @@ export function AppSidebar() {
     <aside className="hidden md:flex flex-col w-64 border-r border-white/5 glass-subtle h-screen sticky top-0 left-0 z-40">
       <div className="p-6">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center font-bold text-white shadow-lg shadow-primary/20">
-            <GraduationCap className="h-6 w-6" />
+          <div className="h-10 w-10 relative shrink-0">
+            <Image src="/logo_adrata.png" alt="PKKMB Adrata" fill className="object-contain" />
           </div>
           <div>
             <h1 className="text-lg font-extrabold tracking-tight">PKKMB FT</h1>
