@@ -1,7 +1,6 @@
-/* eslint-disable */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "../store/useAuthStore";
 import { Role } from "../types/auth.types";
@@ -11,15 +10,13 @@ interface AuthGuardProps {
   allowedRoles?: Role[];
 }
 
+const emptySubscribe = () => () => {};
+
 export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { isAuthenticated, isLoading, user } = useAuthStore();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   useEffect(() => {
     if (!isMounted || isLoading) return;

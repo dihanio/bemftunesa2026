@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { apiClient } from '@/shared/api/axios';
 import { AuthResponse, MeResponse } from '../types/auth.types';
 
@@ -12,15 +11,15 @@ export const authApi = {
   },
 
   getMe: async (): Promise<MeResponse> => {
-    const response = await apiClient.get<any>('/auth/me');
+    const response = await apiClient.get<{ success: boolean; data: Record<string, unknown> }>('/auth/me');
     const userData = response.data.data;
     if (userData && userData.role) {
-      const slug = typeof userData.role === 'object' ? userData.role.slug : userData.role;
+      const slug = typeof userData.role === 'object' && userData.role !== null ? (userData.role as { slug?: string }).slug : userData.role as string;
       const normalized = slug?.toLowerCase() || '';
       if (normalized === 'super-admin' || normalized === 'admin') userData.role = 'ADMIN';
       else if (normalized === 'panitia' || normalized === 'pemateri' || normalized === 'kakak-pendamping') userData.role = 'PANITIA';
       else userData.role = 'MABA';
     }
-    return { success: true, data: userData };
+    return { success: true, data: userData as unknown as MeResponse['data'] };
   }
 };

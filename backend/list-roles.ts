@@ -5,7 +5,7 @@ import { resolve } from 'path';
 dotenv.config({ path: resolve(__dirname, '.env') });
 
 interface Role {
-  _id: any;
+  _id: unknown;
   slug: string;
   name: string;
   scope: string;

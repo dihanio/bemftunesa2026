@@ -102,7 +102,7 @@ async function seedData() {
 
   // 4. PREPARE USER DATA
   console.log('\n👥 Seeding users...');
-  const usersToInsert: any[] = [];
+  const usersToInsert: Record<string, unknown>[] = [];
 
   const addUser = (name: string, nim: string, roleSlug: string, position: string, deptName: string | null = null, publicPhotoUrl: string = '', customEmail?: string) => {
     // Check for duplicate NIM in this run to avoid dupes

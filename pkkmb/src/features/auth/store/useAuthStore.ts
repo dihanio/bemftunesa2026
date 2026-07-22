@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '../types/auth.types';
@@ -52,8 +51,8 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const res = await authApi.getMe();
-          set((state) => ({ user: res.data as User, isAuthenticated: true, isLoading: false }));
-        } catch (error) {
+          set({ user: res.data as User, isAuthenticated: true, isLoading: false });
+        } catch {
           set({ user: null, isAuthenticated: false, isLoading: false });
         }
       },

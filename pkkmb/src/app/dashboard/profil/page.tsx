@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -43,7 +42,7 @@ export default function ProfilPage() {
 
     setIsSubmitting(true);
     try {
-      const res = await apiClient.post('/users/me/change-password', {
+      await apiClient.post('/users/me/change-password', {
         currentPassword,
         newPassword,
       });
@@ -52,13 +51,14 @@ export default function ProfilPage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsSubmitting(false);
-      setFeedback({ type: 'error', text: err.response?.data?.message || 'Gagal mengubah password' });
+      const error = err as { response?: { data?: { message?: string } } };
+      setFeedback({ type: 'error', text: error.response?.data?.message || 'Gagal mengubah password' });
     }
   };
 
-  const [extendedUser, setExtendedUser] = useState<any>(null);
+  const [extendedUser, setExtendedUser] = useState<Record<string, unknown> | null>(null);
   
   useEffect(() => {
     if (maba) {
@@ -71,10 +71,10 @@ export default function ProfilPage() {
   if (!maba) return null;
 
   const profileFields = [
-    { label: 'Nama Lengkap', value: extendedUser?.name || maba.name, icon: User },
-    { label: 'NIM', value: extendedUser?.nim || maba.nim, icon: Hash },
-    { label: 'Program Studi', value: extendedUser?.studyProgram || '-', icon: GraduationCap },
-    { label: 'Kelompok PKKMB', value: extendedUser?.pkkmbGroup?.name || extendedUser?.pkkmbGroup || maba.pkkmbGroupId || '-', icon: Users },
+    { label: 'Nama Lengkap', value: (extendedUser?.name as string) || maba.name, icon: User },
+    { label: 'NIM', value: (extendedUser?.nim as string) || maba.nim, icon: Hash },
+    { label: 'Program Studi', value: (extendedUser?.studyProgram as string) || '-', icon: GraduationCap },
+    { label: 'Kelompok PKKMB', value: (extendedUser?.pkkmbGroup as { name?: string })?.name || (extendedUser?.pkkmbGroup as string) || maba.pkkmbGroupId || '-', icon: Users },
   ];
 
   return (

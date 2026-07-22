@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { User } from '@/features/auth/types/auth.types';
 import { 
   LayoutDashboard, 
@@ -7,13 +6,14 @@ import {
   ClipboardList, 
   User as UserIcon,
   Settings,
-  ShieldAlert
+  ShieldAlert,
+  type LucideIcon
 } from 'lucide-react';
 
 export interface NavItem {
   href: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   roles?: string[]; // If undefined, accessible to all logged-in users
 }
 

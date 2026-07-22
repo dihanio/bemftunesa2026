@@ -1,0 +1,159 @@
+{
+  "id": "3GrDdFcwnRw532pi3gph7GRoBSA",
+  "version": "1",
+  "turboVersion": "2.10.4",
+  "monorepo": true,
+  "globalCacheInputs": {
+    "rootKey": "I can’t see ya, but I know you’re here",
+    "files": {},
+    "hashOfExternalDependencies": "ccaddfa66c87b362",
+    "hashOfInternalDependencies": "",
+    "environmentVariables": {
+      "specified": {
+        "env": [],
+        "passThroughEnv": null
+      },
+      "configured": [],
+      "inferred": [],
+      "passthrough": null
+    },
+    "engines": null
+  },
+  "packages": [
+    "@bemft/frontend"
+  ],
+  "envMode": "strict",
+  "frameworkInference": true,
+  "tasks": [
+    {
+      "taskId": "@bemft/frontend#build",
+      "task": "build",
+      "package": "@bemft/frontend",
+      "hash": "8fd7a9ac37d4083e",
+      "inputs": {
+        ".env.example": "d79ec8bbf6b5507c4615cc001b8fec919ab88481",
+        "eslint.config.mjs": "05e726d1b4201bc8c7716d2b058279676582e8c0",
+        "next.config.ts": "e188ce2c3a9a66ddaebc5595c02db2934e63eaf9",
+        "package.json": "e3a8c2e1eb807c7f15e163b66564efcffc09b7cc",
+        "postcss.config.mjs": "61e36849cf7cfa9f1f71b4a3964a4953e3e243d3",
+        "public/Gedung_FT.webp": "905c00b8da57f637c642023bb036476c10d1e532",
+        "public/file.svg": "004145cddf3f9db91b57b9cb596683c8eb420862",
+        "public/fungsionaris/Diha Anfeu Nio Julaynda.png": "b7ca2be51b1f63ad581fdcb92567b6b41d394067",
+        "public/fungsionaris/Elok Faiqoh.png": "73eb1dacc9a6430c31117e9c4647443bf6af9e92",
+        "public/fungsionaris/Stefi Febianova.png": "11b87ba5f32b7d8db4d2f90c3e7512c82ded7e8b",
+        "public/fungsionaris/Syahrul Fath.png": "aca444f1283aa2252f417fc469ecfc2985a5f7b4",
+        "public/gedung ft.png": "25e455b6cc8e7cb2fed7c3c575fb6352f8873a41",
+        "public/gedung_ft_new.jpeg": "eedec37070c971d8b35e1e40ce4473b8d1174f6c",
+        "public/globe.svg": "567f17b0d7c7fb662c16d4357dd74830caf2dccb",
+        "public/images/gedung-ft.png": "25e455b6cc8e7cb2fed7c3c575fb6352f8873a41",
+        "public/images/logo-bemft.png": "4e02b06879f7bb61dd1dac9c6c09a29563bfb0fd",
+        "public/images/logo-kabinet.png": "7d297fdc52b9dbe4476d872a44fb97e19e8ff316",
+        "public/logo_kabinet.png": "7d297fdc52b9dbe4476d872a44fb97e19e8ff316",
+        "public/logobemft.png": "4e02b06879f7bb61dd1dac9c6c09a29563bfb0fd",
+        "public/next.svg": "5174b28c565c285e3e312ec5178be64fbeca8398",
+        "public/vercel.svg": "77053960334e2e34dc584dea8019925c3b4ccca9",
+        "public/window.svg": "b2b2a44f6ebc70c450043c05a002e7a93ba5d651",
+        "src/app/(public)/transparansi/page.tsx": "d326a368bf7a2383a955bd7a5242656b74507225",
+        "src/app/aspirasi/page.tsx": "be7ab6744dc4ff50f76effee1b9e138b085cdb14",
+        "src/app/berita/[slug]/layout.tsx": "d707523fca3f8977e6689f6f213a353fddde3dd7",
+        "src/app/berita/[slug]/opengraph-image.tsx": "264e5aee6a6bfd8b1bea0f2a305be4e462e03465",
+        "src/app/berita/[slug]/page.tsx": "0aa2c7922e75544a1b98cfe1b41221baaf92d4ce",
+        "src/app/berita/page.tsx": "9e5a1a6aa5ee69e08790ca15bc0ed1f67a7914b6",
+        "src/app/error.tsx": "18d6fff4ee55eb47a296917224a99d0b85471264",
+        "src/app/galeri/[slug]/page.tsx": "485915bb113a986b67a4275a488f1b7ebd469bba",
+        "src/app/galeri/page.tsx": "c47fd515bd251593ac39d970d0ae9ee8b995478d",
+        "src/app/globals.css": "5babb4d5032fd209dfb5a65c7640b497073df167",
+        "src/app/icon.png": "4e02b06879f7bb61dd1dac9c6c09a29563bfb0fd",
+        "src/app/kontak/page.tsx": "e7a2c206de0eecff49ae73ebe82f38a1cc91788c",
+        "src/app/layout.tsx": "012e0b22c450049e940d5b3b56609fba5d0e7479",
+        "src/app/not-found.tsx": "69ab2dc12eefd1ef14d6e9b2c6958b2bb98e3384",
+        "src/app/oprec/[slug]/layout.tsx": "9b332cd110e4b831f6ccad52197bc6de1da16108",
+        "src/app/oprec/[slug]/opengraph-image.tsx": "9ec9719111cdd32976460c2795175d32d460ec6b",
+        "src/app/oprec/[slug]/page.tsx": "07d094f834770e3377e76a0b705f8ce2d262754b",
+        "src/app/oprec/page.tsx": "e0fb81b29f434d8ba8dd75aac2927bedd4a5afd9",
+        "src/app/page.tsx": "ca20177e265acb87acb91b242465230f53e847a3",
+        "src/app/struktur/page.tsx": "bd1376e5f227c0112be15f2a48a9382b3c1fe75d",
+        "src/app/tentang/page.tsx": "39252f10ae99ac048b73550f750977379268311f",
+        "src/components/dashboard/activity-feed.tsx": "fe07b7bef6501b6427b8b6b519ee5fa18bcc4a89",
+        "src/components/home/AspirasiSection.tsx": "80ef1faf426597173961e460810977d9fa634940",
+        "src/components/home/HeroSection.tsx": "3efb8458771d95c52342950da5f0fee9db383aba",
+        "src/components/home/NewsSection.tsx": "fe7432758720ae2c2a2bf1f31b39d3dd12d94a14",
+        "src/components/home/PartnersSection.tsx": "01e54f8969c81af54a655310ed470ecc3aa70fa8",
+        "src/components/home/SambutanSection.tsx": "622532e9828f3802d49ce83b84350ee690f27482",
+        "src/components/home/StatsSection.tsx": "a1098a2de01639cf28f8676645bf1b857ed4084d",
+        "src/components/layout/Breadcrumbs.tsx": "230a849c74884d188fc4c6edd52155d078f028ee",
+        "src/components/layout/Footer.tsx": "cc05c1de93a16faf33d425fbc9216a4483712a59",
+        "src/components/layout/Navbar.tsx": "977357500cd7db22e69048d1dbc62e484a08ceae",
+        "src/components/ui/FormFileUpload.tsx": "84e911a60f452979825e67ab69ba64f3d25c09f3",
+        "src/components/ui/FormInput.tsx": "69b0ce18f4e52b4c6f1564616bafeb4de227da54",
+        "src/components/ui/FormSelect.tsx": "5df3dfd80de6ae0001a7fac36e83fb27cdc41b4b",
+        "src/components/ui/FormTextarea.tsx": "cadbc8104eff39e64e9bf0e514831a622789f55c",
+        "src/components/ui/card.tsx": "e27349d4741ad3a17d255e77c62a7ebe4d0df7c0",
+        "src/components/ui/index.ts": "fadf05ec3d171329bd50657a8a10c5d1602b3f20",
+        "src/components/ui/skeleton.tsx": "5b0eccb7951d170a21af3010c01bb813dec2b753",
+        "src/hooks/useDebounce.ts": "57c0cc8ca514336641d495501329172ef0418887",
+        "src/lib/api.ts": "d6f9eafc6c62b846009f6b5884bccb31370c86ee",
+        "src/lib/utils.ts": "8165bdba99a678ec05b7faff30e1eed4ca7563a2",
+        "tsconfig.json": "cf9c65d3e0676a0169374d827f7abb97497789ef"
+      },
+      "hashOfExternalDependencies": "f6cb2fa90177e45e",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 12251,
+        "sha": "77b48f777fd13c0bf93d2e4bd41b0846e05381f2",
+        "dirtyHash": "25564e23d4c7845660614f153b279d7e8c83203951b2e0436c379402dd709926"
+      },
+      "command": "next build",
+      "cliArguments": [],
+      "outputs": [
+        ".next/**",
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "frontend/.turbo/turbo-build.log",
+      "directory": "frontend",
+      "dependencies": [],
+      "dependents": [],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          ".next/**",
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "nextjs",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    }
+  ],
+  "user": "",
+  "scm": {
+    "type": "git",
+    "sha": "311aad5cf3dd99fa1a47cd5b4f2f73c880a7ff2c",
+    "branch": "main"
+  }
+}
+

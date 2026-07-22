@@ -1,16 +1,14 @@
-/* eslint-disable */
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { authApi } from '@/features/auth/api/auth.api';
-import { API_BASE_URL } from '@/shared/api/axios';
 import Image from 'next/image';
 import './login.css';
 
 function LoginContent() {
-  const { setAuth, user, isLoading, fetchMe } = useAuthStore();
+  const { user, isLoading, fetchMe } = useAuthStore();
   const router = useRouter();
   
   const [nim, setNim] = useState('');
@@ -32,8 +30,9 @@ function LoginContent() {
       await authApi.loginMaba(nim, password);
       await fetchMe();
       router.push('/dashboard');
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || 'Login gagal. Periksa kembali NIM dan password Anda.');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setErrorMsg(error.response?.data?.message || 'Login gagal. Periksa kembali NIM dan password Anda.');
     } finally {
       setIsSubmitting(false);
     }

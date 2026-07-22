@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import React from 'react';
@@ -6,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { getNavItems } from './navigation';
-import { GraduationCap } from 'lucide-react';
 import Image from 'next/image';
 
 export function AppSidebar() {
