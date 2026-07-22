@@ -7,8 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/shared/api/axios';
 import { Skeleton } from '@/components/ui/skeleton';
 
+export interface Session {
+  _id: string;
+  title: string;
+  date: string;
+}
+
 export function GroupHub({ groupId, userRole }: { groupId: string; userRole: string }) {
-  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

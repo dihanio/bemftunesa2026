@@ -26,13 +26,9 @@ export function MabaDashboard() {
   const { user: maba } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<'presensi' | 'penugasan'>('presensi');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [events, setEvents] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [logs, setLogs] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [assignments, setAssignments] = useState<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [submissions, setSubmissions] = useState<any[]>([]);
 
   const [isFetchingData, setIsFetchingData] = useState(true);
@@ -126,7 +122,6 @@ export function MabaDashboard() {
       setIsSubmittingCheckin(null);
       setFeedbackMsg({ type: 'success', text: 'Presensi berhasil dicatat! Status: ' + (res.data?.data?.status === 'present' ? 'Hadir' : 'Terlambat') });
       fetchData();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setIsSubmittingCheckin(null);
       setFeedbackMsg({ type: 'error', text: err.response?.data?.message || 'Presensi gagal dicatat' });
@@ -163,7 +158,6 @@ export function MabaDashboard() {
       handleCloseSubmit();
       setFeedbackMsg({ type: 'success', text: 'Tugas berhasil dikumpulkan!' });
       fetchData();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setIsUploadingSubmission(false);
       handleCloseSubmit();

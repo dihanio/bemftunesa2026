@@ -76,7 +76,6 @@ export function PanitiaDashboard() {
       setFeedbackMsg({ type: 'success', text: 'Sesi presensi berhasil dibuat!' });
       setShowCreateSession(false);
       fetchData();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setFeedbackMsg({ type: 'error', text: err.response?.data?.message || 'Gagal membuat sesi' });
     }
