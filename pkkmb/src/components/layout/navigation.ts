@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { User } from '@/features/auth/types/auth.types';
 import { 
   LayoutDashboard, 

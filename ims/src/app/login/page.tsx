@@ -57,21 +57,13 @@ function LoginContent() {
     <div className="w-full max-w-[400px] space-y-8">
       {/* Mobile Branding */}
       <div className="flex flex-col items-center text-center lg:hidden mb-8">
-        <div className="flex items-center gap-4 mb-6">
-          <Image 
-            src="/images/logo-bemft.png" 
-            alt="BEM FT" 
-            width={64} 
-            height={64} 
-            className="object-contain" 
-          />
-          <Image 
-            src="/images/logo-kabinet.png" 
-            alt="Kabinet" 
-            width={64} 
-            height={64} 
-            className="object-contain" 
-          />
+        <div className="flex items-center gap-4 mb-3">
+          <Image src="/images/logo-bemft.png" alt="BEM FT" width={56} height={56} className="object-contain" />
+          <Image src="/images/logo-kabinet.png" alt="Kabinet" width={56} height={56} className="object-contain" />
+        </div>
+        <div className="flex flex-col items-center mb-6">
+          <span className="font-bold tracking-wide text-sm text-ink leading-none mb-1">BEM FT UNESA</span>
+          <span className="font-semibold text-[10px] text-ink-muted tracking-widest leading-none">KABINET DANADYAKSA</span>
         </div>
         <h1 className="text-3xl font-extrabold text-ink tracking-tight">IMS Portal</h1>
       </div>

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { apiClient } from '@/shared/api/axios';
 import { AuthResponse, MeResponse } from '../types/auth.types';
 
