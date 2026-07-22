@@ -151,7 +151,10 @@ export default function LoginPage() {
               className="object-contain" 
             />
             <div className="w-[1px] h-8 bg-white/20 mx-2" />
-            <span className="font-semibold tracking-wide text-sm text-white/90">BEM FT UNESA</span>
+            <div className="flex flex-col justify-center">
+              <span className="font-bold tracking-wide text-sm text-white/90 leading-none mb-1">BEM FT UNESA</span>
+              <span className="font-semibold text-[10px] text-white/60 tracking-widest leading-none">KABINET DANADYAKSA</span>
+            </div>
           </div>
         </div>
 
