@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // output: "standalone", // Uncomment for Docker deployment
+  output: "standalone",
   images: {
     remotePatterns: [
       {
