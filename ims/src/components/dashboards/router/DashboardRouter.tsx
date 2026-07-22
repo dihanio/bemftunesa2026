@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDashboardContext } from '../provider/DashboardProvider';
 import { getDashboardConfig } from '../../../config/dashboard-registry';
 import { composeDashboard } from '../../../core/dashboard/widget-composer';

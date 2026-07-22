@@ -44,7 +44,7 @@ export function LetterFormModal({ isOpen, onClose, onSubmit, initialData, isSubm
         });
       } else if (isOpen) {
         setFormData({
-          type: "internal",
+          type: "incoming",
           subject: "",
           sender: "BEM FT UNESA",
           recipient: "",
