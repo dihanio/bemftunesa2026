@@ -218,7 +218,7 @@ export function PanitiaDashboard() {
                 <p className="text-sm text-foreground/50">Beri nilai pada pengumpulan tugas maba.</p>
               </div>
 
-              <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl bg-secondary/30">
+              <div className="text-center py-12 border border-dashed border-white/10 rounded-xl bg-secondary/30">
                 <ClipboardList className="h-10 w-10 text-foreground/20 mx-auto mb-3" />
                 <p className="text-foreground/50">Modul penilaian sedang disinkronisasi dengan backend.</p>
                 <p className="text-xs text-foreground/40 mt-1">Endpoint untuk mengambil daftar submission panitia belum tersedia di API.</p>
