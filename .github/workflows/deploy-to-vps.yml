@@ -3,6 +3,18 @@ name: Deploy to VPS (orchestrator)
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'ims/**'
+      - 'pkkmb/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'turbo.json'
+      - 'docker-compose.yml'
+      - 'scripts/deploy/**'
+      - '.github/workflows/deploy-to-vps.yml'
   workflow_dispatch: {}
 
 jobs:

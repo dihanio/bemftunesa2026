@@ -58,9 +58,11 @@ fi
 
 log "Running incremental build with turbo since: ${TURBO_SINCE:-full}"
 if [ -n "$TURBO_SINCE" ]; then
+  npx turbo run build --cache-dir="$CACHE_DIR/.turbo" --filter="...[$TURBO_SINCE]" --dry-run=json > build-plan.json
   npx turbo run build --cache-dir="$CACHE_DIR/.turbo" --filter="...[$TURBO_SINCE]" | tee build-output.log
   BUILD_EXIT=${PIPESTATUS[0]}
 else
+  npx turbo run build --cache-dir="$CACHE_DIR/.turbo" --dry-run=json > build-plan.json
   npx turbo run build --cache-dir="$CACHE_DIR/.turbo" | tee build-output.log
   BUILD_EXIT=${PIPESTATUS[0]}
 fi
@@ -71,17 +73,17 @@ if [ "$BUILD_EXIT" -ne 0 ]; then
   exit 1
 fi
 
-# parse changed packages from turbo output or git diff
-CHANGED_PKGS=$(jq -r '.projects[]? // empty' build-output.json 2>/dev/null || true)
+# parse changed packages from turbo dry-run json output
+CHANGED_PKGS=$(jq -r '.tasks[].package' build-plan.json 2>/dev/null | sort -u | sed 's/^@bemft\///' || true)
+
 if [ -z "$CHANGED_PKGS" ]; then
-  # fallback to git diff
+  # fallback to git diff if turbo json was empty or failed
   if [ -n "$PREV_SHA" ]; then
     CHANGED_FILES=$(git diff --name-only $PREV_SHA $TARGET_SHA)
   else
     CHANGED_FILES=$(git ls-tree -r --name-only HEAD)
   fi
-  CHANGED_PKGS=$(printf "%s
-" "$CHANGED_FILES" | awk -F/ '{print $1}' | sort -u)
+  CHANGED_PKGS=$(printf "%s\n" "$CHANGED_FILES" | awk -F/ '{print $1}' | sort -u)
 fi
 
 log "Changed packages:
