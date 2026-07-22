@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AspirationsService } from './aspirations.service';
 import { Aspiration } from '../schemas/aspiration.schema';
 
@@ -18,6 +19,12 @@ describe('AspirationsService', () => {
             create: jest.fn(),
             findByIdAndUpdate: jest.fn(),
             findByIdAndDelete: jest.fn(),
+          },
+        },
+        {
+          provide: EventEmitter2,
+          useValue: {
+            emit: jest.fn(),
           },
         },
       ],
