@@ -49,7 +49,7 @@ export function FormInput({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className={`w-full ${Icon ? "pl-10" : "px-4.5"} py-3 rounded-xl bg-slate-800/60 border ${
+          className={`w-full ${Icon ? "pl-10" : "px-4.5"} py-3 rounded-xl bg-black/5 dark:bg-slate-800/60 border ${
             error ? "border-rose-500/60 focus:border-rose-500" : "border-accent-blue/15 focus:border-accent-blue/40"
           } text-sm text-foreground placeholder:text-foreground/40 focus:outline-none transition-colors`}
         />
