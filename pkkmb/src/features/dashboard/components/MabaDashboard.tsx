@@ -3,14 +3,22 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { apiClient } from '@/shared/api/axios';
-import { Loader2, Calendar, FileText, CheckCircle, AlertTriangle, ChevronRight, Trophy, Megaphone } from 'lucide-react';
+import { Loader2, Calendar, AlertTriangle, ChevronRight, Trophy, Megaphone, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { PkkmbProgressCard } from './cards/PkkmbProgressCard';
 import { NextActionCard } from './cards/NextActionCard';
 
+interface DashboardData {
+  progress: { percent: number };
+  announcements: { _id: string; title: string; content: string; isPriority: boolean }[];
+  upcomingSchedules: { _id: string; name: string; startTime: string; endTime: string }[];
+  tasks: { graded: number; total: number };
+  nextAction: unknown;
+}
+
 export function MabaDashboard() {
   const { user: maba } = useAuthStore();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [isFetchingData, setIsFetchingData] = useState(true);
 
   useEffect(() => {
@@ -47,7 +55,7 @@ export function MabaDashboard() {
     );
   }
 
-  const { progress, announcements, upcomingSchedules, tasks, attendance, nextAction } = data;
+  const { progress, announcements, upcomingSchedules, tasks, nextAction } = data;
   const isLulus = progress.percent === 100 && tasks.graded === tasks.total && tasks.total > 0;
 
   return (
@@ -120,7 +128,7 @@ export function MabaDashboard() {
               {announcements?.length === 0 ? (
                 <p className="text-sm text-foreground/40 text-center py-4">Belum ada pengumuman.</p>
               ) : (
-                announcements?.map((ann: any) => (
+                announcements?.map((ann) => (
                   <div key={ann._id} className="p-3 rounded-xl bg-black/20 border border-white/5">
                     {ann.isPriority && <div className="text-[10px] font-bold text-accent-gold uppercase mb-1">Penting</div>}
                     <div className="text-sm font-semibold mb-1 line-clamp-1">{ann.title}</div>
@@ -147,7 +155,7 @@ export function MabaDashboard() {
               {upcomingSchedules?.length === 0 ? (
                 <p className="text-sm text-foreground/40 text-center py-4">Belum ada jadwal terdekat.</p>
               ) : (
-                upcomingSchedules?.map((sched: any) => (
+                upcomingSchedules?.map((sched) => (
                   <div key={sched._id} className="p-3 rounded-xl bg-black/20 border border-white/5 flex gap-3">
                     <div className="flex flex-col items-center justify-center p-2 bg-blue-500/10 text-blue-400 rounded-lg min-w-[50px]">
                       <span className="text-lg font-bold leading-none">{new Date(sched.startTime).getDate()}</span>

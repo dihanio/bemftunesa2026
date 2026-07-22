@@ -3,13 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { apiClient } from '@/shared/api/axios';
-import { FileText, Calendar, Upload, Award, ExternalLink, Loader2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 
 export default function TasksPage() {
   // Migrate logic from MabaDashboard for Tasks
   const { user } = useAuthStore();
-  const [assignments, setAssignments] = useState<any[]>([]);
-  const [submissions, setSubmissions] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(true);
 
   // TODO: Add Modal state and functions
@@ -18,12 +16,10 @@ export default function TasksPage() {
     if (!user) return;
     const fetchData = async () => {
       try {
-        const [assignmentsRes, submissionsRes] = await Promise.all([
+        await Promise.all([
           apiClient.get('/pkkmb/tasks'),
           apiClient.get('/pkkmb/tasks/my-submissions'),
         ]);
-        setAssignments(assignmentsRes.data?.data || []);
-        setSubmissions(submissionsRes.data?.data || []);
       } catch (err) {
         console.error(err);
       }

@@ -5,7 +5,6 @@ import { redirect } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { MabaDashboard } from '@/features/dashboard/components/MabaDashboard';
 import { PanitiaDashboard } from '@/features/dashboard/components/PanitiaDashboard';
-import { AdminDashboard } from '@/features/dashboard/components/AdminDashboard';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {

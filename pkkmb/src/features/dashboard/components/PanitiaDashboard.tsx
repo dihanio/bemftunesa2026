@@ -3,14 +3,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { apiClient } from '@/shared/api/axios';
-import { Loader2, AlertTriangle, Users, ChevronRight, Calendar } from 'lucide-react';
+import { Loader2, AlertTriangle, Users, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { MonitoringSummaryCard } from './cards/MonitoringSummaryCard';
 import { ActivityTimeline } from './cards/ActivityTimeline';
 
+interface PanitiaData {
+  activeGroup?: unknown;
+  monitoringStats?: { totalMaba: number; present: number; late: number; absent: number };
+  upcomingSchedules?: unknown[];
+}
+
 export function PanitiaDashboard() {
   const { user } = useAuthStore();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<PanitiaData | null>(null);
   const [isFetching, setIsFetching] = useState(true);
 
   const fetchData = useCallback(async () => {

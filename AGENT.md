@@ -1,7 +1,9 @@
 # Agent Guidelines
 
 1. **Auto Commit & Push:** Setiap kali ada perubahan kode atau konfigurasi yang berhasil diimplementasikan dan diverifikasi, AI agent WAJIB langsung melakukan `git commit` dan `git push` ke repository secara otomatis tanpa harus diminta.
-
+2. **Pre-Commit Verification:** Sebelum melakukan `git commit`, agent WAJIB menjalankan `npm run lint` (jika tersedia) di direktori terkait (misal di folder `pkkmb` atau `backend`) untuk memastikan tidak ada error *linting* (seperti unused variables, implicit any, dsb).
+3. **No Unused Variables/Imports:** Bersihkan semua *import* atau variabel yang didefinisikan namun tidak pernah digunakan.
+4. **No Console Logs:** Hapus `console.log` yang tidak perlu sebelum *commit*.
 ---
 
 # TypeScript Type Safety Policy (Mandatory)

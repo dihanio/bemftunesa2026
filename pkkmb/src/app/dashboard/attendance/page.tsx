@@ -3,24 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { apiClient } from '@/shared/api/axios';
-import { CheckCircle, Clock, MapPin, QrCode, Calendar, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
 
 export default function AttendancePage() {
   const { user } = useAuthStore();
-  const [events, setEvents] = useState<any[]>([]);
-  const [logs, setLogs] = useState<any[]>([]);
   const [isFetchingData, setIsFetchingData] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
       try {
-        const [eventsRes, logsRes] = await Promise.all([
+        await Promise.all([
           apiClient.get('/pkkmb/attendance/sessions'),
           apiClient.get('/pkkmb/attendance/my-logs'),
         ]);
-        setEvents(eventsRes.data?.data || []);
-        setLogs(logsRes.data?.data || []);
       } catch (err) {
         console.error(err);
       }

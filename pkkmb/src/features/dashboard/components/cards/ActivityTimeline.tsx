@@ -1,8 +1,15 @@
 import React from 'react';
 import { Calendar, Clock } from 'lucide-react';
 
+interface ScheduleItem {
+  _id?: string;
+  name: string;
+  startTime: string;
+  location?: string;
+}
+
 interface ActivityTimelineProps {
-  schedules: any[];
+  schedules: ScheduleItem[];
 }
 
 export function ActivityTimeline({ schedules }: ActivityTimelineProps) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
@@ -24,20 +24,9 @@ export function AppSidebar() {
     return href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
   };
 
-  // Initialize expanded state based on active path
-  useEffect(() => {
-    const initialExpanded: Record<string, boolean> = {};
-    navItems.forEach(item => {
-      if (item.children && isActive(item.href)) {
-        initialExpanded[item.href] = true;
-      }
-    });
-    setExpanded(prev => ({ ...prev, ...initialExpanded }));
-  }, [pathname, navItems]);
-
   const toggleExpand = (href: string) => {
     if (isCollapsed) setIsCollapsed(false); // Auto expand sidebar if trying to open menu
-    setExpanded(prev => ({ ...prev, [href]: !prev[href] }));
+    setExpanded(prev => ({ ...prev, [href]: !(prev[href] ?? isActive(href)) }));
   };
 
   return (
@@ -70,7 +59,7 @@ export function AppSidebar() {
           const active = isActive(item.href);
           const Icon = item.icon;
           const hasChildren = item.children && item.children.length > 0;
-          const isExpanded = expanded[item.href];
+          const isExpanded = expanded[item.href] ?? active;
 
           return (
             <div key={item.href} className="space-y-1">
