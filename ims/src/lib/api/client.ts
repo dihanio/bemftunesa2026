@@ -1,7 +1,7 @@
 // Base API client configuration and core fetch methods
 import { ApiError } from './error';
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL as string;
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:4000/api/v1' : 'https://api.bemftunesa.org/api/v1');
 
 export interface ApiResponse<T> {
   data: T;
