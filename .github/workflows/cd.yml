@@ -17,14 +17,20 @@ jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          envs: GITHUB_TOKEN
           command_timeout: 30m
           script: |
             set -e
@@ -33,8 +39,10 @@ jobs:
             echo "Pulling latest code for docker-compose.yml..."
             git pull origin main
             
+            echo "Authenticating with GHCR..."
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
             echo "Pulling new container images from GHCR..."
-            # Note: the VPS must have run 'docker login ghcr.io' beforehand.
             docker compose pull
             
             echo "Restarting containers with zero-downtime rolling update..."
