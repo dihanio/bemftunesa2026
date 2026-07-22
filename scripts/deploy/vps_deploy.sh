@@ -62,7 +62,7 @@ fi
 
 log "Running incremental build with turbo since: ${TURBO_SINCE:-full}"
 if [ -n "$TURBO_SINCE" ]; then
-  npx turbo run build --since=$TURBO_SINCE | tee build-output.log
+  npx turbo run build --filter="...[$TURBO_SINCE]" | tee build-output.log
   BUILD_EXIT=${PIPESTATUS[0]}
 else
   npx turbo run build | tee build-output.log
