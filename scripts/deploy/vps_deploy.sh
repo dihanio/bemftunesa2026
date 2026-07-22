@@ -110,6 +110,9 @@ fi
 
 log "Services to restart: ${SERVICES_TO_RESTART[*]}"
 
+# ensure .env exists to prevent docker compose env_file error
+touch .env
+
 # restart services via docker-compose
 for svc in "${SERVICES_TO_RESTART[@]}"; do
   log "Rebuilding and restarting service: $svc"
