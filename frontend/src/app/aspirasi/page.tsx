@@ -125,7 +125,7 @@ export default function AspirasiPage() {
       case "process":
         return "text-accent-gold border-accent-gold/30 bg-accent-gold/10";
       default:
-        return "text-foreground/50 border-accent-blue/10 bg-slate-800/40 dark:bg-slate-800/5";
+        return "text-foreground/50 border-accent-blue/10 bg-black/5 dark:bg-slate-800/5";
     }
   };
 
@@ -163,19 +163,19 @@ export default function AspirasiPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mt-6 items-start">
         {/* Submit Form Area (7 Cols) */}
-        <section className="lg:col-span-7 glass-subtle border border-accent-blue/15 hover:border-accent-gold/30 rounded-3xl p-6 md:p-8">
+        <section className="lg:col-span-7 bg-white dark:bg-transparent shadow-sm dark:shadow-none glass-subtle border border-accent-blue/15 hover:border-accent-gold/30 rounded-3xl p-6 md:p-8">
           <h2 className="text-sm font-bold text-foreground uppercase tracking-widest border-b border-accent-blue/10 pb-4 mb-6">
             Formulir Pengaduan
           </h2>
 
           {submitSuccess ? (
-            <div className="p-8 text-center bg-slate-800/20 border border-accent-blue/40 rounded-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-300">
+            <div className="p-8 text-center bg-black/5 dark:bg-slate-800/20 border border-accent-blue/40 rounded-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-300">
               <CheckCircle className="w-12 h-12 text-accent-blue" />
               <h3 className="text-foreground font-extrabold text-lg">Aspirasi Berhasil Dikirim!</h3>
               <p className="text-xs text-foreground/85 leading-relaxed max-w-sm">
                 Aspirasi Anda telah masuk ke sistem database. Harap simpan ID Tiket di bawah ini untuk melacak status respon dari pengurus BEM.
               </p>
-              <div className="bg-slate-800/80 dark:bg-slate-800/10 border border-accent-blue/30 rounded-xl px-4 py-3 font-mono text-xs text-accent-gold select-all font-bold tracking-wider my-2">
+              <div className="bg-black/10 dark:bg-slate-800/10 border border-accent-blue/30 rounded-xl px-4 py-3 font-mono text-xs text-accent-gold select-all font-bold tracking-wider my-2">
                 {submitSuccess}
               </div>
               <button
@@ -263,7 +263,7 @@ export default function AspirasiPage() {
         {/* Tracker Area (5 Cols) */}
         <section className="lg:col-span-5 flex flex-col gap-8">
           {/* Tracker box */}
-          <div className="glass-active border border-accent-blue/15 rounded-3xl p-6 md:p-8">
+          <div className="bg-white dark:bg-transparent shadow-sm dark:shadow-none glass-active border border-accent-blue/15 rounded-3xl p-6 md:p-8">
             <h2 className="text-xs font-semibold text-accent-gold uppercase tracking-wide border-b border-accent-blue/15 pb-3 mb-6">
               Track Aspiration Ticket
             </h2>
@@ -278,7 +278,7 @@ export default function AspirasiPage() {
                     value={trackingId}
                     onChange={(e) => setTrackingId(e.target.value)}
                     placeholder="Cth: 65cb68d..."
-                    className="flex-grow px-4.5 py-3 rounded-xl bg-slate-800/60 border border-accent-blue/15 text-xs text-foreground placeholder-foreground/50 focus:outline-none focus:border-accent-gold transition-colors"
+                    className="flex-grow px-4.5 py-3 rounded-xl bg-black/5 dark:bg-slate-800/60 border border-accent-blue/15 text-xs text-foreground placeholder-foreground/50 focus:outline-none focus:border-accent-gold transition-colors"
                   />
                   <button
                     type="submit"
@@ -314,7 +314,7 @@ export default function AspirasiPage() {
                     </span>
                   </div>
 
-                  <div className="flex flex-col gap-3 p-4 rounded-xl bg-slate-800/60 border border-accent-blue/10">
+                  <div className="flex flex-col gap-3 p-4 rounded-xl bg-black/5 dark:bg-slate-800/60 border border-accent-blue/10">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-xs text-foreground/50">SUBJEK PENGADUAN</span>
                       <span className="text-xs text-foreground font-bold">{trackedData.subject || "No Subject"}</span>
@@ -328,7 +328,7 @@ export default function AspirasiPage() {
                   {/* BEM Response */}
                   <div className="flex flex-col gap-2">
                     <span className="text-xs font-semibold text-accent-gold uppercase tracking-widest">Respon Fungsionaris BEM</span>
-                    <div className="p-4.5 rounded-xl bg-slate-800/20 border border-accent-blue/20 text-xs text-foreground/80 leading-relaxed min-h-[60px]">
+                    <div className="p-4.5 rounded-xl bg-black/5 dark:bg-slate-800/20 border border-accent-blue/20 text-xs text-foreground/80 leading-relaxed min-h-[60px]">
                       {trackedData.response ? (
                         <p>{trackedData.response}</p>
                       ) : (
