@@ -56,7 +56,10 @@ export class Aspiration {
   @Prop()
   resolutionDate: Date;
 
-  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Document' }], default: [] })
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Document' }],
+    default: [],
+  })
   attachments: MongooseSchema.Types.ObjectId[];
 
   @Prop()

@@ -1,8 +1,16 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Program, ProgramDocument } from '../schemas/program.schema';
-import { CreateProgramDto, UpdateProgramDto, QueryProgramDto } from './dto/program.dto';
+import {
+  CreateProgramDto,
+  UpdateProgramDto,
+  QueryProgramDto,
+} from './dto/program.dto';
 
 @Injectable()
 export class ProgramsService {
@@ -12,7 +20,8 @@ export class ProgramsService {
 
   async findAll(query: QueryProgramDto) {
     const filter: Record<string, unknown> = { deletedAt: { $exists: false } };
-    if (query.department) filter.department = new Types.ObjectId(query.department);
+    if (query.department)
+      filter.department = new Types.ObjectId(query.department);
     if (query.status) filter.status = query.status;
     if (query.cabinetPeriod) filter.cabinetPeriod = query.cabinetPeriod;
 
@@ -22,7 +31,7 @@ export class ProgramsService {
       .populate('department', 'name')
       .sort({ createdAt: -1 })
       .exec();
-    
+
     return { data };
   }
 
@@ -48,7 +57,15 @@ export class ProgramsService {
     return program;
   }
 
-  async update(id: string, dto: UpdateProgramDto, user?: { _id?: { toString(): string }, role?: { slug?: string }, department?: { toString(): string } }) {
+  async update(
+    id: string,
+    dto: UpdateProgramDto,
+    user?: {
+      _id?: { toString(): string };
+      role?: { slug?: string };
+      department?: { toString(): string };
+    },
+  ) {
     const program = await this.findById(id);
 
     // Permission check: super-admin, kabem, PIC, or kadep of same department
@@ -56,22 +73,39 @@ export class ProgramsService {
       const roleSlug = user.role?.slug || '';
       const userId = user._id?.toString();
       const allowedRoles = ['super-admin', 'kabem'];
-      const isPic = program.pic && program.pic.toString() === userId;
+      const isPic =
+        program.pic &&
+        (program.pic as { toString(): string })?.toString() === userId;
       const isKadepSameDept =
         roleSlug === 'kadep' &&
         user.department &&
         program.department &&
-        user.department.toString() === program.department.toString();
+        user.department?.toString() ===
+          (program.department as { toString(): string })?.toString();
 
       if (!allowedRoles.includes(roleSlug) && !isPic && !isKadepSameDept) {
-        throw new ForbiddenException('Anda tidak memiliki akses untuk mengedit proker ini');
+        throw new ForbiddenException(
+          'Anda tidak memiliki akses untuk mengedit proker ini',
+        );
       }
     }
 
-    if (dto.pic) program.pic = new Types.ObjectId(dto.pic) as unknown as typeof program.pic;
-    if (dto.tor) program.tor = new Types.ObjectId(dto.tor) as unknown as typeof program.tor;
-    if (dto.proposal) program.proposal = new Types.ObjectId(dto.proposal) as unknown as typeof program.proposal;
-    if (dto.lpj) program.lpj = new Types.ObjectId(dto.lpj) as unknown as typeof program.lpj;
+    if (dto.pic)
+      program.pic = new Types.ObjectId(
+        dto.pic,
+      ) as unknown as typeof program.pic;
+    if (dto.tor)
+      program.tor = new Types.ObjectId(
+        dto.tor,
+      ) as unknown as typeof program.tor;
+    if (dto.proposal)
+      program.proposal = new Types.ObjectId(
+        dto.proposal,
+      ) as unknown as typeof program.proposal;
+    if (dto.lpj)
+      program.lpj = new Types.ObjectId(
+        dto.lpj,
+      ) as unknown as typeof program.lpj;
 
     Object.assign(program, {
       ...dto,
@@ -95,17 +129,38 @@ export class ProgramsService {
 
   async getStats() {
     const filter = { deletedAt: { $exists: false } };
-    
+
     const total = await this.programModel.countDocuments(filter);
-    const planning = await this.programModel.countDocuments({ ...filter, status: 'planning' });
-    const active = await this.programModel.countDocuments({ ...filter, status: 'active' });
-    const completed = await this.programModel.countDocuments({ ...filter, status: 'completed' });
-    
+    const planning = await this.programModel.countDocuments({
+      ...filter,
+      status: 'planning',
+    });
+    const active = await this.programModel.countDocuments({
+      ...filter,
+      status: 'active',
+    });
+    const completed = await this.programModel.countDocuments({
+      ...filter,
+      status: 'completed',
+    });
+
     return {
       total: { label: 'Total Proker', value: total },
-      planning: { label: 'Perencanaan', value: planning, color: 'warning' as const },
-      active: { label: 'Sedang Berjalan', value: active, color: 'primary' as const },
-      completed: { label: 'Selesai', value: completed, color: 'success' as const },
+      planning: {
+        label: 'Perencanaan',
+        value: planning,
+        color: 'warning' as const,
+      },
+      active: {
+        label: 'Sedang Berjalan',
+        value: active,
+        color: 'primary' as const,
+      },
+      completed: {
+        label: 'Selesai',
+        value: completed,
+        color: 'success' as const,
+      },
     };
   }
 }

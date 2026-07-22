@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import ImsApiService, { API_BASE_URL } from "@/lib/api";
 import { FileText, Plus, Loader2, Calendar, Award, ExternalLink, Edit3, Eye, ClipboardCheck, Download } from "lucide-react";
@@ -61,7 +61,7 @@ export default function PkkmbTugasPage() {
   const [gradeFeedback, setGradeFeedback] = useState("");
   const [isGrading, setIsGrading] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await ImsApiService.getPkkmbAssignments<PkkmbAssignment>();
@@ -73,11 +73,14 @@ export default function PkkmbTugasPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchData]);
 
   const handleOpenCreate = () => {
     setIsEditing(false);

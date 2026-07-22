@@ -9,36 +9,47 @@ export class MailListener {
   constructor(private readonly mailService: MailService) {}
 
   @OnEvent('applicant.created')
-  handleApplicantCreated(payload: { email: string; name: string }) {
+  async handleApplicantCreated(payload: { email: string; name: string }) {
     this.logger.log(`Handling applicant.created event for ${payload.email}`);
-    this.mailService.sendMail(
+    await this.mailService.sendMail(
       payload.email,
       'Welcome to BEM FT UNESA Recruitment',
       'welcome', // welcome.hbs
       {
         name: payload.name,
-      }
+      },
     );
   }
 
   @OnEvent('applicant.status.updated')
-  handleApplicantStatusUpdated(payload: { email: string; name: string; status: string }) {
-    this.logger.log(`Handling applicant.status.updated event for ${payload.email}`);
-    this.mailService.sendMail(
+  async handleApplicantStatusUpdated(payload: {
+    email: string;
+    name: string;
+    status: string;
+  }) {
+    this.logger.log(
+      `Handling applicant.status.updated event for ${payload.email}`,
+    );
+    await this.mailService.sendMail(
       payload.email,
       'Update on Your Application Status',
       'status-update', // status-update.hbs
       {
         name: payload.name,
         status: payload.status,
-      }
+      },
     );
   }
 
   @OnEvent('aspiration.responded')
-  handleAspirationResponded(payload: { email: string; name: string; subject: string; response: string }) {
+  async handleAspirationResponded(payload: {
+    email: string;
+    name: string;
+    subject: string;
+    response: string;
+  }) {
     this.logger.log(`Handling aspiration.responded event for ${payload.email}`);
-    this.mailService.sendMail(
+    await this.mailService.sendMail(
       payload.email,
       'Response to Your Aspiration',
       'aspiration-response', // aspiration-response.hbs
@@ -46,7 +57,7 @@ export class MailListener {
         name: payload.name,
         subject: payload.subject,
         response: payload.response,
-      }
+      },
     );
   }
 }

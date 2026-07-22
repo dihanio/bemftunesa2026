@@ -2,7 +2,6 @@ import { Module, Global } from '@nestjs/common';
 import { MailService } from './mail.service';
 import { MailListener } from './mail.listener';
 import { MailerModule } from '@nestjs-modules/mailer';
-// @ts-ignore
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService from "@/lib/api";
@@ -79,7 +79,7 @@ export default function AspirasiMahasiswaPage() {
     officialResponse: "",
   });
 
-  const loadDepartments = async () => {
+  const loadDepartments = useCallback(async () => {
     try {
       const res = await ImsApiService.getDepartments<Department>();
       if (res?.data) {
@@ -88,9 +88,9 @@ export default function AspirasiMahasiswaPage() {
     } catch (err) {
       console.error("Failed to load departments:", err);
     }
-  };
+  }, []);
 
-  const loadAspirations = async () => {
+  const loadAspirations = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -122,15 +122,21 @@ export default function AspirasiMahasiswaPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadDepartments();
-  }, []);
-
-  useEffect(() => {
-    loadAspirations();
   }, [selectedStatus, selectedUrgency, dssMode]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadDepartments();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadDepartments]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadAspirations();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadAspirations]);
 
   // Client-side search
   const filteredAspirations = aspirations.filter((asp) => {

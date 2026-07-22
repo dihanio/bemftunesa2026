@@ -50,7 +50,7 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
     // Database
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
       }),
       inject: [ConfigService],
@@ -59,7 +59,7 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
     // Background Jobs (BullMQ)
     BullModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         connection: {
           host: configService.get<string>('REDIS_HOST', 'localhost'),
           port: configService.get<number>('REDIS_PORT', 6379),
@@ -103,8 +103,6 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(RequestIdMiddleware, LoggingMiddleware)
-      .forRoutes('*');
+    consumer.apply(RequestIdMiddleware, LoggingMiddleware).forRoutes('*');
   }
 }

@@ -3,7 +3,6 @@ import { getModelToken } from '@nestjs/mongoose';
 import { BadRequestException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from '../schemas/user.schema';
-import { Role } from '../schemas/role.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { validate } from 'class-validator';
 

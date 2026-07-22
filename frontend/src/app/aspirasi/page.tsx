@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { PublicApiService } from "@/lib/api";
 import { FormInput, FormTextarea, FormSelect } from "@/components/ui";
-import { Send, Eye, FileText, CheckCircle, AlertTriangle, HelpCircle } from "lucide-react";
+import { Send, Eye, CheckCircle, AlertTriangle, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AspirasiPage() {
@@ -24,7 +24,7 @@ export default function AspirasiPage() {
   // Tracking State
   const [trackingId, setTrackingId] = useState("");
   const [trackingLoading, setTrackingLoading] = useState(false);
-  const [trackedData, setTrackedData] = useState<any | null>(null);
+  const [trackedData, setTrackedData] = useState<{ _id: string; status: string; category: string; createdAt: string; subject: string; message: string; response?: string } | null>(null);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
   const categories = ["Akademik", "Fasilitas", "Kesejahteraan", "Birokrasi", "Lainnya"];

@@ -4,20 +4,20 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { PublicApiService } from "@/lib/api";
-import { Users, Calendar, ArrowRight, ExternalLink, ShieldCheck, Clock, MapPin } from "lucide-react";
+import { PublicApiService, RecruitmentItem } from "@/lib/api";
+import { Users, Calendar, ArrowRight, ExternalLink, ShieldCheck } from "lucide-react";
 
 export default function OprecPage() {
-  const [recruitments, setRecruitments] = useState<any[]>([]);
+  const [recruitments, setRecruitments] = useState<RecruitmentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecruitments = async () => {
       try {
         const res = await PublicApiService.getRecruitments();
-        // sort: put "open" first, then others
-        const data = res?.data?.data?.data || res?.data?.data || res?.data || (Array.isArray(res) ? res : []);
-        const sorted = data.sort((a: any, b: any) => {
+        const resData = res?.data as unknown;
+        const unwrapped = Array.isArray(resData) ? resData : (resData as {data?: RecruitmentItem[]})?.data || (res as unknown as {data?: RecruitmentItem[]})?.data || [];
+        const sorted = (Array.isArray(unwrapped) ? unwrapped : []).sort((a: RecruitmentItem, b: RecruitmentItem) => {
           if (a.status === "open" && b.status !== "open") return -1;
           if (a.status !== "open" && b.status === "open") return 1;
           return 0;
@@ -84,12 +84,12 @@ export default function OprecPage() {
         </div>
       ) : recruitments.length > 0 ? (
         <div className="grid grid-cols-1 gap-6">
-          {recruitments.map((rec: any) => {
-            const isOpen = rec.status === "open" && new Date(rec.closeDate) >= new Date();
+          {recruitments.map((rec: RecruitmentItem) => {
+            const isOpen = rec.status === "open" && new Date(String(rec.closeDate)) >= new Date();
             
             return (
               <div 
-                key={rec._id}
+                key={String(rec._id)}
                 className="glass-active border border-accent-blue/20 hover:border-accent-gold/40 rounded-3xl p-6 md:p-8 transition-all duration-300 flex flex-col md:flex-row gap-8 group"
               >
                 {/* Poster Thumbnail */}

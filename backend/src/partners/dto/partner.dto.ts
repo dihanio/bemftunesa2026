@@ -1,24 +1,35 @@
 import {
-  IsString, IsOptional, IsBoolean, IsNumber,
-  IsEnum, IsUrl, MaxLength, MinLength,
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  IsEnum,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { PaginationQueryDto } from '../../common/dto/pagination.dto';
 
 export class CreatePartnerDto {
-  @IsString() @MinLength(2) @MaxLength(100)
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
   name: string;
 
-  @IsString() @MinLength(2)
+  @IsString()
+  @MinLength(2)
   slug: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   logo?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   website?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @IsOptional()
@@ -29,28 +40,35 @@ export class CreatePartnerDto {
   @IsEnum(['platinum', 'gold', 'silver', 'bronze'])
   tier?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   period?: string;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   order?: number;
 }
 
 export class UpdatePartnerDto extends PartialType(CreatePartnerDto) {}
 
 export class PartnerQueryDto extends PaginationQueryDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   q?: string;
 
-  @IsOptional() @IsEnum(['partner', 'sponsor', 'media_partner', 'supporter'])
+  @IsOptional()
+  @IsEnum(['partner', 'sponsor', 'media_partner', 'supporter'])
   type?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   period?: string;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 }

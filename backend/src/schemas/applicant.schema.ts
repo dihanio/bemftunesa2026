@@ -90,7 +90,11 @@ export class StatusHistoryEntry {
 
 @Schema({ timestamps: true, collection: 'applicants' })
 export class Applicant {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Recruitment', required: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Recruitment',
+    required: true,
+  })
   recruitmentId: Types.ObjectId;
 
   // ── Data Wajib ──

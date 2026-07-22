@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { PublicApiService } from "@/lib/api";
+import { PublicApiService, GalleryItem } from "@/lib/api";
 import { Calendar, ArrowLeft, MapPin, Download, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -11,7 +11,7 @@ import Image from "next/image";
 export default function AlbumDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [album, setAlbum] = useState<any>(null);
+  const [album, setAlbum] = useState<GalleryItem & { location?: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
@@ -19,9 +19,10 @@ export default function AlbumDetailPage() {
     const fetchAlbum = async () => {
       try {
         const res = await PublicApiService.getGalleryBySlug(params.slug as string);
-        const albumData = res?.data?.data || res?.data || res;
-        if (albumData && albumData._id) {
-          setAlbum(albumData);
+        const resData = res?.data as unknown;
+        const albumData = (resData as {data?: GalleryItem & { location?: string }})?.data || resData || res;
+        if (albumData && typeof albumData === 'object' && '_id' in albumData) {
+          setAlbum(albumData as GalleryItem);
         } else {
           router.push("/galeri");
         }
@@ -100,8 +101,8 @@ export default function AlbumDetailPage() {
 
       {album.photos && album.photos.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {album.photos.map((photo: any, index: number) => {
-            const imgUrl = typeof photo === 'string' ? photo : (photo.url || photo.mediaId?.url);
+          {album.photos.map((photo, index: number) => {
+            const imgUrl = typeof photo === 'string' ? photo : ((photo as {url?: string}).url || (photo as {mediaId?: {url?: string}}).mediaId?.url);
             if (!imgUrl) return null;
             
             return (

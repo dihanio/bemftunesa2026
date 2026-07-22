@@ -90,7 +90,12 @@ export default function KepanitiaaanPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchAll();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchAll]);
 
   const handleCreate = async () => {
     if (!newProgramId || !newName) return;
@@ -198,7 +203,7 @@ export default function KepanitiaaanPage() {
           <div className="text-center py-16 text-ink-subtle bg-surface-1 rounded-xl border border-hairline flex flex-col items-center justify-center">
             <ClipboardList size={40} className="mb-3 opacity-40 text-ink-tertiary" />
             <p className="m-0 font-medium text-ink">Belum ada kepanitiaan</p>
-            <p className="text-sm mt-1 text-ink-muted">Klik "Buat Kepanitiaan" untuk menambahkan.</p>
+            <p className="text-sm mt-1 text-ink-muted">Klik &quot;Buat Kepanitiaan&quot; untuk menambahkan.</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -252,7 +257,7 @@ export default function KepanitiaaanPage() {
 
                       {c.members.length === 0 ? (
                         <div className="text-sm text-ink-subtle py-4 border border-dashed border-hairline rounded-lg text-center mt-2 bg-surface-2">
-                          Belum ada anggota. Klik "Tambah" untuk menambahkan.
+                          Belum ada anggota. Klik &quot;Tambah&quot; untuk menambahkan.
                         </div>
                       ) : (
                         <div className="overflow-x-auto">

@@ -2,10 +2,9 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Content, ContentDocument } from '../schemas/content.schema';
 import {
   CreateContentDto,
@@ -19,9 +18,8 @@ import {
 } from '../common/dto/pagination.dto';
 import type { UserDocument } from '../schemas/user.schema';
 
-const toStr = (id: unknown): string => (id as { toString(): string }).toString();
-
-const PUBLISH_PERMITTED_STATUSES = ['published', 'archived'];
+const toStr = (id: unknown): string =>
+  (id as { toString(): string }).toString();
 
 @Injectable()
 export class ContentService {
@@ -45,8 +43,14 @@ export class ContentService {
     }
     if (query.from || query.to) {
       filter.publishedAt = {};
-      if (query.from) (filter.publishedAt as Record<string, unknown>).$gte = new Date(query.from);
-      if (query.to) (filter.publishedAt as Record<string, unknown>).$lte = new Date(query.to);
+      if (query.from)
+        (filter.publishedAt as Record<string, unknown>).$gte = new Date(
+          query.from,
+        );
+      if (query.to)
+        (filter.publishedAt as Record<string, unknown>).$lte = new Date(
+          query.to,
+        );
     }
 
     const [data, total] = await Promise.all([
@@ -88,7 +92,9 @@ export class ContentService {
       .findOne({ slug: dto.slug, type: dto.type })
       .exec();
     if (existing) {
-      throw new BadRequestException('Slug already exists for this content type');
+      throw new BadRequestException(
+        'Slug already exists for this content type',
+      );
     }
 
     const content = await this.contentModel.create({
@@ -106,15 +112,11 @@ export class ContentService {
     if (!content) throw new NotFoundException('Content not found');
 
     // Authors can only edit their own content
-    if (
-      (content.author as unknown as string).toString() !==
-      toStr(user._id)
-    ) {
+    if ((content.author as unknown as string).toString() !== toStr(user._id)) {
       // Check if the user has elevated permission (done via guard before reaching here)
       // For direct ownership check at service level, we skip if admin/editor
     }
 
-    const before = content.toObject();
     Object.assign(content, {
       ...dto,
       featuredImage: dto.featuredImage || content.featuredImage,
@@ -125,11 +127,10 @@ export class ContentService {
     return saved;
   }
 
-  async updateStatus(id: string, dto: UpdateContentStatusDto, user: UserDocument) {
+  async updateStatus(id: string, dto: UpdateContentStatusDto) {
     const content = await this.contentModel.findById(id).exec();
     if (!content) throw new NotFoundException('Content not found');
 
-    const oldStatus = content.status;
     content.status = dto.status;
 
     if (dto.status === 'published' && !content.publishedAt) {
@@ -141,7 +142,7 @@ export class ContentService {
     return saved;
   }
 
-  async delete(id: string, user: UserDocument) {
+  async delete(id: string) {
     const content = await this.contentModel.findById(id).exec();
     if (!content) throw new NotFoundException('Content not found');
 

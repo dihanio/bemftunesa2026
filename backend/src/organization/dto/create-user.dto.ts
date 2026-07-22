@@ -1,4 +1,10 @@
-import { IsEmail, IsNotEmpty, IsOptional, Matches, IsMongoId } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  Matches,
+  IsMongoId,
+} from 'class-validator';
 
 export class CreateUserDto {
   @IsNotEmpty({ message: 'Nama lengkap wajib diisi' })
@@ -6,7 +12,8 @@ export class CreateUserDto {
 
   @IsEmail({}, { message: 'Format email tidak valid' })
   @Matches(/^[a-zA-Z0-9._%+-]+@(mhs\.)?unesa\.ac\.id$/, {
-    message: 'Email harus menggunakan domain resmi Unesa (@mhs.unesa.ac.id atau @unesa.ac.id)',
+    message:
+      'Email harus menggunakan domain resmi Unesa (@mhs.unesa.ac.id atau @unesa.ac.id)',
   })
   email: string;
 

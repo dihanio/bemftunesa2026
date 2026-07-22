@@ -19,8 +19,6 @@ import { Contact, ContactSchema } from '../schemas/contact.schema';
       { name: Contact.name, schema: ContactSchema },
     ]),
   ],
-  controllers: [
-    PublicController,
-  ],
+  controllers: [PublicController],
 })
 export class PublicModule {}

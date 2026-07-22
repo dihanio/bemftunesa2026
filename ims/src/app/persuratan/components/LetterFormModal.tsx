@@ -28,33 +28,36 @@ export function LetterFormModal({ isOpen, onClose, onSubmit, initialData, isSubm
   });
 
   useEffect(() => {
-    if (initialData && isOpen) {
-      setFormData({
-        type: initialData.type,
-        subject: initialData.subject,
-        sender: initialData.sender,
-        recipient: initialData.recipient,
-        documentUrl: initialData.documentUrl || "",
-        status: initialData.status,
-        approvalNotes: initialData.approvalNotes || "",
-        deadlineDate: initialData.deadlineDate ? new Date(initialData.deadlineDate).toISOString().split('T')[0] : "",
-        impactScale: initialData.impactScale || "internal",
-        urgencyLevel: initialData.urgencyLevel || "normal",
-      });
-    } else if (isOpen) {
-      setFormData({
-        type: "outgoing",
-        subject: "",
-        sender: "BEM FT UNESA",
-        recipient: "",
-        documentUrl: "",
-        status: "draft",
-        approvalNotes: "",
-        deadlineDate: "",
-        impactScale: "internal",
-        urgencyLevel: "normal",
-      });
-    }
+    const timer = setTimeout(() => {
+      if (initialData && isOpen) {
+        setFormData({
+          type: initialData.type,
+          subject: initialData.subject,
+          sender: initialData.sender,
+          recipient: initialData.recipient,
+          documentUrl: initialData.documentUrl || "",
+          status: initialData.status,
+          approvalNotes: initialData.approvalNotes || "",
+          deadlineDate: initialData.deadlineDate ? new Date(initialData.deadlineDate).toISOString().split('T')[0] : "",
+          impactScale: initialData.impactScale || "internal",
+          urgencyLevel: initialData.urgencyLevel || "normal",
+        });
+      } else if (isOpen) {
+        setFormData({
+          type: "internal",
+          subject: "",
+          sender: "BEM FT UNESA",
+          recipient: "",
+          documentUrl: "",
+          status: "draft",
+          approvalNotes: "",
+          deadlineDate: "",
+          impactScale: "internal",
+          urgencyLevel: "normal",
+        });
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;

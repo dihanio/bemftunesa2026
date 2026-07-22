@@ -19,22 +19,23 @@ export interface ResponseEnvelope<T> {
 }
 
 @Injectable()
-export class TransformInterceptor<T>
-  implements NestInterceptor<T, ResponseEnvelope<T>>
-{
+export class TransformInterceptor<T> implements NestInterceptor<
+  T,
+  ResponseEnvelope<T>
+> {
   intercept(
     _context: ExecutionContext,
     next: CallHandler,
   ): Observable<ResponseEnvelope<T>> {
     return next.handle().pipe(
-      map((result) => {
+      map((result: unknown) => {
         if (result && typeof result === 'object' && 'success' in result) {
-          return result;
+          return result as ResponseEnvelope<T>;
         }
 
         return {
           success: true,
-          data: result ?? null,
+          data: (result ?? null) as T,
         };
       }),
     );

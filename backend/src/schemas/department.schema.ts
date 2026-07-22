@@ -31,4 +31,3 @@ export const DepartmentSchema = SchemaFactory.createForClass(Department);
 
 DepartmentSchema.index({ slug: 1 }, { unique: true });
 DepartmentSchema.index({ isActive: 1, order: 1 });
-

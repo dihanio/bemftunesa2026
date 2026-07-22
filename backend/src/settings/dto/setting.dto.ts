@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, ValidateNested, IsDefined } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateSettingDto {
@@ -6,8 +12,8 @@ export class UpdateSettingDto {
   @IsNotEmpty()
   key: string;
 
-  @IsDefined()
-  value: any;
+  @IsNotEmpty()
+  value: unknown;
 
   @IsString()
   @IsOptional()

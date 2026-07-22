@@ -6,9 +6,7 @@ import { Letter, LetterSchema } from '../schemas/letter.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Letter.name, schema: LetterSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Letter.name, schema: LetterSchema }]),
   ],
   controllers: [LettersController],
   providers: [LettersService],

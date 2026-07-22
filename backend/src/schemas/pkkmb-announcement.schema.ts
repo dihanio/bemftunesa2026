@@ -27,4 +27,5 @@ export class PkkmbAnnouncement {
   deletedAt?: Date;
 }
 
-export const PkkmbAnnouncementSchema = SchemaFactory.createForClass(PkkmbAnnouncement);
+export const PkkmbAnnouncementSchema =
+  SchemaFactory.createForClass(PkkmbAnnouncement);

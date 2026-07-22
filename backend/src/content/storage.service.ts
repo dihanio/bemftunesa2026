@@ -1,8 +1,12 @@
-import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { extname } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'node:crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -37,7 +41,7 @@ export class StorageService {
       throw new InternalServerErrorException('No file provided');
     }
 
-    const uniqueSuffix = `${Date.now()}-${uuidv4()}`;
+    const uniqueSuffix = `${Date.now()}-${randomUUID()}`;
     const extension = extname(file.originalname);
     const filename = `${uniqueSuffix}${extension}`;
 
@@ -48,28 +52,37 @@ export class StorageService {
     }
   }
 
-  private async uploadToS3(file: Express.Multer.File, filename: string): Promise<string> {
-    const bucketName = this.configService.get<string>('S3_BUCKET_NAME') || 'bemft-bucket';
+  private async uploadToS3(
+    file: Express.Multer.File,
+    filename: string,
+  ): Promise<string> {
+    const bucketName =
+      this.configService.get<string>('S3_BUCKET_NAME') || 'bemft-bucket';
     const s3Endpoint = this.configService.get<string>('S3_ENDPOINT');
 
     try {
-      await this.s3Client.send(new PutObjectCommand({
-        Bucket: bucketName,
-        Key: `public/${filename}`,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        ACL: 'public-read',
-      }));
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: bucketName,
+          Key: `public/${filename}`,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          ACL: 'public-read',
+        }),
+      );
 
       // Return Supabase/S3 public URL pattern
       return `${s3Endpoint}/${bucketName}/public/${filename}`;
-    } catch (err: any) {
-      this.logger.error(`S3 upload failed: ${err.message}`);
+    } catch (err: unknown) {
+      this.logger.error(`S3 upload failed: ${(err as Error).message}`);
       throw new InternalServerErrorException('Failed to upload file to S3');
     }
   }
 
-  private async uploadLocally(file: Express.Multer.File, filename: string): Promise<string> {
+  private async uploadLocally(
+    file: Express.Multer.File,
+    filename: string,
+  ): Promise<string> {
     const uploadDir = path.join(process.cwd(), 'public', 'uploads');
 
     if (!fs.existsSync(uploadDir)) {
@@ -77,7 +90,7 @@ export class StorageService {
     }
 
     const filePath = path.join(uploadDir, filename);
-    fs.writeFileSync(filePath, file.buffer);
+    await fs.promises.writeFile(filePath, file.buffer);
 
     return `/uploads/${filename}`;
   }

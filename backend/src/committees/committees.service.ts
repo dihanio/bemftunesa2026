@@ -1,13 +1,22 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Committee, CommitteeDocument, CommitteeMember } from '../schemas/committee.schema';
-import { CreateCommitteeDto, UpdateCommitteeDto, AddMemberDto } from './dto/committee.dto';
+import { Committee, CommitteeDocument } from '../schemas/committee.schema';
+import {
+  CreateCommitteeDto,
+  UpdateCommitteeDto,
+  AddMemberDto,
+} from './dto/committee.dto';
 
 @Injectable()
 export class CommitteesService {
   constructor(
-    @InjectModel(Committee.name) private committeeModel: Model<CommitteeDocument>,
+    @InjectModel(Committee.name)
+    private committeeModel: Model<CommitteeDocument>,
   ) {}
 
   async findAll(programId?: string) {
@@ -40,10 +49,15 @@ export class CommitteesService {
   }
 
   async create(dto: CreateCommitteeDto) {
-    const existing = await this.committeeModel.findOne({ programId: new Types.ObjectId(dto.programId) });
-    if (existing) throw new ConflictException('Program Kerja ini sudah memiliki kepanitiaan');
+    const existing = await this.committeeModel.findOne({
+      programId: new Types.ObjectId(dto.programId),
+    });
+    if (existing)
+      throw new ConflictException(
+        'Program Kerja ini sudah memiliki kepanitiaan',
+      );
 
-    const members = (dto.members || []).map(m => ({
+    const members = (dto.members || []).map((m) => ({
       userId: new Types.ObjectId(m.userId),
       role: m.role,
       joinedAt: new Date(),
@@ -68,15 +82,16 @@ export class CommitteesService {
   async addMember(id: string, dto: AddMemberDto) {
     const committee = await this.findById(id);
     const alreadyMember = committee.members.some(
-      m => m.userId.toString() === dto.userId,
+      (m) => m.userId.toString() === dto.userId,
     );
-    if (alreadyMember) throw new ConflictException('Anggota sudah terdaftar di kepanitiaan ini');
+    if (alreadyMember)
+      throw new ConflictException('Anggota sudah terdaftar di kepanitiaan ini');
 
     committee.members.push({
       userId: new Types.ObjectId(dto.userId),
       role: dto.role,
       joinedAt: new Date(),
-    } as CommitteeMember);
+    });
 
     return committee.save();
   }
@@ -84,13 +99,13 @@ export class CommitteesService {
   async removeMember(id: string, userId: string) {
     const committee = await this.findById(id);
     committee.members = committee.members.filter(
-      m => m.userId.toString() !== userId,
-    ) as CommitteeMember[];
+      (m) => m.userId.toString() !== userId,
+    );
     return committee.save();
   }
 
   async delete(id: string) {
-    const committee = await this.findById(id);
+    await this.findById(id);
     await this.committeeModel.findByIdAndDelete(id).exec();
     return { deleted: true };
   }

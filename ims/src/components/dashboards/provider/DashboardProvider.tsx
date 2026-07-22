@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { UserProfileBase, ActiveContext } from '../../../types/rbac';
 import { useAuth } from '../../../core/auth/useAuth';
 import { LoadingState } from '../../ui/states/LoadingState';
@@ -16,6 +16,12 @@ const DashboardContext = createContext<DashboardContextValue | undefined>(undefi
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const { profile, activeContext, isLoading, error, reload } = useAuth();
+
+  useEffect(() => {
+    if (profile && !profile.role && typeof window !== 'undefined') {
+      window.location.href = '/pending';
+    }
+  }, [profile]);
 
   if (isLoading) {
     return (
@@ -51,10 +57,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }
 
   // Check if user has no role assigned
+
+
   if (profile && !profile.role) {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/pending';
-    }
     return (
       <div className="h-screen w-full flex items-center justify-center bg-canvas">
         <p className="text-sm text-ink-muted">Mengarahkan ke halaman persetujuan...</p>

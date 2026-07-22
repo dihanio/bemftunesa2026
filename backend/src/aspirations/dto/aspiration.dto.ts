@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+  IsMongoId,
+} from 'class-validator';
 
 export class CreateAspirationDto {
   @IsOptional()

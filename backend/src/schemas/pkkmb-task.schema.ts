@@ -32,7 +32,12 @@ export type PkkmbSubmissionDocument = HydratedDocument<PkkmbSubmission>;
 
 @Schema({ timestamps: true })
 export class PkkmbSubmission {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'PkkmbTask', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'PkkmbTask',
+    required: true,
+    index: true,
+  })
   taskId: Types.ObjectId;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
@@ -44,7 +49,11 @@ export class PkkmbSubmission {
   @Prop({ required: true })
   fileUrl: string;
 
-  @Prop({ required: true, enum: ['Belum Submit', 'Sudah Submit', 'Terlambat'], default: 'Belum Submit' })
+  @Prop({
+    required: true,
+    enum: ['Belum Submit', 'Sudah Submit', 'Terlambat'],
+    default: 'Belum Submit',
+  })
   status: string;
 
   @Prop()
@@ -63,7 +72,8 @@ export class PkkmbSubmission {
   deletedAt?: Date;
 }
 
-export const PkkmbSubmissionSchema = SchemaFactory.createForClass(PkkmbSubmission);
+export const PkkmbSubmissionSchema =
+  SchemaFactory.createForClass(PkkmbSubmission);
 
 PkkmbSubmissionSchema.index({ taskId: 1, userId: 1 });
 PkkmbSubmissionSchema.index({ taskId: 1, groupId: 1 });

@@ -91,6 +91,7 @@ export function FormSelect({
           </div>
         )}
       </div>
+      <input type="hidden" name={name} value={value} />
       {error && <p className="text-xs text-rose-400 mt-1">{error}</p>}
     </div>
   );

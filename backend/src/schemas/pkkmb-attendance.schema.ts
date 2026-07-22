@@ -2,11 +2,17 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 // --- Attendance Session ---
-export type PkkmbAttendanceSessionDocument = HydratedDocument<PkkmbAttendanceSession>;
+export type PkkmbAttendanceSessionDocument =
+  HydratedDocument<PkkmbAttendanceSession>;
 
 @Schema({ timestamps: true })
 export class PkkmbAttendanceSession {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'PkkmbGroup', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'PkkmbGroup',
+    required: true,
+    index: true,
+  })
   groupId: Types.ObjectId;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
@@ -41,20 +47,36 @@ export class PkkmbAttendanceSession {
   deletedAt?: Date;
 }
 
-export const PkkmbAttendanceSessionSchema = SchemaFactory.createForClass(PkkmbAttendanceSession);
+export const PkkmbAttendanceSessionSchema = SchemaFactory.createForClass(
+  PkkmbAttendanceSession,
+);
 
 // --- Attendance Log ---
 export type PkkmbAttendanceLogDocument = HydratedDocument<PkkmbAttendanceLog>;
 
 @Schema({ timestamps: true })
 export class PkkmbAttendanceLog {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'PkkmbAttendanceSession', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'PkkmbAttendanceSession',
+    required: true,
+    index: true,
+  })
   sessionId: Types.ObjectId;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  })
   userId: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['Hadir', 'Telat', 'Tidak Hadir'], default: 'Hadir' })
+  @Prop({
+    required: true,
+    enum: ['Hadir', 'Telat', 'Tidak Hadir'],
+    default: 'Hadir',
+  })
   status: string;
 
   @Prop({ default: () => new Date() })
@@ -78,6 +100,7 @@ export class PkkmbAttendanceLog {
   deletedAt?: Date;
 }
 
-export const PkkmbAttendanceLogSchema = SchemaFactory.createForClass(PkkmbAttendanceLog);
+export const PkkmbAttendanceLogSchema =
+  SchemaFactory.createForClass(PkkmbAttendanceLog);
 
 PkkmbAttendanceLogSchema.index({ sessionId: 1, userId: 1 }, { unique: true });

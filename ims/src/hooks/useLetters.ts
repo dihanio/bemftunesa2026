@@ -42,7 +42,10 @@ export function useLetters(type?: string, status?: string, dssMode?: boolean): U
   }, [type, status, dssMode]);
 
   useEffect(() => {
-    fetchLetters();
+    const timer = setTimeout(() => {
+      fetchLetters();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchLetters]);
 
   return {
@@ -79,7 +82,10 @@ export function useRecentLetters(limit: number = 5): UseLettersResult {
   }, [limit]);
 
   useEffect(() => {
-    fetchLetters();
+    const timer = setTimeout(() => {
+      fetchLetters();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchLetters]);
 
   return {

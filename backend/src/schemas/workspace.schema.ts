@@ -10,7 +10,11 @@ export class WorkspaceMember {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['admin', 'editor', 'viewer'], default: 'viewer' })
+  @Prop({
+    required: true,
+    enum: ['admin', 'editor', 'viewer'],
+    default: 'viewer',
+  })
   role: string;
 
   @Prop({ default: () => new Date() })
@@ -50,7 +54,11 @@ export class Workspace {
   icon: string;
 
   /** Link to existing Department (optional, only for type=department). */
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Department', default: null })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Department',
+    default: null,
+  })
   departmentId: Types.ObjectId | null;
 
   /** Creator / initial admin. */

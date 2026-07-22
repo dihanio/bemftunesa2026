@@ -40,7 +40,11 @@ export class Content {
   @Prop()
   content: string;
 
-  @Prop({ required: true, enum: ['draft', 'review', 'published', 'archived'], default: 'draft' })
+  @Prop({
+    required: true,
+    enum: ['draft', 'review', 'published', 'archived'],
+    default: 'draft',
+  })
   status: string;
 
   @Prop()

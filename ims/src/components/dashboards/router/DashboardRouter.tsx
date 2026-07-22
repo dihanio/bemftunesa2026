@@ -18,10 +18,13 @@ export function DashboardRouter() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Redirect to pending page if user has no role
-  if (!activeContext?.role?.slug) {
-    if (typeof window !== 'undefined') {
+  useEffect(() => {
+    if (!activeContext?.role?.slug && typeof window !== 'undefined') {
       window.location.href = '/pending';
     }
+  }, [activeContext]);
+
+  if (!activeContext?.role?.slug) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-canvas">
         <p className="text-sm text-ink-muted">Mengarahkan ke halaman persetujuan...</p>

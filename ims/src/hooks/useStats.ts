@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { StatsService } from '../services/StatsService';
 import { StatData } from '../types/dashboard-domains';
 import { ApiError } from '../lib/api/error';
@@ -16,7 +16,7 @@ export function useProkerStats(): UseStatsResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -33,11 +33,14 @@ export function useProkerStats(): UseStatsResult {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchStats();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchStats]);
 
   return {
     data,
@@ -53,7 +56,7 @@ export function useSuratStats(): UseStatsResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -70,11 +73,14 @@ export function useSuratStats(): UseStatsResult {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchStats();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchStats]);
 
   return {
     data,

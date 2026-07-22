@@ -1,13 +1,25 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Recruitment, RecruitmentDocument } from '../schemas/recruitment.schema';
-import { CreateRecruitmentDto, UpdateRecruitmentDto, RecruitmentQueryDto } from './dto/recruitment.dto';
+import {
+  Recruitment,
+  RecruitmentDocument,
+} from '../schemas/recruitment.schema';
+import {
+  CreateRecruitmentDto,
+  UpdateRecruitmentDto,
+  RecruitmentQueryDto,
+} from './dto/recruitment.dto';
 
 @Injectable()
 export class RecruitmentService {
   constructor(
-    @InjectModel(Recruitment.name) private recruitmentModel: Model<RecruitmentDocument>,
+    @InjectModel(Recruitment.name)
+    private recruitmentModel: Model<RecruitmentDocument>,
   ) {}
 
   async findAll(query: RecruitmentQueryDto) {
@@ -18,7 +30,12 @@ export class RecruitmentService {
 
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
-      this.recruitmentModel.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+      this.recruitmentModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
       this.recruitmentModel.countDocuments(filter),
     ]);
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -43,17 +60,28 @@ export class RecruitmentService {
   }
 
   async create(dto: CreateRecruitmentDto): Promise<RecruitmentDocument> {
-    const exists = await this.recruitmentModel.findOne({ slug: dto.slug }).exec();
-    if (exists) throw new ConflictException(`Slug "${dto.slug}" sudah digunakan`);
+    const exists = await this.recruitmentModel
+      .findOne({ slug: dto.slug })
+      .exec();
+    if (exists)
+      throw new ConflictException(`Slug "${dto.slug}" sudah digunakan`);
     return new this.recruitmentModel(dto).save();
   }
 
-  async update(id: string, dto: UpdateRecruitmentDto): Promise<RecruitmentDocument> {
+  async update(
+    id: string,
+    dto: UpdateRecruitmentDto,
+  ): Promise<RecruitmentDocument> {
     if (dto.slug) {
-      const exists = await this.recruitmentModel.findOne({ slug: dto.slug, _id: { $ne: id } }).exec();
-      if (exists) throw new ConflictException(`Slug "${dto.slug}" sudah digunakan`);
+      const exists = await this.recruitmentModel
+        .findOne({ slug: dto.slug, _id: { $ne: id } })
+        .exec();
+      if (exists)
+        throw new ConflictException(`Slug "${dto.slug}" sudah digunakan`);
     }
-    const rec = await this.recruitmentModel.findByIdAndUpdate(id, dto, { new: true }).exec();
+    const rec = await this.recruitmentModel
+      .findByIdAndUpdate(id, dto, { new: true })
+      .exec();
     if (!rec) throw new NotFoundException('Rekrutmen tidak ditemukan');
     return rec;
   }

@@ -20,7 +20,7 @@ export default function BeritaDetailPage({ params }: PageProps) {
 
   useEffect(() => {
     if (!slug) return;
-    setLoading(true);
+    setTimeout(() => setLoading(true), 0);
 
     PublicApiService.getNewsBySlug(slug)
       .then((res) => {
@@ -36,7 +36,7 @@ export default function BeritaDetailPage({ params }: PageProps) {
   }, [slug]);
 
   useEffect(() => {
-    setRecLoading(true);
+    setTimeout(() => setRecLoading(true), 0);
     PublicApiService.getNews({ page: 1, limit: 4 })
       .then((res) => {
         const rawData: unknown = res?.data;

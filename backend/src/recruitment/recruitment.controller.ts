@@ -1,12 +1,23 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Param, Body, Query, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequiredPermissions } from '../auth/decorators/required-permission.decorator';
 import { RecruitmentService } from './recruitment.service';
-import { CreateRecruitmentDto, UpdateRecruitmentDto, RecruitmentQueryDto } from './dto/recruitment.dto';
+import {
+  CreateRecruitmentDto,
+  UpdateRecruitmentDto,
+  RecruitmentQueryDto,
+} from './dto/recruitment.dto';
 
 @Controller('recruitment')
 export class RecruitmentController {

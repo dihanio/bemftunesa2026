@@ -102,20 +102,16 @@ export class ContentController {
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateContentStatusDto,
-    @CurrentUser() user: UserDocument,
   ) {
-    const data = await this.contentService.updateStatus(id, dto, user);
+    const data = await this.contentService.updateStatus(id, dto);
     return { success: true, data };
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Delete(':id')
   @RequiredPermissions('content:delete')
-  async delete(
-    @Param('id') id: string,
-    @CurrentUser() user: UserDocument,
-  ) {
-    const data = await this.contentService.delete(id, user);
+  async delete(@Param('id') id: string) {
+    const data = await this.contentService.delete(id);
     return { success: true, data };
   }
 }

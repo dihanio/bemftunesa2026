@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
 interface RequestUser {
-  role: any;
+  role: { name?: string } | string;
 }
 
 @Injectable()
@@ -40,7 +40,7 @@ export class RolesGuard implements CanActivate {
     }
 
     // Assume role document has a 'name' field based on role.schema.ts
-    const roleName = role.name || role;
+    const roleName = (typeof role === 'object' ? role.name : role) as string;
 
     const hasRole = requiredRoles.includes(roleName);
 

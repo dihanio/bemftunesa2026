@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ActivityService } from '../services/ActivityService';
 import { ActivityData } from '../types/dashboard-domains';
 import { ApiError } from '../lib/api/error';
@@ -16,7 +16,7 @@ export function useSystemActivities(): UseActivitiesResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<ApiError | null>(null);
 
-  const fetchActivities = async () => {
+  const fetchActivities = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -33,11 +33,14 @@ export function useSystemActivities(): UseActivitiesResult {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchActivities();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchActivities();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchActivities]);
 
   return {
     data,

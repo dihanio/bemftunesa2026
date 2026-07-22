@@ -1,10 +1,16 @@
 import {
-  Injectable, NotFoundException, ConflictException,
+  Injectable,
+  NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Partner, PartnerDocument } from '../schemas/partner.schema';
-import { CreatePartnerDto, UpdatePartnerDto, PartnerQueryDto } from './dto/partner.dto';
+import {
+  CreatePartnerDto,
+  UpdatePartnerDto,
+  PartnerQueryDto,
+} from './dto/partner.dto';
 
 @Injectable()
 export class PartnersService {
@@ -24,7 +30,12 @@ export class PartnersService {
 
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
-      this.partnerModel.find(filter).sort({ order: 1, createdAt: -1 }).skip(skip).limit(limit).exec(),
+      this.partnerModel
+        .find(filter)
+        .sort({ order: 1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
       this.partnerModel.countDocuments(filter),
     ]);
 
@@ -46,7 +57,8 @@ export class PartnersService {
 
   async create(dto: CreatePartnerDto): Promise<PartnerDocument> {
     const exists = await this.partnerModel.findOne({ slug: dto.slug }).exec();
-    if (exists) throw new ConflictException(`Slug "${dto.slug}" already exists`);
+    if (exists)
+      throw new ConflictException(`Slug "${dto.slug}" already exists`);
 
     const partner = new this.partnerModel(dto);
     await partner.save();
@@ -55,10 +67,15 @@ export class PartnersService {
 
   async update(id: string, dto: UpdatePartnerDto): Promise<PartnerDocument> {
     if (dto.slug) {
-      const exists = await this.partnerModel.findOne({ slug: dto.slug, _id: { $ne: id } }).exec();
-      if (exists) throw new ConflictException(`Slug "${dto.slug}" already exists`);
+      const exists = await this.partnerModel
+        .findOne({ slug: dto.slug, _id: { $ne: id } })
+        .exec();
+      if (exists)
+        throw new ConflictException(`Slug "${dto.slug}" already exists`);
     }
-    const partner = await this.partnerModel.findByIdAndUpdate(id, dto, { new: true }).exec();
+    const partner = await this.partnerModel
+      .findByIdAndUpdate(id, dto, { new: true })
+      .exec();
     if (!partner) throw new NotFoundException('Partner not found');
     return partner;
   }

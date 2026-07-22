@@ -16,7 +16,7 @@ export class HealthController {
   ) {
     const host = this.configService.get<string>('REDIS_HOST', 'localhost');
     const port = this.configService.get<number>('REDIS_PORT', 6379);
-    
+
     // Create a dedicated lightweight connection to check Redis health
     this.redisClient = new Redis.default({
       host,
@@ -29,14 +29,14 @@ export class HealthController {
   @Get()
   async checkHealth() {
     const start = Date.now();
-    
+
     // 1. Check MongoDB
     let dbStatus = 'unhealthy';
     try {
-      if (this.connection.readyState === 1) {
+      if (Number(this.connection.readyState) === 1) {
         dbStatus = 'healthy';
       }
-    } catch (err) {
+    } catch {
       dbStatus = 'unhealthy';
     }
 
@@ -48,21 +48,24 @@ export class HealthController {
       if (pong === 'PONG') {
         redisStatus = 'healthy';
       }
-      await this.redisClient?.disconnect();
-    } catch (err) {
+      this.redisClient?.disconnect();
+    } catch {
       redisStatus = 'unhealthy';
     }
 
     // 3. Check Storage (local write/read check)
     let storageStatus = 'unhealthy';
     try {
-      const uploadDir = this.configService.get<string>('UPLOAD_DIR', './public/uploads');
+      const uploadDir = this.configService.get<string>(
+        'UPLOAD_DIR',
+        './public/uploads',
+      );
       const resolvedPath = path.resolve(uploadDir);
-      
+
       if (!fs.existsSync(resolvedPath)) {
         fs.mkdirSync(resolvedPath, { recursive: true });
       }
-      
+
       const testFile = path.join(resolvedPath, '.healthcheck');
       fs.writeFileSync(testFile, 'healthcheck_write_ok');
       const content = fs.readFileSync(testFile, 'utf8');
@@ -70,12 +73,15 @@ export class HealthController {
         storageStatus = 'healthy';
       }
       fs.unlinkSync(testFile);
-    } catch (err) {
+    } catch {
       storageStatus = 'unhealthy';
     }
 
     const duration = Date.now() - start;
-    const isHealthy = dbStatus === 'healthy' && redisStatus === 'healthy' && storageStatus === 'healthy';
+    const isHealthy =
+      dbStatus === 'healthy' &&
+      redisStatus === 'healthy' &&
+      storageStatus === 'healthy';
 
     return {
       success: isHealthy,

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService from "@/lib/api";
@@ -84,7 +84,7 @@ export default function BeritaKontenPage() {
     keywordsRaw: "",
   });
 
-  const loadContents = async () => {
+  const loadContents = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -110,11 +110,14 @@ export default function BeritaKontenPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, selectedStatus, searchQuery]);
 
   useEffect(() => {
-    loadContents();
-  }, [activeTab, selectedStatus, searchQuery]);
+    const timer = setTimeout(() => {
+      loadContents();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadContents]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const title = e.target.value;

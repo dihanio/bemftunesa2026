@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useCallback } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService, { ApplicantData, ApplicantStats, API_BASE_URL } from "@/lib/api";
@@ -39,7 +39,7 @@ function ApplicantsPageContent() {
   });
   const [finalForm, setFinalForm] = useState({ notes: "" });
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!recruitmentId) return;
     try {
       setLoading(true);
@@ -61,11 +61,14 @@ function ApplicantsPageContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [recruitmentId, search, statusFilter, positionFilter]);
 
   useEffect(() => {
-    loadData();
-  }, [recruitmentId, search, statusFilter, positionFilter]);
+    const timer = setTimeout(() => {
+      loadData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadData, recruitmentId, search, statusFilter, positionFilter]);
 
   const handleExport = async () => {
     try {
@@ -83,6 +86,7 @@ function ApplicantsPageContent() {
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
+      console.error(err);
       alert("Gagal mengekspor CSV");
     }
   };
@@ -333,7 +337,7 @@ function ApplicantsPageContent() {
                 </tr>
               </thead>
               <tbody>
-                {(dssMode ? [...applicants].sort((a,b) => (b.interview?.scoring?.finalScore || 0) - (a.interview?.scoring?.finalScore || 0)) : applicants).map((app, idx) => (
+                {(dssMode ? [...applicants].sort((a,b) => (b.interview?.scoring?.finalScore || 0) - (a.interview?.scoring?.finalScore || 0)) : applicants).map((app) => (
                   <tr key={app._id} className={`border-b border-hairline hover:bg-primary/10 transition-colors ${dssMode && (app.interview?.scoring?.finalScore || 0) >= 80 ? 'bg-accent-gold/5' : ''}`}>
                     <td className="px-6 py-4">
                       <div className="font-bold text-ink flex items-center gap-2">
@@ -344,7 +348,7 @@ function ApplicantsPageContent() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-mono text-primary">{app.nim}</div>
-                      <div className="text-xs text-ink-muted">{app.department} '{app.batch}</div>
+                      <div className="text-xs text-ink-muted">{app.department} &apos;{app.batch}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-medium bg-surface-2 inline-block px-2 py-1 rounded-full border border-hairline">
@@ -443,7 +447,7 @@ function ApplicantsPageContent() {
                     <div className="flex flex-col gap-4">
                       <div>
                         <h3 className="text-2xl font-bold text-ink">{selectedApplicant.name}</h3>
-                        <div className="text-primary font-mono text-sm">{selectedApplicant.nim} • {selectedApplicant.department} '{selectedApplicant.batch}</div>
+                        <div className="text-primary font-mono text-sm">{selectedApplicant.nim} • {selectedApplicant.department} &apos;{selectedApplicant.batch}</div>
                       </div>
                       
                       <div className="flex items-center gap-2">
@@ -483,7 +487,7 @@ function ApplicantsPageContent() {
                       {selectedApplicant.motivation && (
                         <div className="bg-surface-2 p-3 rounded-xl border border-hairline mt-2">
                           <h4 className="text-xs font-bold text-ink-muted uppercase mb-1">Motivasi</h4>
-                          <p className="text-sm text-ink-muted leading-relaxed italic">"{selectedApplicant.motivation}"</p>
+                          <p className="text-sm text-ink-muted leading-relaxed italic">&quot;{selectedApplicant.motivation}&quot;</p>
                         </div>
                       )}
                     </div>
@@ -519,7 +523,7 @@ function ApplicantsPageContent() {
                                 </div>
                                 {selectedApplicant.interview.notes && (
                                   <div className="mt-2 text-xs text-ink-muted italic border-l-2 border-hairline pl-2">
-                                    "{selectedApplicant.interview.notes}"
+                                    &quot;{selectedApplicant.interview.notes}&quot;
                                   </div>
                                 )}
                               </div>

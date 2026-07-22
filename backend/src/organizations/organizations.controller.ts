@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -30,14 +38,22 @@ export class OrganizationsController {
 
   @Post()
   @Roles(...ROLES_BPI_PIMPINAN)
-  async create(@Body() body: { name: string; period: string; vision?: string; missions?: string[] }) {
+  async create(
+    @Body()
+    body: {
+      name: string;
+      period: string;
+      vision?: string;
+      missions?: string[];
+    },
+  ) {
     const data = await this.orgService.create(body);
     return { success: true, data };
   }
 
   @Patch(':id')
   @Roles(...ROLES_BPI_PIMPINAN)
-  async update(@Param('id') id: string, @Body() body: any) {
+  async update(@Param('id') id: string, @Body() body: Record<string, unknown>) {
     const data = await this.orgService.update(id, body);
     return { success: true, data };
   }

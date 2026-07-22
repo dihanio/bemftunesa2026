@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsBoolean, IsArray, IsDateString, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsArray,
+  IsDateString,
+  IsNumber,
+} from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateGalleryDto {

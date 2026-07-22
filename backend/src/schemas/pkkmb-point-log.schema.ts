@@ -5,7 +5,12 @@ export type PkkmbPointLogDocument = HydratedDocument<PkkmbPointLog>;
 
 @Schema({ timestamps: true })
 export class PkkmbPointLog {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'PkkmbGroup', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'PkkmbGroup',
+    required: true,
+    index: true,
+  })
   groupId: Types.ObjectId;
 
   @Prop({ required: true })

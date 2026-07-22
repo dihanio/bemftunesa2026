@@ -4,8 +4,7 @@ import React, { useState } from "react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { PublicApiService } from "@/lib/api";
 import { FormInput, FormTextarea } from "@/components/ui";
-import { MapPin, Mail, Phone, Clock, Send, CheckCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Phone, Clock, Send, CheckCircle, AlertTriangle } from "lucide-react";
 
 export default function KontakPage() {
   const [form, setForm] = useState({

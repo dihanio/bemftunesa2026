@@ -114,6 +114,42 @@ export interface ContactInput {
   message: string;
 }
 
+export interface GalleryItem {
+  _id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  eventDate: string;
+  coverImage?: string | { url: string };
+  photos?: (string | { url: string })[];
+}
+
+export interface RecruitmentItem {
+  _id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  status: string;
+  openDate: string;
+  closeDate: string;
+  poster?: string | { url: string };
+  period?: string;
+  contactPerson?: string;
+  contactWhatsapp?: string;
+  formUrl?: string;
+  positions?: { title: string; quota?: number; description?: string; requirements?: string }[];
+  timeline?: { label: string; startDate: string; endDate?: string; order?: number }[];
+}
+
+export interface PartnerItem {
+  _id: string;
+  name: string;
+  type: string;
+  logo: string | { url: string };
+  url?: string;
+}
+
+
 export class PublicApiService {
   private static async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -147,7 +183,6 @@ export class PublicApiService {
     if (params?.category && params.category !== "All") query.append("category", params.category);
     if (params?.search) query.append("search", params.search);
 
-    const queryString = query.toString() ? `?${query.toString()}` : "?type=news";
     if (!query.has("type")) {
       query.append("type", "news");
     }
@@ -191,8 +226,8 @@ export class PublicApiService {
   }
 
   // Fetch About Settings
-  static async getAbout(): Promise<ApiResponse<any>> {
-    return this.request<any>("/settings/public/about", { next: { revalidate: 60 } });
+  static async getAbout(): Promise<ApiResponse<unknown>> {
+    return this.request<unknown>("/settings/public/about", { next: { revalidate: 60 } });
   }
 
   // Submit Aspiration Form
@@ -205,43 +240,43 @@ export class PublicApiService {
 
   // Get Aspiration Status Tracker
   static async getAspirationStatus(id: string): Promise<ApiResponse<{ _id: string; status: string; category: string; createdAt: string; subject: string; message: string; response?: string }>> {
-    return this.request<any>(`/public/aspirations/status/${id}`);
+    return this.request<{ _id: string; status: string; category: string; createdAt: string; subject: string; message: string; response?: string }>(`/public/aspirations/status/${id}`);
   }
 
   // Submit Contact Form
-  static async submitContact(data: ContactInput): Promise<ApiResponse<any>> {
-    return this.request<any>("/public/contact", {
+  static async submitContact(data: ContactInput): Promise<ApiResponse<unknown>> {
+    return this.request<unknown>("/public/contact", {
       method: "POST",
       body: JSON.stringify(data),
     });
   }
 
   // --- Versi 2 (Content & External) API Methods ---
-  static async getGallery(params?: { page?: number; limit?: number; search?: string }): Promise<ApiResponse<any>> {
+  static async getGallery(params?: { page?: number; limit?: number; search?: string }): Promise<ApiResponse<GalleryItem[]>> {
     const query = new URLSearchParams();
     if (params?.page) query.append("page", String(params.page));
     if (params?.limit) query.append("limit", String(params.limit));
     if (params?.search) query.append("search", params.search);
     const queryString = query.toString() ? `?${query.toString()}` : "";
-    return this.request<any>(`/gallery/public${queryString}`, { next: { revalidate: 60 } });
+    return this.request<GalleryItem[]>(`/gallery/public${queryString}`, { next: { revalidate: 60 } });
   }
 
-  static async getGalleryBySlug(slug: string): Promise<ApiResponse<any>> {
-    return this.request<any>(`/gallery/public/${slug}`, { next: { revalidate: 60 } });
+  static async getGalleryBySlug(slug: string): Promise<ApiResponse<GalleryItem>> {
+    return this.request<GalleryItem>(`/gallery/public/${slug}`, { next: { revalidate: 60 } });
   }
 
-  static async getRecruitments(status?: string): Promise<ApiResponse<any>> {
+  static async getRecruitments(status?: string): Promise<ApiResponse<RecruitmentItem[]>> {
     const query = status ? `?status=${status}` : "";
-    return this.request<any>(`/recruitment/public${query}`, { next: { revalidate: 60 } });
+    return this.request<RecruitmentItem[]>(`/recruitment/public${query}`, { next: { revalidate: 60 } });
   }
 
-  static async getRecruitmentBySlug(slug: string): Promise<ApiResponse<any>> {
-    return this.request<any>(`/recruitment/public/${slug}`, { next: { revalidate: 60 } });
+  static async getRecruitmentBySlug(slug: string): Promise<ApiResponse<RecruitmentItem>> {
+    return this.request<RecruitmentItem>(`/recruitment/public/${slug}`, { next: { revalidate: 60 } });
   }
 
-  static async getPartners(type?: string): Promise<ApiResponse<any>> {
+  static async getPartners(type?: string): Promise<ApiResponse<PartnerItem[]>> {
     const query = type ? `?type=${type}` : "";
-    return this.request<any>(`/partners/public${query}`, { next: { revalidate: 60 } });
+    return this.request<PartnerItem[]>(`/partners/public${query}`, { next: { revalidate: 60 } });
   }
 }
 export default PublicApiService;

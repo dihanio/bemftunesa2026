@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsEnum, IsMongoId, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsMongoId,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateLetterDto {
   @IsEnum(['incoming', 'outgoing', 'proposal', 'lpj'])
@@ -20,7 +26,7 @@ export class CreateLetterDto {
   @IsOptional()
   @IsString()
   documentUrl?: string;
-  
+
   @IsOptional()
   @IsString()
   referenceNumber?: string;
@@ -40,7 +46,14 @@ export class CreateLetterDto {
 
 export class UpdateLetterDto {
   @IsOptional()
-  @IsEnum(['draft', 'review_kadep', 'review_ketua', 'approved', 'rejected', 'archived'])
+  @IsEnum([
+    'draft',
+    'review_kadep',
+    'review_ketua',
+    'approved',
+    'rejected',
+    'archived',
+  ])
   status?: string;
 
   @IsOptional()
@@ -82,7 +95,14 @@ export class QueryLetterDto {
   type?: string;
 
   @IsOptional()
-  @IsEnum(['draft', 'review_kadep', 'review_ketua', 'approved', 'rejected', 'archived'])
+  @IsEnum([
+    'draft',
+    'review_kadep',
+    'review_ketua',
+    'approved',
+    'rejected',
+    'archived',
+  ])
   status?: string;
 
   @IsOptional()

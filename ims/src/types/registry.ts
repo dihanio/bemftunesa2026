@@ -1,5 +1,4 @@
 import { PermissionString, RoleSlug } from './rbac';
-import { ElementType } from 'react';
 
 export interface WidgetRegistryItem {
   id: string;

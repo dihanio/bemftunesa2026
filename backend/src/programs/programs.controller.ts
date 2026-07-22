@@ -1,7 +1,23 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ProgramsService } from './programs.service';
-import { CreateProgramDto, UpdateProgramDto, QueryProgramDto } from './dto/program.dto';
+import {
+  CreateProgramDto,
+  UpdateProgramDto,
+  QueryProgramDto,
+} from './dto/program.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthenticatedRequest } from '../common/interfaces/authenticated-request.interface';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ROLES_PROKER_ADMIN, ROLES_DELETE } from '../common/constants/roles';
@@ -37,8 +53,16 @@ export class ProgramsController {
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateProgramDto: UpdateProgramDto, @Request() req: any) {
-    const data = await this.programsService.update(id, updateProgramDto, req.user);
+  async update(
+    @Param('id') id: string,
+    @Body() updateProgramDto: UpdateProgramDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const data = await this.programsService.update(
+      id,
+      updateProgramDto,
+      req.user,
+    );
     return { success: true, data };
   }
 

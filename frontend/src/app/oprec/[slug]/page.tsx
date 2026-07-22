@@ -5,22 +5,23 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { PublicApiService } from "@/lib/api";
-import { Users, Calendar, ArrowLeft, ExternalLink, ShieldCheck, Phone, CheckCircle2, FileText, LayoutList } from "lucide-react";
+import { PublicApiService, RecruitmentItem } from "@/lib/api";
+import { Users, ArrowLeft, Calendar, CheckCircle2, LayoutList, ExternalLink, ShieldCheck, Phone } from "lucide-react";
 
 export default function OprecDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [recruitment, setRecruitment] = useState<any>(null);
+  const [recruitment, setRecruitment] = useState<RecruitmentItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecruitment = async () => {
       try {
         const res = await PublicApiService.getRecruitmentBySlug(params.slug as string);
-        const data = res?.data?.data || res?.data || res;
-        if (data && data._id) {
-          setRecruitment(data);
+        const resData = res?.data as unknown;
+        const data = (resData as {data?: RecruitmentItem})?.data || resData || res;
+        if (data && typeof data === 'object' && '_id' in data) {
+          setRecruitment(data as RecruitmentItem);
         } else {
           router.push("/oprec");
         }
@@ -151,7 +152,7 @@ export default function OprecDetailPage() {
                 Posisi / Divisi yang Dibutuhkan
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {recruitment.positions.map((pos: any, idx: number) => (
+                {recruitment.positions.map((pos, idx: number) => (
                   <div key={idx} className="glass-active border border-accent-blue/20 p-5 rounded-2xl hover:border-accent-gold/30 transition-all">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-bold text-foreground">{pos.title}</h3>
@@ -186,8 +187,8 @@ export default function OprecDetailPage() {
               
               <div className="relative pl-6 space-y-8 before:absolute before:inset-0 before:ml-[11px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-accent-blue/20 before:to-transparent">
                 {recruitment.timeline
-                  .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
-                  .map((item: any, idx: number) => {
+                  .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0))
+                  .map((item, idx: number) => {
                   const isCurrent = new Date() >= new Date(item.startDate) && (!item.endDate || new Date() <= new Date(item.endDate));
                   const isPast = item.endDate && new Date() > new Date(item.endDate);
                   

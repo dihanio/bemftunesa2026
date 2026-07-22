@@ -5,14 +5,15 @@ import { PublicApiService } from "@/lib/api";
 import Image from "next/image";
 
 export default function PartnersSection() {
-  const [partners, setPartners] = useState<any[]>([]);
+  const [partners, setPartners] = useState<{_id: string; name: string; website?: string; logo?: string | {url: string}; status: string}[]>([]);
 
   useEffect(() => {
     const fetchPartners = async () => {
       try {
         const allPartnersRes = await PublicApiService.getPartners();
-        const raw = allPartnersRes?.data?.data?.data || allPartnersRes?.data?.data || allPartnersRes?.data || [];
-        const activePartners = Array.isArray(raw) ? raw.filter((p: any) => p.status === "active") : [];
+        const resData = allPartnersRes?.data as unknown;
+        const raw = Array.isArray(resData) ? resData : (resData as {data?: {data?: { status: string; _id: string; name: string; website?: string; logo?: string | {url: string} }[]}})?.data?.data || (resData as {data?: { status: string; _id: string; name: string; website?: string; logo?: string | {url: string} }[]})?.data || [];
+        const activePartners = Array.isArray(raw) ? raw.filter((p: { status: string }) => p.status === "active") : [];
         setPartners(activePartners);
       } catch (err) {
         console.error(err);

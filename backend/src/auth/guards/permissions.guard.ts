@@ -23,7 +23,7 @@ interface RequestUser {
 export class PermissionsGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       REQUIRED_PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -48,14 +48,18 @@ export class PermissionsGuard implements CanActivate {
     }
 
     if (!Array.isArray(role.permissions)) {
-      throw new ForbiddenException('Invalid role configuration (permissions not populated)');
+      throw new ForbiddenException(
+        'Invalid role configuration (permissions not populated)',
+      );
     }
 
     const userPermissions = role.permissions.map((p) => p.name);
 
-    const hasAllPermissions = userPermissions.includes('manage:all') || requiredPermissions.every((permission) =>
-      userPermissions.includes(permission),
-    );
+    const hasAllPermissions =
+      userPermissions.includes('manage:all') ||
+      requiredPermissions.every((permission) =>
+        userPermissions.includes(permission),
+      );
 
     if (!hasAllPermissions) {
       throw new ForbiddenException('Insufficient permissions');

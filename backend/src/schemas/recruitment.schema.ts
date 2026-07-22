@@ -17,7 +17,11 @@ export class Recruitment {
   @Prop()
   poster: string;
 
-  @Prop({ type: String, enum: ['open', 'closed', 'announced'], default: 'closed' })
+  @Prop({
+    type: String,
+    enum: ['open', 'closed', 'announced'],
+    default: 'closed',
+  })
   status: string;
 
   @Prop()
@@ -32,7 +36,10 @@ export class Recruitment {
   @Prop({ default: true })
   useInternalForm: boolean;
 
-  @Prop({ type: [{ name: String, quota: Number, description: String }], default: [] })
+  @Prop({
+    type: [{ name: String, quota: Number, description: String }],
+    default: [],
+  })
   positions: { name: string; quota: number; description: string }[];
 
   @Prop({ trim: true })

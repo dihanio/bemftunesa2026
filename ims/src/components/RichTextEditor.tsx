@@ -5,7 +5,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import { 
-  Bold, Italic, Strikethrough, Code, 
+  Bold, Italic, Strikethrough, 
   Heading1, Heading2, List, ListOrdered, 
   Quote, Undo, Redo, Link as LinkIcon
 } from 'lucide-react';
@@ -17,11 +17,8 @@ interface RichTextEditorProps {
 }
 
 const MenuBar = ({ editor }: { editor: import("@tiptap/react").Editor | null }) => {
-  if (!editor) {
-    return null;
-  }
-
   const setLink = useCallback(() => {
+    if (!editor) return;
     const previousUrl = editor.getAttributes('link').href;
     const url = window.prompt('URL', previousUrl);
 
@@ -36,6 +33,10 @@ const MenuBar = ({ editor }: { editor: import("@tiptap/react").Editor | null }) 
 
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   }, [editor]);
+
+  if (!editor) {
+    return null;
+  }
 
   const btnClass = "p-1.5 rounded-md hover:bg-white/10 text-foreground/80 hover:text-foreground transition-colors";
   const activeClass = "bg-white/10 text-foreground";
@@ -140,7 +141,7 @@ const MenuBar = ({ editor }: { editor: import("@tiptap/react").Editor | null }) 
   );
 };
 
-export default function RichTextEditor({ content, onChange, placeholder = "Mulai menulis..." }: RichTextEditorProps) {
+export default function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit,

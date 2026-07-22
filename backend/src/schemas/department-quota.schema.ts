@@ -7,7 +7,12 @@ const FIVE_GB = 5 * 1024 * 1024 * 1024;
 
 @Schema({ timestamps: true, collection: 'department_quotas' })
 export class DepartmentQuota {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Department', required: true, unique: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Department',
+    required: true,
+    unique: true,
+  })
   departmentId: Types.ObjectId;
 
   /** Max bytes allowed. Default 5GB */
@@ -19,4 +24,5 @@ export class DepartmentQuota {
   usedBytes: number;
 }
 
-export const DepartmentQuotaSchema = SchemaFactory.createForClass(DepartmentQuota);
+export const DepartmentQuotaSchema =
+  SchemaFactory.createForClass(DepartmentQuota);

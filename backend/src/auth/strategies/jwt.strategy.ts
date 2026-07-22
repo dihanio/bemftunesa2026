@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../../schemas/user.schema';
-import { Types } from 'mongoose';
 import { AppPermission } from '../../common/auth/permissions';
 import { RoleDocument } from '../../schemas/role.schema';
 import { Request } from 'express';
@@ -23,7 +22,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private userModel: Model<UserDocument>,
   ) {
     const secret = configService.get<string>('JWT_SECRET');
-    if (!secret) throw new Error('JWT_SECRET is not defined. Aborting startup.');
+    if (!secret)
+      throw new Error('JWT_SECRET is not defined. Aborting startup.');
 
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
@@ -31,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         (request: Request) => {
           let token: string | null = null;
           if (request && request.cookies) {
-            token = request.cookies['accessToken'];
+            token = (request.cookies as Record<string, string>)['accessToken'];
           }
           // Fallback to Authorization header for backward compatibility
           if (!token) {
@@ -65,28 +65,36 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     console.log('=== JWT STRATEGY DEBUG ===');
     console.log('User email:', user.email);
     console.log('User.role (raw):', user.role);
-    
+
     // user.populated('role') returns undefined even though role IS populated
     // So we use user.role directly and check if it's an object (populated) vs ObjectId (not populated)
-    const role = (user.role && typeof user.role === 'object' && '_id' in user.role)
-      ? user.role as (Omit<RoleDocument, 'permissions'> & { permissions: { name: string }[] })
-      : undefined;
-    
+    const role =
+      user.role && typeof user.role === 'object' && '_id' in user.role
+        ? (user.role as Omit<RoleDocument, 'permissions'> & {
+            permissions: { name: string }[];
+          })
+        : undefined;
+
     console.log('Role after extraction:', role);
     console.log('Role slug:', role?.slug);
     console.log('=========================');
-    
-    const permissions = role?.permissions?.map((p) => p.name as AppPermission) || [];
+
+    const permissions =
+      role?.permissions?.map((p) => p.name as AppPermission) || [];
 
     return {
       userId: user._id.toString(),
-      activeRoleId: role?._id?.toString() || user.role?.toString(),
-      role: role ? {
-        _id: role._id,
-        slug: role.slug,
-        name: role.name,
-        scope: role.scope,
-      } : undefined,
+      activeRoleId:
+        role?._id?.toString() ||
+        (user.role as { toString(): string })?.toString(),
+      role: role
+        ? {
+            _id: role._id,
+            slug: role.slug,
+            name: role.name,
+            scope: role.scope,
+          }
+        : undefined,
       organizationId: user.department?.toString(),
       cabinetPeriod: user.cabinetPeriod,
       permissions,

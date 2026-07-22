@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Department, DepartmentDocument } from '../schemas/department.schema';
+import { DepartmentDocument } from '../schemas/department.schema';
 import { User, UserDocument } from '../schemas/user.schema';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
@@ -22,13 +22,23 @@ import { RequiredPermissions } from '../auth/decorators/required-permission.deco
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class DepartmentController {
   constructor(
-    @InjectModel('Department') private departmentModel: Model<DepartmentDocument>,
+    @InjectModel('Department')
+    private departmentModel: Model<DepartmentDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
   @Post()
   @RequiredPermissions('departments:create')
-  async create(@Body() body: { name: string; slug: string; description?: string; order?: number; taskBoardUrl?: string }) {
+  async create(
+    @Body()
+    body: {
+      name: string;
+      slug: string;
+      description?: string;
+      order?: number;
+      taskBoardUrl?: string;
+    },
+  ) {
     const existing = await this.departmentModel.findOne({ slug: body.slug });
     if (existing) {
       throw new BadRequestException('Slug departemen sudah digunakan');
@@ -56,7 +66,15 @@ export class DepartmentController {
   @RequiredPermissions('departments:update')
   async update(
     @Param('id') id: string,
-    @Body() body: { name?: string; slug?: string; description?: string; order?: number; isActive?: boolean; taskBoardUrl?: string },
+    @Body()
+    body: {
+      name?: string;
+      slug?: string;
+      description?: string;
+      order?: number;
+      isActive?: boolean;
+      taskBoardUrl?: string;
+    },
   ) {
     const dept = await this.departmentModel.findById(id).exec();
     if (!dept) {
@@ -82,7 +100,9 @@ export class DepartmentController {
       }
     }
 
-    return this.departmentModel.findByIdAndUpdate(id, { $set: body }, { new: true }).exec();
+    return this.departmentModel
+      .findByIdAndUpdate(id, { $set: body }, { new: true })
+      .exec();
   }
 
   @Delete(':id')
@@ -108,6 +128,8 @@ export class DepartmentController {
       return { success: true, message: 'Departemen berhasil dihapus permanen' };
     }
 
-    return this.departmentModel.findByIdAndUpdate(id, { $set: { isActive: false } }, { new: true }).exec();
+    return this.departmentModel
+      .findByIdAndUpdate(id, { $set: { isActive: false } }, { new: true })
+      .exec();
   }
 }

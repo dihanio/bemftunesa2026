@@ -12,6 +12,40 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+const getAvatarUrl = (name: string, avatar?: string) => {
+  if (!avatar) return null;
+  if (avatar.startsWith("/")) return avatar.split("/").map(s => encodeURIComponent(s)).join("/");
+  return avatar;
+};
+
+const BpiCard = ({ profile, title, className, onClick }: { profile: StructureLeader | undefined, title: string, className?: string, onClick?: () => void }) => (
+  <motion.div 
+    whileHover={{ y: -5, scale: 1.02 }}
+    onClick={onClick}
+    className={cn("relative group cursor-pointer w-full max-w-[260px]", className || "mt-24", profile ? "opacity-100" : "opacity-50")}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-accent-gold/20 to-transparent rounded-[32px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+    <div className="relative h-full pt-36 pb-10 px-6 rounded-[32px] bg-background/50 backdrop-blur-md border border-accent-blue/15 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] dark:shadow-[0_15px_40px_-10px_rgba(0,0,0,0.5)] group-hover:shadow-[0_25px_50px_-10px_rgba(234,179,8,0.25)] transition-all duration-500 group-hover:border-accent-gold/40 flex flex-col items-center justify-end text-center">
+      
+      {/* 3D Pop-out Avatar */}
+      <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-32 h-48 flex items-end justify-center z-10 transition-all duration-500 group-hover:-translate-y-4">
+        {/* Frame Background */}
+        <div className="absolute bottom-0 w-32 h-36 rounded-[1.5rem] bg-slate-100 dark:bg-slate-800 border-[6px] border-background shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_40px_-5px_rgba(0,0,0,0.6)]" />
+        
+        {/* Photo (Taller than frame) */}
+        {profile && getAvatarUrl(profile.name, profile.avatar) ? (
+          <Image src={getAvatarUrl(profile.name, profile.avatar)!} alt={profile.name} width={128} height={192} className="relative z-10 w-full h-[110%] object-cover object-bottom rounded-b-[1.2rem] drop-shadow-2xl transition-transform duration-500 group-hover:scale-110 origin-bottom" />
+        ) : (
+          <User className="relative z-10 w-12 h-12 text-accent-blue mb-10" />
+        )}
+      </div>
+
+      <h4 className="text-base font-extrabold text-foreground leading-tight mt-2">{profile?.name || "Belum Ditentukan"}</h4>
+      <p className="text-[11px] text-accent-gold font-bold uppercase tracking-wider mt-1.5">{title}</p>
+    </div>
+  </motion.div>
+);
+
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -137,42 +171,7 @@ export default function StrukturPage() {
   const sekretarisList = bpi.filter((u) => u.roleSlug?.includes("sekretaris"));
   const bendaharaList = bpi.filter((u) => u.roleSlug?.includes("bendahara"));
 
-  const getAvatarUrl = (name: string, avatar?: string) => {
-    if (!avatar) return null;
-    if (avatar.startsWith("/")) return avatar.split("/").map(s => encodeURIComponent(s)).join("/");
-    return avatar;
-  };
-
   const filteredMembers = members.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()) || m.role.toLowerCase().includes(searchQuery.toLowerCase()));
-
-  const BpiCard = ({ profile, title, className }: { profile: StructureLeader | undefined, title: string, className?: string }) => (
-    <motion.div 
-      whileHover={{ y: -5, scale: 1.02 }}
-      onClick={() => { if (profile) setSelectedProfile(profile) }}
-      className={cn("relative group cursor-pointer w-full max-w-[260px]", className || "mt-24", profile ? "opacity-100" : "opacity-50")}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-accent-gold/20 to-transparent rounded-[32px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-      <div className="relative h-full pt-36 pb-10 px-6 rounded-[32px] bg-background/50 backdrop-blur-md border border-accent-blue/15 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] dark:shadow-[0_15px_40px_-10px_rgba(0,0,0,0.5)] group-hover:shadow-[0_25px_50px_-10px_rgba(234,179,8,0.25)] transition-all duration-500 group-hover:border-accent-gold/40 flex flex-col items-center justify-end text-center">
-        
-        {/* 3D Pop-out Avatar */}
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-32 h-48 flex items-end justify-center z-10 transition-all duration-500 group-hover:-translate-y-4">
-          {/* Frame Background */}
-          <div className="absolute bottom-0 w-32 h-36 rounded-[1.5rem] bg-slate-100 dark:bg-slate-800 border-[6px] border-background shadow-[0_20px_40px_-5px_rgba(0,0,0,0.3)] dark:shadow-[0_20px_40px_-5px_rgba(0,0,0,0.6)]" />
-          
-          {/* Photo (Taller than frame) */}
-          {profile && getAvatarUrl(profile.name, profile.avatar) ? (
-            <Image src={getAvatarUrl(profile.name, profile.avatar)!} alt={profile.name} width={128} height={192} className="relative z-10 w-full h-[110%] object-cover object-bottom rounded-b-[1.2rem] drop-shadow-2xl transition-transform duration-500 group-hover:scale-110 origin-bottom" />
-          ) : (
-            <User className="relative z-10 w-12 h-12 text-accent-blue mb-10" />
-          )}
-        </div>
-
-        <h4 className="text-base font-extrabold text-foreground leading-tight mt-2">{profile?.name || "Belum Ditentukan"}</h4>
-        <p className="text-[11px] text-accent-gold font-bold uppercase tracking-wider mt-1.5">{title}</p>
-      </div>
-    </motion.div>
-  );
-
   if (loading) {
     return (
       <main className="min-h-screen pt-32 pb-16 px-6 flex items-center justify-center">
@@ -223,10 +222,10 @@ export default function StrukturPage() {
         
         <div className="flex flex-col items-center">
           <div className="flex flex-col md:flex-row gap-8 justify-center items-start w-full z-10">
-            <BpiCard profile={ketua} title="Ketua BEM" className="mt-16 md:mt-8" />
+            <BpiCard profile={ketua} title="Ketua BEM" className="mt-16 md:mt-8" onClick={() => ketua && setSelectedProfile(ketua)} />
             <div className="hidden md:block w-16 h-px bg-accent-blue/30 md:mt-48" />
             <div className="md:hidden w-px h-8 bg-accent-blue/30" />
-            <BpiCard profile={wakil} title="Wakil Ketua BEM" className="mt-0 md:mt-24" />
+            <BpiCard profile={wakil} title="Wakil Ketua BEM" className="mt-0 md:mt-24" onClick={() => wakil && setSelectedProfile(wakil)} />
           </div>
           
           <div className="w-px h-12 bg-accent-blue/30 z-0" />
@@ -238,10 +237,10 @@ export default function StrukturPage() {
 
           <div className="flex flex-col md:flex-row gap-8 justify-between w-full max-w-[800px] z-10">
             <div className="flex flex-col gap-4 items-center">
-              {sekretarisList.length > 0 ? sekretarisList.map(s => <BpiCard key={s._id} profile={s} title={s.role} />) : <BpiCard profile={undefined} title="Sekretaris" />}
+              {sekretarisList.length > 0 ? sekretarisList.map(s => <BpiCard key={s._id} profile={s} title={s.role} onClick={() => setSelectedProfile(s)} />) : <BpiCard profile={undefined} title="Sekretaris" />}
             </div>
             <div className="flex flex-col gap-4 items-center">
-              {bendaharaList.length > 0 ? bendaharaList.map(b => <BpiCard key={b._id} profile={b} title={b.role} />) : <BpiCard profile={undefined} title="Bendahara" />}
+              {bendaharaList.length > 0 ? bendaharaList.map(b => <BpiCard key={b._id} profile={b} title={b.role} onClick={() => setSelectedProfile(b)} />) : <BpiCard profile={undefined} title="Bendahara" />}
             </div>
           </div>
         </div>
@@ -374,7 +373,7 @@ export default function StrukturPage() {
                 </div>
               </div>
             )) : (
-              <div className="col-span-full text-center py-8 text-foreground/50 text-sm">Tidak ada pengurus yang cocok dengan "{searchQuery}"</div>
+              <div className="col-span-full text-center py-8 text-foreground/50 text-sm">Tidak ada pengurus yang cocok dengan &quot;{searchQuery}&quot;</div>
             )}
           </div>
         )}

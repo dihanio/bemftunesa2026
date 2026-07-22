@@ -9,7 +9,7 @@ export class Setting {
   key: string;
 
   @Prop({ type: MongooseSchema.Types.Mixed, required: true })
-  value: any;
+  value: unknown;
 
   @Prop({ default: 'text' })
   type: string;

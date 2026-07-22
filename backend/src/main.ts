@@ -34,15 +34,16 @@ async function bootstrap() {
 
   const frontendUrl = configService.get<string>('FRONTEND_URL') as string;
   const imsUrl = configService.get<string>('IMS_URL') as string;
-  const pkkmbUrl = configService.get<string>('PKKMB_URL') || 'http://localhost:3002';
+  const pkkmbUrl =
+    configService.get<string>('PKKMB_URL') || 'http://localhost:3002';
 
   app.enableCors({
     origin: (origin, callback) => {
       const staticOrigins = [frontendUrl, imsUrl, pkkmbUrl].filter(Boolean);
       if (
-        !origin || 
-        staticOrigins.includes(origin) || 
-        /\.bemftunesa\.org$/.test(origin) || 
+        !origin ||
+        staticOrigins.includes(origin) ||
+        /\.bemftunesa\.org$/.test(origin) ||
         /^http:\/\/localhost:\d+$/.test(origin)
       ) {
         callback(null, true);
@@ -75,8 +76,8 @@ async function bootstrap() {
       .setTitle('BEM FT UNESA — Public CMS API')
       .setDescription(
         'REST API untuk Content Management System website publik BEM Fakultas Teknik UNESA.\n\n' +
-        '**Authentication**: Gunakan endpoint `/api/v1/auth/google` untuk login via Google OAuth, ' +
-        'lalu salin `accessToken` dari response dan klik **Authorize** di atas.',
+          '**Authentication**: Gunakan endpoint `/api/v1/auth/google` untuk login via Google OAuth, ' +
+          'lalu salin `accessToken` dari response dan klik **Authorize** di atas.',
       )
       .setVersion('1.0.0')
       .addBearerAuth(
@@ -96,13 +97,16 @@ async function bootstrap() {
       },
     });
 
-    console.log(`📖 Swagger UI: http://localhost:${configService.get<number>('PORT', 4000)}/api/docs`);
+    console.log(
+      `📖 Swagger UI: http://localhost:${configService.get<number>('PORT', 4000)}/api/docs`,
+    );
   }
 
   const port = configService.get<number>('PORT', 4000);
   await app.listen(port);
-  console.log(`🚀 BEM FT UNESA CMS API running on http://localhost:${port}/api/v1`);
+  console.log(
+    `🚀 BEM FT UNESA CMS API running on http://localhost:${port}/api/v1`,
+  );
 }
 
-bootstrap();
-
+bootstrap().catch((err) => console.error('Failed to bootstrap app:', err));

@@ -7,7 +7,7 @@ import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService from "@/lib/api";
 import { Users, Search, Plus, Loader2, Upload, AlertCircle, RefreshCw, KeyRound } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 interface MabaItem {
   _id: string;
@@ -32,7 +32,7 @@ export default function PkkmbMabaPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await ImsApiService.getMabaList<MabaItem>();
@@ -44,11 +44,14 @@ export default function PkkmbMabaPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchData]);
 
   const handleSeed = async (e: React.FormEvent) => {
     e.preventDefault();

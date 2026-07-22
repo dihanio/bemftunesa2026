@@ -46,7 +46,12 @@ export default function OrganisasiPage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchOrgs(); }, [fetchOrgs]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchOrgs();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchOrgs]);
 
   const resetForm = () => {
     setFormName(""); setFormPeriod(""); setFormVision(""); setFormMissions("");

@@ -15,30 +15,40 @@ export class SettingsService {
   }
 
   async findMany(keys: string[]): Promise<Setting[]> {
-    return this.settingModel.find({ key: { $in: keys } }).lean().exec();
+    return this.settingModel
+      .find({ key: { $in: keys } })
+      .lean()
+      .exec();
   }
 
   async getAll(): Promise<Setting[]> {
     return this.settingModel.find().sort({ key: 1 }).lean().exec();
   }
 
-  async upsert(key: string, value: any, type?: string, description?: string): Promise<Setting> {
-    const updateData: any = { value };
+  async upsert(
+    key: string,
+    value: unknown,
+    type?: string,
+    description?: string,
+  ): Promise<Setting> {
+    const updateData: Record<string, unknown> = { value };
     if (type !== undefined) updateData.type = type;
     if (description !== undefined) updateData.description = description;
 
-    const setting = await this.settingModel.findOneAndUpdate(
-      { key },
-      { $set: updateData },
-      { new: true, upsert: true }
-    ).exec();
+    const setting = await this.settingModel
+      .findOneAndUpdate(
+        { key },
+        { $set: updateData },
+        { new: true, upsert: true },
+      )
+      .exec();
 
     return setting;
   }
 
-  async bulkUpsert(settings: UpdateSettingDto[]): Promise<any> {
+  async bulkUpsert(settings: UpdateSettingDto[]): Promise<unknown> {
     const operations = settings.map((s) => {
-      const updateData: any = { value: s.value };
+      const updateData: Record<string, unknown> = { value: s.value };
       if (s.type !== undefined) updateData.type = s.type;
       if (s.description !== undefined) updateData.description = s.description;
 

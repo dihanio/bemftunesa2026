@@ -30,8 +30,8 @@ export class AuditLog {
   @Prop({ trim: true })
   requestId?: string;
 
-  @Prop({ type: MongooseSchema.Types.Mixed })
-  details?: Record<string, any>;
+  @Prop({ type: Object })
+  details?: Record<string, unknown>;
 }
 
 export const AuditLogSchema = SchemaFactory.createForClass(AuditLog);

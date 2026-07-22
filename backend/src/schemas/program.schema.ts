@@ -8,7 +8,11 @@ export class Program {
   @Prop({ default: '2026' })
   cabinetPeriod: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Department', required: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Department',
+    required: true,
+  })
   department: MongooseSchema.Types.ObjectId;
 
   @Prop({ required: true })
@@ -57,7 +61,10 @@ export class Program {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Document' })
   lpj: MongooseSchema.Types.ObjectId;
 
-  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Document' }], default: [] })
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Document' }],
+    default: [],
+  })
   documentation: MongooseSchema.Types.ObjectId[];
 
   @Prop()

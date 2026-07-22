@@ -24,7 +24,14 @@ export class Letter {
   recipient: string;
 
   @Prop({
-    enum: ['draft', 'review_kadep', 'review_ketua', 'approved', 'rejected', 'archived'],
+    enum: [
+      'draft',
+      'review_kadep',
+      'review_ketua',
+      'approved',
+      'rejected',
+      'archived',
+    ],
     default: 'draft',
     required: true,
   })

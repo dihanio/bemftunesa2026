@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { Shield, Target, Award, Compass, Eye, Heart } from "lucide-react";
+
 
 export default function TentangPage() {
   const [activeTab, setActiveTab] = useState<"visi" | "misi" | "tujuan">("visi");
@@ -42,7 +42,7 @@ export default function TentangPage() {
           Tentang <span className="text-accent-gold">BEM FT UNESA</span>
         </h1>
         <p className="text-sm text-foreground/75 mt-4 max-w-2xl leading-relaxed">
-          <strong className="text-foreground">"Sinergi Nyata, Teknik Berdaya"</strong> &mdash; Official Tagline 2026
+          <strong className="text-foreground">&quot;Sinergi Nyata, Teknik Berdaya&quot;</strong> &mdash; Official Tagline 2026
         </p>
       </div>
 
@@ -162,7 +162,7 @@ export default function TentangPage() {
           </div>
 
           <div className="w-full lg:w-2/3 flex flex-col gap-4 relative z-10">
-            {logoPhilosophy.map((philo: any, idx: number) => (
+            {logoPhilosophy.map((philo: { title: string; desc: string; color: string }, idx: number) => (
               <div
                 key={idx}
                 onMouseEnter={() => setHoveredPhilo(idx)}

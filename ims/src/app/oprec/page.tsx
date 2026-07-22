@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService, { RecruitmentData } from "@/lib/api";
@@ -43,9 +43,10 @@ export default function RecruitmentPage() {
     positions: "[\n  {\n    \"name\": \"Posisi 1\",\n    \"quota\": 1,\n    \"description\": \"Deskripsi\"\n  }\n]", // JSON string
   });
 
-  const loadRecruitments = async () => {
+  const loadRecruitments = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await ImsApiService.getRecruitments();
       if (res?.data) {
         setRecruitments(res.data);
@@ -56,11 +57,14 @@ export default function RecruitmentPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadRecruitments();
-  }, []);
+    const timer = setTimeout(() => {
+      loadRecruitments();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadRecruitments]);
 
   const handleOpenCreate = () => {
     setFormData({

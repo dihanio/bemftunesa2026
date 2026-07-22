@@ -125,8 +125,18 @@ export default function FungsionarisPage() {
     }
   }, [filterDept]);
 
-  useEffect(() => { loadDeps(); }, []);
-  useEffect(() => { loadUsers(); }, [loadUsers]);
+  useEffect(() => { 
+    const timer = setTimeout(() => {
+      loadDeps();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadUsers();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [loadUsers]);
 
   const filtered = users.filter((u) => {
     const q = searchQuery.toLowerCase();

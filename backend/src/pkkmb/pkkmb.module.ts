@@ -16,10 +16,22 @@ import {
   PkkmbSubmission,
   PkkmbSubmissionSchema,
 } from '../schemas/pkkmb-task.schema';
-import { PkkmbSchedule, PkkmbScheduleSchema } from '../schemas/pkkmb-schedule.schema';
-import { PkkmbAnnouncement, PkkmbAnnouncementSchema } from '../schemas/pkkmb-announcement.schema';
-import { PkkmbPointLog, PkkmbPointLogSchema } from '../schemas/pkkmb-point-log.schema';
-import { PkkmbGallery, PkkmbGallerySchema } from '../schemas/pkkmb-gallery.schema';
+import {
+  PkkmbSchedule,
+  PkkmbScheduleSchema,
+} from '../schemas/pkkmb-schedule.schema';
+import {
+  PkkmbAnnouncement,
+  PkkmbAnnouncementSchema,
+} from '../schemas/pkkmb-announcement.schema';
+import {
+  PkkmbPointLog,
+  PkkmbPointLogSchema,
+} from '../schemas/pkkmb-point-log.schema';
+import {
+  PkkmbGallery,
+  PkkmbGallerySchema,
+} from '../schemas/pkkmb-gallery.schema';
 
 import { PkkmbController } from './pkkmb.controller';
 import { PkkmbService } from './pkkmb.service';
@@ -30,7 +42,10 @@ import { PkkmbService } from './pkkmb.service';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: PkkmbGroup.name, schema: PkkmbGroupSchema },
-      { name: PkkmbAttendanceSession.name, schema: PkkmbAttendanceSessionSchema },
+      {
+        name: PkkmbAttendanceSession.name,
+        schema: PkkmbAttendanceSessionSchema,
+      },
       { name: PkkmbAttendanceLog.name, schema: PkkmbAttendanceLogSchema },
       { name: PkkmbTask.name, schema: PkkmbTaskSchema },
       { name: PkkmbSubmission.name, schema: PkkmbSubmissionSchema },

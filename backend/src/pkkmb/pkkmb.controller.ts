@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards, Res, BadRequestException, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  Res,
+  BadRequestException,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -29,30 +46,47 @@ export class PkkmbController {
   @Get('me')
   @ApiOperation({ summary: 'Mendapatkan profil Maba/Pendamping saat ini' })
   @ApiResponse({ status: 200, description: 'Berhasil' })
-  async getMe(@CurrentUser() user: UserDocument) {
+  getMe(@CurrentUser() user: UserDocument) {
     return { success: true, data: user };
   }
 
   @Get('attendance/sessions')
   @ApiOperation({ summary: 'Melihat sesi presensi aktif untuk kelompok maba' })
   async getActiveAttendanceSessions(@CurrentUser() user: UserDocument) {
-    if (!user.pkkmbGroup) throw new BadRequestException("Anda belum masuk ke kelompok manapun");
-    const data = await this.pkkmbService.getActiveAttendanceSessions(user.pkkmbGroup.toString());
+    if (!user.pkkmbGroup)
+      throw new BadRequestException('Anda belum masuk ke kelompok manapun');
+    const data = await this.pkkmbService.getActiveAttendanceSessions(
+      user.pkkmbGroup.toString(),
+    );
     return { success: true, data };
   }
 
   @Post('attendance/checkin')
   @ApiOperation({ summary: 'Melakukan presensi maba (Mendukung GPS dan QR)' })
-  async checkIn(@CurrentUser() user: UserDocument, @Body() dto: MabaCheckinDto) {
-    if (!user.pkkmbGroup) throw new BadRequestException("Anda belum masuk ke kelompok manapun");
-    const data = await this.pkkmbService.checkIn(user._id.toString(), user.pkkmbGroup.toString(), dto);
+  async checkIn(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: MabaCheckinDto,
+  ) {
+    if (!user.pkkmbGroup)
+      throw new BadRequestException('Anda belum masuk ke kelompok manapun');
+    const data = await this.pkkmbService.checkIn(
+      user._id.toString(),
+      user.pkkmbGroup.toString(),
+      dto,
+    );
     return { success: true, message: 'Presensi berhasil dicatat', data };
   }
 
   @Get('attendance/my-logs')
   @ApiOperation({ summary: 'Melihat riwayat presensi sendiri' })
-  async getMyAttendanceLogs(@CurrentUser() user: UserDocument, @Query() query: PaginationDto) {
-    const data = await this.pkkmbService.getMyAttendanceLogs(user._id.toString(), query);
+  async getMyAttendanceLogs(
+    @CurrentUser() user: UserDocument,
+    @Query() query: PaginationDto,
+  ) {
+    const data = await this.pkkmbService.getMyAttendanceLogs(
+      user._id.toString(),
+      query,
+    );
     return { success: true, data };
   }
 
@@ -64,9 +98,18 @@ export class PkkmbController {
   }
 
   @Get('tasks/my-submissions')
-  @ApiOperation({ summary: 'Melihat status pengumpulan tugas (individu & kelompok)' })
-  async getMySubmissions(@CurrentUser() user: UserDocument, @Query() query: PaginationDto) {
-    const data = await this.pkkmbService.getMySubmissions(user._id.toString(), query, user.pkkmbGroup?.toString());
+  @ApiOperation({
+    summary: 'Melihat status pengumpulan tugas (individu & kelompok)',
+  })
+  async getMySubmissions(
+    @CurrentUser() user: UserDocument,
+    @Query() query: PaginationDto,
+  ) {
+    const data = await this.pkkmbService.getMySubmissions(
+      user._id.toString(),
+      query,
+      user.pkkmbGroup?.toString(),
+    );
     return { success: true, data };
   }
 
@@ -78,8 +121,14 @@ export class PkkmbController {
     @Param('id') taskId: string,
     @Body() dto: MabaSubmitTaskDto,
   ) {
-    if (!user.pkkmbGroup) throw new BadRequestException("Anda belum masuk ke kelompok manapun");
-    const data = await this.pkkmbService.submitTask(user._id.toString(), user.pkkmbGroup.toString(), taskId, dto);
+    if (!user.pkkmbGroup)
+      throw new BadRequestException('Anda belum masuk ke kelompok manapun');
+    const data = await this.pkkmbService.submitTask(
+      user._id.toString(),
+      user.pkkmbGroup.toString(),
+      taskId,
+      dto,
+    );
     return { success: true, message: 'Tugas berhasil dikumpulkan', data };
   }
 
@@ -88,18 +137,37 @@ export class PkkmbController {
   @Post('mentor/attendance/sessions')
   @Roles('Kakak Pendamping')
   @ApiOperation({ summary: 'Membuat sesi presensi untuk kelompok' })
-  async createAttendanceSession(@CurrentUser() mentor: UserDocument, @Body() dto: CreateAttendanceSessionDto) {
-    if (!mentor.pkkmbGroup) throw new BadRequestException("Anda belum di-assign ke kelompok manapun");
-    const data = await this.pkkmbService.createAttendanceSession(mentor._id.toString(), mentor.pkkmbGroup.toString(), dto);
-    return { success: true, message: 'Sesi presensi berhasil dibuka untuk kelompok Anda', data };
+  async createAttendanceSession(
+    @CurrentUser() mentor: UserDocument,
+    @Body() dto: CreateAttendanceSessionDto,
+  ) {
+    if (!mentor.pkkmbGroup)
+      throw new BadRequestException('Anda belum di-assign ke kelompok manapun');
+    const data = await this.pkkmbService.createAttendanceSession(
+      mentor._id.toString(),
+      mentor.pkkmbGroup.toString(),
+      dto,
+    );
+    return {
+      success: true,
+      message: 'Sesi presensi berhasil dibuka untuk kelompok Anda',
+      data,
+    };
   }
 
   @Get('mentor/attendance/sessions')
   @Roles('Kakak Pendamping')
   @ApiOperation({ summary: 'Melihat riwayat sesi presensi kelompoknya' })
-  async getMentorAttendanceSessions(@CurrentUser() mentor: UserDocument, @Query() query: PaginationDto) {
-    if (!mentor.pkkmbGroup) throw new BadRequestException("Anda belum di-assign ke kelompok manapun");
-    const data = await this.pkkmbService.getMentorAttendanceSessions(mentor.pkkmbGroup.toString(), query);
+  async getMentorAttendanceSessions(
+    @CurrentUser() mentor: UserDocument,
+    @Query() query: PaginationDto,
+  ) {
+    if (!mentor.pkkmbGroup)
+      throw new BadRequestException('Anda belum di-assign ke kelompok manapun');
+    const data = await this.pkkmbService.getMentorAttendanceSessions(
+      mentor.pkkmbGroup.toString(),
+      query,
+    );
     return { success: true, data };
   }
 
@@ -108,12 +176,17 @@ export class PkkmbController {
   @ApiOperation({ summary: 'Memasukkan presensi manual Maba' })
   @ApiParam({ name: 'sessionId', description: 'ID Sesi Presensi' })
   async mentorManualCheckin(
-    @CurrentUser() mentor: UserDocument, 
-    @Param('sessionId') sessionId: string, 
-    @Body() dto: AdminManualCheckinDto
+    @CurrentUser() mentor: UserDocument,
+    @Param('sessionId') sessionId: string,
+    @Body() dto: AdminManualCheckinDto,
   ) {
-    if (!mentor.pkkmbGroup) throw new BadRequestException("Anda belum di-assign ke kelompok manapun");
-    const data = await this.pkkmbService.mentorManualCheckin(sessionId, mentor.pkkmbGroup.toString(), dto);
+    if (!mentor.pkkmbGroup)
+      throw new BadRequestException('Anda belum di-assign ke kelompok manapun');
+    const data = await this.pkkmbService.mentorManualCheckin(
+      sessionId,
+      mentor.pkkmbGroup.toString(),
+      dto,
+    );
     return { success: true, message: 'Presensi manual berhasil dicatat', data };
   }
 
@@ -136,7 +209,11 @@ export class PkkmbController {
     @Param('id') submissionId: string,
     @Body() dto: GradeSubmissionDto,
   ) {
-    const data = await this.pkkmbService.gradeSubmission(submissionId, grader._id.toString(), dto);
+    const data = await this.pkkmbService.gradeSubmission(
+      submissionId,
+      grader._id.toString(),
+      dto,
+    );
     return { success: true, message: 'Nilai tugas berhasil disimpan', data };
   }
 
@@ -146,7 +223,10 @@ export class PkkmbController {
   @Roles('Admin', 'Panitia', 'Super Admin')
   @ApiOperation({ summary: 'Mengunduh rekap presensi (CSV)' })
   @ApiParam({ name: 'sessionId', description: 'ID Sesi Presensi' })
-  async exportAttendanceCsv(@Param('sessionId') sessionId: string, @Res() res: Response) {
+  async exportAttendanceCsv(
+    @Param('sessionId') sessionId: string,
+    @Res() res: Response,
+  ) {
     const csv = await this.pkkmbService.exportAttendanceToCsv(sessionId);
     res.header('Content-Type', 'text/csv');
     res.attachment(`presensi-${sessionId}.csv`);

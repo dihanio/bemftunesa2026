@@ -11,8 +11,8 @@ export default async function Image({ params }: { params: { slug: string } }) {
   const title = data?.title || 'Open Recruitment BEM FT UNESA';
   
   // Convert relative API URL to absolute if necessary, or use fallback
-  let imgUrl = data?.poster;
-  if (imgUrl && imgUrl.startsWith('/')) {
+  let imgUrl = typeof data?.poster === 'string' ? data.poster : data?.poster?.url;
+  if (imgUrl && typeof imgUrl === 'string' && imgUrl.startsWith('/')) {
     imgUrl = `${process.env.NEXT_PUBLIC_API_URL}${imgUrl}`;
   }
 

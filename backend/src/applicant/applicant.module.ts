@@ -9,11 +9,11 @@ import { ApplicantService } from './applicant.service';
   imports: [
     MongooseModule.forFeature([
       { name: Applicant.name, schema: ApplicantSchema },
-      { name: Recruitment.name, schema: RecruitmentSchema }
+      { name: Recruitment.name, schema: RecruitmentSchema },
     ]),
   ],
   controllers: [ApplicantController],
   providers: [ApplicantService],
-  exports: [ApplicantService]
+  exports: [ApplicantService],
 })
 export class ApplicantModule {}

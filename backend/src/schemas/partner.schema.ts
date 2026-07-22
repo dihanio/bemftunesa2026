@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
 export type PartnerDocument = HydratedDocument<Partner>;
 
@@ -30,7 +30,11 @@ export class Partner {
   /**
    * sponsor tier: platinum / gold / silver / bronze (only for type=sponsor)
    */
-  @Prop({ type: String, enum: ['platinum', 'gold', 'silver', 'bronze', null], default: null })
+  @Prop({
+    type: String,
+    enum: ['platinum', 'gold', 'silver', 'bronze', null],
+    default: null,
+  })
   tier: string;
 
   @Prop({ default: true })

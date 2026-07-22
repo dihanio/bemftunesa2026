@@ -20,8 +20,8 @@ export class DebugUserMiddleware implements NestMiddleware {
       const reqUser = (req as unknown as { user?: CustomUser }).user;
       this.logger.log('User object:', JSON.stringify(reqUser, null, 2));
       this.logger.log('Has user:', !!reqUser);
-      this.logger.log('Has user.role:', !!(reqUser?.role));
-      this.logger.log('Has user.role.slug:', !!(reqUser?.role?.slug));
+      this.logger.log('Has user.role:', !!reqUser?.role);
+      this.logger.log('Has user.role.slug:', !!reqUser?.role?.slug);
       this.logger.log('user.role value:', reqUser?.role);
       this.logger.log('user.activeRoleId:', reqUser?.activeRoleId);
       this.logger.log('===================================');

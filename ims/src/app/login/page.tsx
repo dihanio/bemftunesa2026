@@ -62,8 +62,7 @@ function LoginContent() {
           <Image src="/images/logo-kabinet.png" alt="Kabinet" width={56} height={56} className="object-contain" />
         </div>
         <div className="flex flex-col items-center mb-6">
-          <span className="font-bold tracking-wide text-sm text-ink leading-none mb-1">BEM FT UNESA</span>
-          <span className="font-semibold text-[10px] text-ink-muted tracking-widest leading-none">KABINET DANADYAKSA</span>
+          <span className="font-bold tracking-wide text-sm text-ink leading-none mb-1">BEM FT UNESA | KABINET DANADYAKSA</span>
         </div>
         <h1 className="text-3xl font-extrabold text-ink tracking-tight">IMS Portal</h1>
       </div>
@@ -144,8 +143,7 @@ export default function LoginPage() {
             />
             <div className="w-[1px] h-8 bg-white/20 mx-2" />
             <div className="flex flex-col justify-center">
-              <span className="font-bold tracking-wide text-sm text-white/90 leading-none mb-1">BEM FT UNESA</span>
-              <span className="font-semibold text-[10px] text-white/60 tracking-widest leading-none">KABINET DANADYAKSA</span>
+              <span className="font-bold tracking-wide text-sm text-white/90 leading-none mb-1">BEM FT UNESA | KABINET DANADYAKSA</span>
             </div>
           </div>
         </div>

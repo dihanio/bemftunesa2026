@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { UserProfileBase, ActiveContext } from '../../types/rbac';
 import { AuthService } from './auth.service';
 import { determineActiveContext } from '../rbac/role-resolver';
@@ -18,7 +18,7 @@ export function useAuth(): UseAuthResult {
   const [error, setError] = useState<Error | null>(null);
   const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     // Don't fetch if we're already redirecting to prevent loops
     if (isRedirecting) {
       console.log('Already redirecting, skipping profile fetch');
@@ -68,11 +68,14 @@ export function useAuth(): UseAuthResult {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isRedirecting]);
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchProfile();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchProfile]);
 
   return {
     profile,

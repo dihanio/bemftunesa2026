@@ -10,7 +10,8 @@ export class MailService {
 
   constructor(
     private readonly mailerService: MailerService,
-    @InjectModel(MailLog.name) private readonly mailLogModel: Model<MailLogDocument>,
+    @InjectModel(MailLog.name)
+    private readonly mailLogModel: Model<MailLogDocument>,
   ) {}
 
   async sendMail(
@@ -28,15 +29,22 @@ export class MailService {
       });
 
       this.logger.log(`Email successfully sent to ${to} (Subject: ${subject})`);
-      
+
       await this.logMail(to, subject, template, 'nodemailer', 'success', null);
     } catch (error) {
       this.logger.error(
         `Failed to send email to ${to} (Subject: ${subject})`,
-        error instanceof Error ? error.stack : 'Unknown Error'
+        error instanceof Error ? error.stack : 'Unknown Error',
       );
-      
-      await this.logMail(to, subject, template, 'nodemailer', 'failed', error instanceof Error ? error.message : 'Unknown Error');
+
+      await this.logMail(
+        to,
+        subject,
+        template,
+        'nodemailer',
+        'failed',
+        error instanceof Error ? error.message : 'Unknown Error',
+      );
     }
   }
 
@@ -58,7 +66,10 @@ export class MailService {
         errorMessage,
       });
     } catch (logError) {
-      this.logger.error('Failed to log email attempt', logError instanceof Error ? logError.stack : 'Unknown Error');
+      this.logger.error(
+        'Failed to log email attempt',
+        logError instanceof Error ? logError.stack : 'Unknown Error',
+      );
     }
   }
 }

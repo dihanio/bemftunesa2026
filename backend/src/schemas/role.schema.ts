@@ -14,13 +14,20 @@ export class Role {
   @Prop()
   description: string;
 
-  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Permission' }], default: [] })
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Permission' }],
+    default: [],
+  })
   permissions: MongooseSchema.Types.ObjectId[];
 
   @Prop({ default: false })
   isSystem: boolean;
 
-  @Prop({ type: String, enum: ['global', 'department', 'pkkmb_group'], default: 'department' })
+  @Prop({
+    type: String,
+    enum: ['global', 'department', 'pkkmb_group'],
+    default: 'department',
+  })
   scope: 'global' | 'department' | 'pkkmb_group';
 }
 

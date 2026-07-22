@@ -1,4 +1,12 @@
-import { Controller, Get, Put, Post, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateSettingDto, BulkUpdateSettingsDto } from './dto/setting.dto';
@@ -17,19 +25,19 @@ export class SettingsController {
       'about_misi',
       'about_tujuan_title',
       'about_tujuan_desc',
-      'about_filosofi'
+      'about_filosofi',
     ];
-    
+
     const settings = await this.settingsService.findMany(keys);
-    
-    const data: Record<string, any> = {};
-    settings.forEach(s => {
+
+    const data: Record<string, unknown> = {};
+    settings.forEach((s) => {
       data[s.key] = s.value;
     });
 
     return {
       success: true,
-      data
+      data,
     };
   }
 
@@ -37,27 +45,27 @@ export class SettingsController {
   async getPublicSambutan() {
     const keys = ['sambutan_text', 'sambutan_intro'];
     const settings = await this.settingsService.findMany(keys);
-    
-    const data: Record<string, any> = {};
-    settings.forEach(s => {
+
+    const data: Record<string, unknown> = {};
+    settings.forEach((s) => {
       data[s.key] = s.value;
     });
 
     return {
       success: true,
-      data
+      data,
     };
   }
 
   // CMS ENDPOINTS
-  
+
   @UseGuards(JwtAuthGuard)
   @Get()
   async getAllSettings() {
     const data = await this.settingsService.getAll();
     return {
       success: true,
-      data
+      data,
     };
   }
 
@@ -65,17 +73,17 @@ export class SettingsController {
   @Put(':key')
   async updateSetting(
     @Param('key') key: string,
-    @Body() updateDto: UpdateSettingDto
+    @Body() updateDto: UpdateSettingDto,
   ) {
     const updated = await this.settingsService.upsert(
-      key, 
-      updateDto.value, 
-      updateDto.type, 
-      updateDto.description
+      key,
+      updateDto.value,
+      updateDto.type,
+      updateDto.description,
     );
     return {
       success: true,
-      data: updated
+      data: updated,
     };
   }
 
@@ -86,7 +94,7 @@ export class SettingsController {
     return {
       success: true,
       message: 'Settings updated successfully',
-      data: result
+      data: result,
     };
   }
 }

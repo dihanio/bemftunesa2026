@@ -72,7 +72,12 @@ export default function DepartemenPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      load();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [load]);
 
   const filtered = departments.filter((d) =>
     d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsMongoId, IsArray, ValidateNested, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsMongoId,
+  IsArray,
+  ValidateNested,
+  IsBoolean,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CommitteeMemberDto {

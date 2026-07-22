@@ -1,12 +1,12 @@
 /**
  * RBAC Role Constants — Single source of truth for role slugs.
- * 
+ *
  * Sesuai dokumentasi organisasi BEM FT:
  * - BPI dipecah menjadi 7 jabatan spesifik
  * - BPH: kadep, wakadep
  * - Staff: staf
- * 
- * Backward compat: slug lama (sekretaris, bendahara) tetap dipertahankan 
+ *
+ * Backward compat: slug lama (sekretaris, bendahara) tetap dipertahankan
  * di dalam grouping agar token/session lama tetap valid.
  */
 
@@ -30,7 +30,11 @@ export const ROLE_BENDAHARA_LEGACY = 'bendahara';
 // --- Groupings for @Roles() decorator ---
 
 /** BPI Pimpinan: Ketua + Wakil */
-export const ROLES_BPI_PIMPINAN = [ROLE_SUPER_ADMIN, ROLE_KABEM, ROLE_WAKABEM] as const;
+export const ROLES_BPI_PIMPINAN = [
+  ROLE_SUPER_ADMIN,
+  ROLE_KABEM,
+  ROLE_WAKABEM,
+] as const;
 
 /** Semua Sekretaris (termasuk slug lama) */
 export const ROLES_SEKRETARIS = [

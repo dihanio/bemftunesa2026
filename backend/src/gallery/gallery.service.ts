@@ -1,8 +1,16 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Gallery, GalleryDocument } from '../schemas/gallery.schema';
-import { CreateGalleryDto, UpdateGalleryDto, GalleryQueryDto } from './dto/gallery.dto';
+import {
+  CreateGalleryDto,
+  UpdateGalleryDto,
+  GalleryQueryDto,
+} from './dto/gallery.dto';
 
 @Injectable()
 export class GalleryService {
@@ -17,7 +25,12 @@ export class GalleryService {
 
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
-      this.galleryModel.find(filter).sort({ eventDate: -1, createdAt: -1 }).skip(skip).limit(limit).exec(),
+      this.galleryModel
+        .find(filter)
+        .sort({ eventDate: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
       this.galleryModel.countDocuments(filter),
     ]);
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
@@ -30,7 +43,9 @@ export class GalleryService {
   }
 
   async findBySlug(slug: string): Promise<GalleryDocument> {
-    const gallery = await this.galleryModel.findOne({ slug, isPublished: true }).exec();
+    const gallery = await this.galleryModel
+      .findOne({ slug, isPublished: true })
+      .exec();
     if (!gallery) throw new NotFoundException('Album tidak ditemukan');
     return gallery;
   }
@@ -43,16 +58,22 @@ export class GalleryService {
 
   async create(dto: CreateGalleryDto): Promise<GalleryDocument> {
     const exists = await this.galleryModel.findOne({ slug: dto.slug }).exec();
-    if (exists) throw new ConflictException(`Slug "${dto.slug}" sudah digunakan`);
+    if (exists)
+      throw new ConflictException(`Slug "${dto.slug}" sudah digunakan`);
     return new this.galleryModel(dto).save();
   }
 
   async update(id: string, dto: UpdateGalleryDto): Promise<GalleryDocument> {
     if (dto.slug) {
-      const exists = await this.galleryModel.findOne({ slug: dto.slug, _id: { $ne: id } }).exec();
-      if (exists) throw new ConflictException(`Slug "${dto.slug}" sudah digunakan`);
+      const exists = await this.galleryModel
+        .findOne({ slug: dto.slug, _id: { $ne: id } })
+        .exec();
+      if (exists)
+        throw new ConflictException(`Slug "${dto.slug}" sudah digunakan`);
     }
-    const gallery = await this.galleryModel.findByIdAndUpdate(id, dto, { new: true }).exec();
+    const gallery = await this.galleryModel
+      .findByIdAndUpdate(id, dto, { new: true })
+      .exec();
     if (!gallery) throw new NotFoundException('Album tidak ditemukan');
     return gallery;
   }

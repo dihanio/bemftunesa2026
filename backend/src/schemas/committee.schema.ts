@@ -27,7 +27,12 @@ export class CommitteeMember {
  */
 @Schema({ timestamps: true, collection: 'committees' })
 export class Committee {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Program', required: true, unique: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'Program',
+    required: true,
+    unique: true,
+  })
   programId: Types.ObjectId; // 1 proker = 1 kepanitiaan
 
   @Prop({ required: true, trim: true })

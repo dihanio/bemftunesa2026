@@ -6,7 +6,6 @@ import {
   Param,
   BadRequestException,
   NotFoundException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -20,18 +19,22 @@ import { Contact, ContactDocument } from '../schemas/contact.schema';
 @Controller('public')
 export class PublicController {
   constructor(
-    @InjectModel('Department') private departmentModel: Model<DepartmentDocument>,
+    @InjectModel('Department')
+    private departmentModel: Model<DepartmentDocument>,
     @InjectModel('User') private userModel: Model<UserDocument>,
     @InjectModel('Role') private roleModel: Model<RoleDocument>,
     @InjectModel('Program') private programModel: Model<ProgramDocument>,
-    @InjectModel('Aspiration') private aspirationModel: Model<AspirationDocument>,
+    @InjectModel('Aspiration')
+    private aspirationModel: Model<AspirationDocument>,
     @InjectModel(Contact.name) private contactModel: Model<ContactDocument>,
   ) {}
 
   @Get('stats')
   async getStats() {
-    const departments = await this.departmentModel.countDocuments({ isActive: true });
-    
+    const departments = await this.departmentModel.countDocuments({
+      isActive: true,
+    });
+
     // Count only actual fungsionaris (BPI + Department members)
     const activeUsers = await this.userModel
       .find({ isActive: true })
@@ -39,11 +42,12 @@ export class PublicController {
       .lean();
 
     const bpiSlugs = ['kabem', 'wakabem', 'sekretaris', 'bendahara'];
-    
-    const members = activeUsers.filter((u: any) => {
+
+    const members = activeUsers.filter((u: Record<string, unknown>) => {
       if (!u.role) return false;
-      const roleSlug = u.role.slug;
-      const isBpi = bpiSlugs.includes(roleSlug);
+      const role = u.role as { slug?: string };
+      const roleSlug = role.slug;
+      const isBpi = roleSlug ? bpiSlugs.includes(roleSlug) : false;
       const isDept = u.department != null;
       return isBpi || isDept;
     }).length;
@@ -51,10 +55,12 @@ export class PublicController {
 
     const totalAspirations = await this.aspirationModel.countDocuments();
     // Count all non-final statuses as "pending" (new, processing, pending)
-    const pendingAspirations = await this.aspirationModel.countDocuments({ 
-      status: { $in: ['new', 'processing', 'pending'] } 
+    const pendingAspirations = await this.aspirationModel.countDocuments({
+      status: { $in: ['new', 'processing', 'pending'] },
     });
-    const resolvedAspirations = await this.aspirationModel.countDocuments({ status: 'resolved' });
+    const resolvedAspirations = await this.aspirationModel.countDocuments({
+      status: 'resolved',
+    });
 
     return {
       success: true,
@@ -83,7 +89,7 @@ export class PublicController {
   }
 
   @Get('documents')
-  async getDocuments() {
+  getDocuments() {
     return { success: true, data: [] };
   }
 
@@ -124,7 +130,10 @@ export class PublicController {
     const deptUsers = (await this.userModel
       .find({ isActive: true, department: { $exists: true, $ne: null } })
       .populate('role', 'name slug')
-      .lean()) as unknown as (PopulatedUser & { department: Types.ObjectId; position: string })[];
+      .lean()) as unknown as (PopulatedUser & {
+      department: Types.ObjectId;
+      position: string;
+    })[];
 
     const members = deptUsers.map((u) => ({
       _id: u._id,
@@ -153,7 +162,16 @@ export class PublicController {
   // ─── Public Aspiration Submission ──────────────────────────────────────────
 
   @Post('aspirations')
-  async submitAspiration(@Body() body: { name?: string; email?: string; subject: string; message: string; category?: string }) {
+  async submitAspiration(
+    @Body()
+    body: {
+      name?: string;
+      email?: string;
+      subject: string;
+      message: string;
+      category?: string;
+    },
+  ) {
     if (!body.subject || !body.message) {
       throw new BadRequestException('Subject dan message wajib diisi');
     }
@@ -199,7 +217,15 @@ export class PublicController {
   // ─── Public Contact Form ──────────────────────────────────────────────────
 
   @Post('contact')
-  async submitContact(@Body() body: { name: string; email: string; subject: string; message: string }) {
+  async submitContact(
+    @Body()
+    body: {
+      name: string;
+      email: string;
+      subject: string;
+      message: string;
+    },
+  ) {
     if (!body.name || !body.email || !body.subject || !body.message) {
       throw new BadRequestException('Semua field wajib diisi');
     }

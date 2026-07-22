@@ -8,15 +8,18 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   try {
     const res = await PublicApiService.getRecruitmentBySlug(params.slug);
-    const data = res?.data?.data || res?.data || res;
-    if (data && data.title) {
-      title = data.title;
-      description = data.description || description;
+    const resData = res?.data as unknown;
+    const data = (resData as {data?: typeof resData})?.data || resData || res;
+    if (data && typeof data === 'object' && 'title' in data) {
+      const typedData = data as {title?: string; description?: string; poster?: string | {url?: string}};
+      title = typedData.title || title;
+      description = typedData.description || description;
       
-      if (data.poster) {
-        imgUrl = data.poster.startsWith('/') 
-          ? `${process.env.NEXT_PUBLIC_API_URL}${data.poster}` 
-          : data.poster;
+      if (typedData.poster) {
+        const posterUrl = typeof typedData.poster === 'string' ? typedData.poster : typedData.poster.url;
+        imgUrl = (posterUrl && typeof posterUrl === 'string' && posterUrl.startsWith('/'))
+          ? `${process.env.NEXT_PUBLIC_API_URL}${posterUrl}` 
+          : (posterUrl || imgUrl);
       }
     }
   } catch (error) {
@@ -30,11 +33,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       title,
       description,
       type: 'website',
+      images: [imgUrl]
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [imgUrl]
     },
   };
 }

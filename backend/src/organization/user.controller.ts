@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Role, RoleDocument } from '../schemas/role.schema';
+import { RoleDocument } from '../schemas/role.schema';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequiredPermissions } from '../auth/decorators/required-permission.decorator';
@@ -30,42 +30,59 @@ export class UserController {
   ) {}
 
   private getUserPermissions(req: import('express').Request): string[] {
-    const role = req.user?.activeRoleId as { permissions?: { name: string }[] } | undefined;
+    const role = req.user?.activeRoleId as
+      | { permissions?: { name: string }[] }
+      | undefined;
     if (!role || !Array.isArray(role.permissions)) return [];
     return role.permissions.map((p) => p.name);
   }
 
   @Post()
   @RequiredPermissions('users:create:all', 'users:create:department')
-  async create(@Req() req: import('express').Request, @Body() createUserDto: CreateUserDto) {
+  async create(
+    @Req() req: import('express').Request,
+    @Body() createUserDto: CreateUserDto,
+  ) {
     const userPerms = this.getUserPermissions(req);
-    const hasCreateAll = userPerms.includes('users:create:all') || userPerms.includes('manage:all');
+    const hasCreateAll =
+      userPerms.includes('users:create:all') ||
+      userPerms.includes('manage:all');
 
     if (!hasCreateAll) {
       if (!req.user!.organizationId) {
-        throw new ForbiddenException('Anda tidak terikat pada departemen manapun');
+        throw new ForbiddenException(
+          'Anda tidak terikat pada departemen manapun',
+        );
       }
       createUserDto.department = req.user!.organizationId.toString();
-      
+
       const stafRole = await this.roleModel.findOne({ slug: 'staf' }).exec();
-      if (!stafRole) throw new ForbiddenException('Role Staf tidak ditemukan di sistem');
+      if (!stafRole)
+        throw new ForbiddenException('Role Staf tidak ditemukan di sistem');
       createUserDto.role = stafRole._id.toString();
     }
 
-    return this.userService.create(createUserDto, req.user!.cabinetPeriod as string);
+    return this.userService.create(createUserDto, req.user!.cabinetPeriod);
   }
 
   @Get()
   @RequiredPermissions('users:read:all', 'users:read:department')
-  async findAll(@Req() req: import('express').Request, @Query('departmentId') departmentId?: string, @Query('search') search?: string) {
+  async findAll(
+    @Req() req: import('express').Request,
+    @Query('departmentId') departmentId?: string,
+    @Query('search') search?: string,
+  ) {
     const userPerms = this.getUserPermissions(req);
-    const hasReadAll = userPerms.includes('users:read:all') || userPerms.includes('manage:all');
+    const hasReadAll =
+      userPerms.includes('users:read:all') || userPerms.includes('manage:all');
 
     const query: Record<string, unknown> = {};
 
     if (!hasReadAll) {
       if (!req.user!.organizationId) {
-        throw new ForbiddenException('Anda tidak terikat pada departemen manapun');
+        throw new ForbiddenException(
+          'Anda tidak terikat pada departemen manapun',
+        );
       }
       query.department = req.user!.organizationId;
     } else if (departmentId) {
@@ -81,27 +98,43 @@ export class UserController {
 
   @Get('roles')
   async getRoles(@Req() req: import('express').Request) {
-    const role = req.user?.activeRoleId as { permissions?: { name: string }[] } | undefined;
-    const permissions = Array.isArray(role?.permissions) ? role.permissions.map((p) => p.name) : [];
+    const role = req.user?.activeRoleId as
+      | { permissions?: { name: string }[] }
+      | undefined;
+    const permissions = Array.isArray(role?.permissions)
+      ? role.permissions.map((p) => p.name)
+      : [];
     const isSuperAdmin = permissions.includes('manage:all');
 
     if (isSuperAdmin) {
       return this.roleModel.find().sort({ name: 1 }).exec();
     }
-    return this.roleModel.find({ slug: { $ne: 'super-admin' } }).sort({ name: 1 }).exec();
+    return this.roleModel
+      .find({ slug: { $ne: 'super-admin' } })
+      .sort({ name: 1 })
+      .exec();
   }
 
   @Get(':id')
   @RequiredPermissions('users:read:all', 'users:read:department')
-  async findOne(@Param('id') id: string, @Req() req: import('express').Request) {
+  async findOne(
+    @Param('id') id: string,
+    @Req() req: import('express').Request,
+  ) {
     const user = await this.userService.findOne(id);
 
     const userPerms = this.getUserPermissions(req);
-    const hasReadAll = userPerms.includes('users:read:all') || userPerms.includes('manage:all');
+    const hasReadAll =
+      userPerms.includes('users:read:all') || userPerms.includes('manage:all');
 
     if (!hasReadAll) {
-      if (!req.user!.organizationId || user.department?.toString() !== req.user!.organizationId.toString()) {
-        throw new ForbiddenException('Anda tidak berhak melihat fungsionaris departemen lain');
+      if (
+        !req.user!.organizationId ||
+        user.department?.toString() !== req.user!.organizationId.toString()
+      ) {
+        throw new ForbiddenException(
+          'Anda tidak berhak melihat fungsionaris departemen lain',
+        );
       }
     }
 
@@ -110,15 +143,26 @@ export class UserController {
 
   @Put(':id')
   @RequiredPermissions('users:update:all', 'users:update:department')
-  async update(@Param('id') id: string, @Req() req: import('express').Request, @Body() updateUserDto: UpdateUserDto) {
+  async update(
+    @Param('id') id: string,
+    @Req() req: import('express').Request,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
     const user = await this.userService.findOne(id);
 
     const userPerms = this.getUserPermissions(req);
-    const hasUpdateAll = userPerms.includes('users:update:all') || userPerms.includes('manage:all');
+    const hasUpdateAll =
+      userPerms.includes('users:update:all') ||
+      userPerms.includes('manage:all');
 
     if (!hasUpdateAll) {
-      if (!req.user!.organizationId || user.department?.toString() !== req.user!.organizationId.toString()) {
-        throw new ForbiddenException('Anda tidak berhak memperbarui fungsionaris departemen lain');
+      if (
+        !req.user!.organizationId ||
+        user.department?.toString() !== req.user!.organizationId.toString()
+      ) {
+        throw new ForbiddenException(
+          'Anda tidak berhak memperbarui fungsionaris departemen lain',
+        );
       }
       delete updateUserDto.department;
       delete updateUserDto.role;
@@ -133,11 +177,18 @@ export class UserController {
     const user = await this.userService.findOne(id);
 
     const userPerms = this.getUserPermissions(req);
-    const hasDeleteAll = userPerms.includes('users:delete:all') || userPerms.includes('manage:all');
+    const hasDeleteAll =
+      userPerms.includes('users:delete:all') ||
+      userPerms.includes('manage:all');
 
     if (!hasDeleteAll) {
-      if (!req.user!.organizationId || user.department?.toString() !== req.user!.organizationId.toString()) {
-        throw new ForbiddenException('Anda tidak berhak menghapus fungsionaris departemen lain');
+      if (
+        !req.user!.organizationId ||
+        user.department?.toString() !== req.user!.organizationId.toString()
+      ) {
+        throw new ForbiddenException(
+          'Anda tidak berhak menghapus fungsionaris departemen lain',
+        );
       }
     }
 

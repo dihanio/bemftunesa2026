@@ -10,4 +10,3 @@ export enum AuditAction {
   UPDATE_VISIBILITY = 'UPDATE_VISIBILITY',
   UPDATE = 'UPDATE',
 }
-

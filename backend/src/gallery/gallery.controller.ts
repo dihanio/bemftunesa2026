@@ -1,12 +1,23 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Param, Body, Query, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequiredPermissions } from '../auth/decorators/required-permission.decorator';
 import { GalleryService } from './gallery.service';
-import { CreateGalleryDto, UpdateGalleryDto, GalleryQueryDto } from './dto/gallery.dto';
+import {
+  CreateGalleryDto,
+  UpdateGalleryDto,
+  GalleryQueryDto,
+} from './dto/gallery.dto';
 
 @Controller('gallery')
 export class GalleryController {

@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { User, UserDocument } from '../schemas/user.schema';
 import { Role, RoleDocument } from '../schemas/role.schema';
@@ -25,7 +25,9 @@ export class AuthService {
   ) {}
 
   async validateGoogleUser(profile: GoogleProfile): Promise<UserDocument> {
-    let user = await this.userModel.findOne({ googleId: profile.googleId }).exec();
+    let user = await this.userModel
+      .findOne({ googleId: profile.googleId })
+      .exec();
 
     if (!user) {
       user = await this.userModel.findOne({ email: profile.email }).exec();
@@ -33,7 +35,9 @@ export class AuthService {
 
     if (!user) {
       const superAdminEmail = this.configService.get<string>('ADMIN_EMAIL');
-      const isSuperAdmin = superAdminEmail && profile.email.toLowerCase() === superAdminEmail.toLowerCase();
+      const isSuperAdmin =
+        superAdminEmail &&
+        profile.email.toLowerCase() === superAdminEmail.toLowerCase();
 
       const roleSlug = isSuperAdmin ? 'super-admin' : 'staf';
       let defaultRole = await this.roleModel.findOne({ slug: roleSlug }).exec();
@@ -41,7 +45,9 @@ export class AuthService {
         defaultRole = await this.roleModel.findOne().exec();
       }
       if (!defaultRole) {
-        throw new UnauthorizedException('System is not initialized. Role table is empty.');
+        throw new UnauthorizedException(
+          'System is not initialized. Role table is empty.',
+        );
       }
 
       user = await this.userModel.create({
@@ -62,10 +68,15 @@ export class AuthService {
 
     if (!user.isActive) {
       const superAdminEmail = this.configService.get<string>('ADMIN_EMAIL');
-      if (superAdminEmail && user.email.toLowerCase() === superAdminEmail.toLowerCase()) {
+      if (
+        superAdminEmail &&
+        user.email.toLowerCase() === superAdminEmail.toLowerCase()
+      ) {
         // ponytail: auto-promote existing inactive super admin; one-time bootstrap path
-        const superRole = await this.roleModel.findOne({ slug: 'super-admin' }).exec();
-        if (superRole) user.role = superRole._id as Types.ObjectId;
+        const superRole = await this.roleModel
+          .findOne({ slug: 'super-admin' })
+          .exec();
+        if (superRole) user.role = superRole._id;
         user.isActive = true;
         user.position = 'Super Administrator';
         await user.save();
@@ -81,7 +92,7 @@ export class AuthService {
     if (profile.avatar) {
       user.avatar = profile.avatar;
     }
-    
+
     user.lastLoginAt = new Date();
     await user.save();
 
@@ -91,18 +102,18 @@ export class AuthService {
   async validateBypassUser(email: string): Promise<UserDocument> {
     // Only allow bypass in development (or if you want it always, remove the check. I'll allow it for testing)
     let user = await this.userModel.findOne({ email }).exec();
-    
+
     if (!user) {
       // Auto-create for bypass testing if not found
       let role = await this.roleModel.findOne({ slug: 'user' }).exec();
       if (!role) {
-         role = await this.roleModel.create({
-           name: 'User',
-           slug: 'user',
-           description: 'Default user role',
-           isSystem: true,
-           permissions: []
-         });
+        role = await this.roleModel.create({
+          name: 'User',
+          slug: 'user',
+          description: 'Default user role',
+          isSystem: true,
+          permissions: [],
+        });
       }
       user = new this.userModel({
         name: email.split('@')[0].replace('.', ' ').toUpperCase(),
@@ -132,7 +143,7 @@ export class AuthService {
     if (!user.isActive) {
       throw new UnauthorizedException('Akun dinonaktifkan.');
     }
-    
+
     // Check password (default is NIM if not set)
     const validPassword = user.password ? user.password : user.nim;
     if (pass !== validPassword) {
@@ -145,12 +156,15 @@ export class AuthService {
     return user;
   }
 
-  async generateTokens(user: UserDocument) {
+  generateTokens(user: UserDocument) {
     const payload = { sub: user._id.toString(), email: user.email };
 
     // expiresIn uses module-level signOptions; override per-call with parsed int
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: parseInt(this.configService.get<string>('JWT_EXPIRES_IN', '604800'), 10),
+      expiresIn: parseInt(
+        this.configService.get<string>('JWT_EXPIRES_IN', '604800'),
+        10,
+      ),
     });
 
     const refreshToken = this.jwtService.sign(payload, {
@@ -162,7 +176,7 @@ export class AuthService {
 
   async refreshTokens(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify(refreshToken);
+      const payload = this.jwtService.verify<{ sub: string }>(refreshToken);
       const user = await this.userModel.findById(payload.sub).exec();
 
       if (!user || !user.isActive) {
@@ -178,9 +192,9 @@ export class AuthService {
     }
   }
 
-  async switchRole(userId: string, assignmentId: string) {
+  async switchRole(userId: string) {
     const user = await this.userModel.findById(userId).exec();
-    
+
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User not found or inactive');
     }
@@ -189,7 +203,7 @@ export class AuthService {
     // Note: Assignments are typically stored in a separate collection or embedded in user
     // For now, we'll just regenerate tokens - full validation would check assignments collection
     // TODO: Add proper assignment validation when assignments schema is available
-    
+
     return this.generateTokens(user);
   }
 

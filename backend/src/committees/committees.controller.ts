@@ -1,6 +1,20 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CommitteesService } from './committees.service';
-import { CreateCommitteeDto, UpdateCommitteeDto, AddMemberDto } from './dto/committee.dto';
+import {
+  CreateCommitteeDto,
+  UpdateCommitteeDto,
+  AddMemberDto,
+} from './dto/committee.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';

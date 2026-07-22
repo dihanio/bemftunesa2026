@@ -4,11 +4,11 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
-import { PublicApiService } from "@/lib/api";
+import { PublicApiService, GalleryItem } from "@/lib/api";
 import { ImageIcon, ArrowRight, Search } from "lucide-react";
 
 export default function GaleriPage() {
-  const [albums, setAlbums] = useState<any[]>([]);
+  const [albums, setAlbums] = useState<GalleryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -17,8 +17,9 @@ export default function GaleriPage() {
       setLoading(true);
       try {
         const res = await PublicApiService.getGallery({ search: searchQuery || undefined });
-        const data = res?.data?.data?.data || res?.data?.data || res?.data || (Array.isArray(res) ? res : []);
-        setAlbums(data);
+        const resData = res?.data as unknown;
+        const unwrapped = Array.isArray(resData) ? resData : (resData as {data?: {data?: GalleryItem[]}})?.data?.data || (resData as {data?: GalleryItem[]})?.data || (res as unknown as {data?: GalleryItem[]})?.data || [];
+        setAlbums(Array.isArray(unwrapped) ? unwrapped : []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -75,7 +76,7 @@ export default function GaleriPage() {
         </div>
       ) : albums.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {albums.map((album: any) => (
+          {albums.map((album: GalleryItem) => (
             <Link 
               href={`/galeri/${album.slug}`} 
               key={album._id}

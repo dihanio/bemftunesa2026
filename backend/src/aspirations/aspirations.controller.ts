@@ -1,10 +1,29 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { AspirationsService } from './aspirations.service';
-import { CreateAspirationDto, UpdateAspirationDto, QueryAspirationDto } from './dto/aspiration.dto';
+import {
+  CreateAspirationDto,
+  UpdateAspirationDto,
+  QueryAspirationDto,
+} from './dto/aspiration.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { ROLES_BPI, ROLE_KADEP, ROLE_SUPER_ADMIN } from '../common/constants/roles';
+import {
+  ROLES_BPI,
+  ROLE_KADEP,
+  ROLE_SUPER_ADMIN,
+} from '../common/constants/roles';
 
 @Controller('aspirations')
 export class AspirationsController {
@@ -12,10 +31,16 @@ export class AspirationsController {
 
   // Public endpoint for submitting aspirations
   @Post()
-  async create(@Body() createAspirationDto: CreateAspirationDto, @Req() req: import('express').Request) {
+  async create(
+    @Body() createAspirationDto: CreateAspirationDto,
+    @Req() req: import('express').Request,
+  ) {
     // If JWT token is present, we could extract userId. For now, pass null or get from auth middleware if used
     const userId = req.user ? req.user.userId?.toString() : undefined;
-    const data = await this.aspirationsService.create(createAspirationDto, userId);
+    const data = await this.aspirationsService.create(
+      createAspirationDto,
+      userId,
+    );
     return { success: true, data };
   }
 
@@ -29,7 +54,8 @@ export class AspirationsController {
   @Get('dss/saw')
   @UseGuards(JwtAuthGuard)
   async getSawPriority(@Query('cabinetPeriod') cabinetPeriod?: string) {
-    const result = await this.aspirationsService.calculateSawPriority(cabinetPeriod);
+    const result =
+      await this.aspirationsService.calculateSawPriority(cabinetPeriod);
     return result;
   }
 
@@ -43,7 +69,10 @@ export class AspirationsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(...ROLES_BPI, ROLE_KADEP)
-  async update(@Param('id') id: string, @Body() updateAspirationDto: UpdateAspirationDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateAspirationDto: UpdateAspirationDto,
+  ) {
     const data = await this.aspirationsService.update(id, updateAspirationDto);
     return { success: true, data };
   }

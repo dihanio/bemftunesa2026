@@ -1,8 +1,13 @@
-import { Injectable, BadRequestException, NotFoundException, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
-import { Role, RoleDocument } from '../schemas/role.schema';
+import { RoleDocument } from '../schemas/role.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -15,19 +20,27 @@ export class UserService implements OnModuleInit {
 
   async onModuleInit() {
     try {
-      const globalRoles = await this.roleModel.find({ scope: 'global' }).select('_id').exec();
+      const globalRoles = await this.roleModel
+        .find({ scope: 'global' })
+        .select('_id')
+        .exec();
       const globalRoleIds = globalRoles.map((r) => r._id);
 
-      await this.userModel.updateMany(
-        { role: { $in: globalRoleIds }, department: { $ne: null } },
-        { $set: { department: null } },
-      ).exec();
+      await this.userModel
+        .updateMany(
+          { role: { $in: globalRoleIds }, department: { $ne: null } },
+          { $set: { department: null } },
+        )
+        .exec();
     } catch {
       // Non-critical startup migration — silently ignore failures
     }
   }
 
-  private async getRoleAndValidateScope(roleId: string, departmentId?: string | null): Promise<void> {
+  private async getRoleAndValidateScope(
+    roleId: string,
+    departmentId?: string | null,
+  ): Promise<void> {
     const role = await this.roleModel.findById(roleId).exec();
     if (!role) {
       throw new BadRequestException('Role hak akses tidak ditemukan');
@@ -39,15 +52,19 @@ export class UserService implements OnModuleInit {
     }
 
     if (role.scope === 'department' && !departmentId) {
-      throw new BadRequestException('Departemen wajib dipilih untuk role fungsionaris ini');
+      throw new BadRequestException(
+        'Departemen wajib dipilih untuk role fungsionaris ini',
+      );
     }
   }
 
   async create(createUserDto: CreateUserDto, creatorCabinetPeriod?: string) {
     const emailLower = createUserDto.email.toLowerCase();
-    
+
     // Check if email already registered
-    const existingEmail = await this.userModel.findOne({ email: emailLower }).exec();
+    const existingEmail = await this.userModel
+      .findOne({ email: emailLower })
+      .exec();
     if (existingEmail) {
       throw new BadRequestException('Email sudah digunakan');
     }
@@ -61,14 +78,17 @@ export class UserService implements OnModuleInit {
     if (role.scope === 'global') {
       departmentVal = null;
     } else if (role.scope === 'department' && !departmentVal) {
-      throw new BadRequestException('Departemen wajib dipilih untuk role fungsionaris ini');
+      throw new BadRequestException(
+        'Departemen wajib dipilih untuk role fungsionaris ini',
+      );
     }
 
     return this.userModel.create({
       ...createUserDto,
       email: emailLower,
       department: departmentVal,
-      cabinetPeriod: createUserDto.cabinetPeriod || creatorCabinetPeriod || '2026',
+      cabinetPeriod:
+        createUserDto.cabinetPeriod || creatorCabinetPeriod || '2026',
     });
   }
 
@@ -105,7 +125,9 @@ export class UserService implements OnModuleInit {
     if (updateUserDto.email) {
       const emailLower = updateUserDto.email.toLowerCase();
       if (emailLower !== user.email) {
-        const existingEmail = await this.userModel.findOne({ email: emailLower }).exec();
+        const existingEmail = await this.userModel
+          .findOne({ email: emailLower })
+          .exec();
         if (existingEmail) {
           throw new BadRequestException('Email sudah digunakan');
         }
@@ -114,7 +136,9 @@ export class UserService implements OnModuleInit {
     }
 
     // Role scope department logic
-    const roleId = updateUserDto.role || (user.role as { toString: () => string }).toString();
+    const roleId =
+      updateUserDto.role ||
+      (user.role as { toString: () => string }).toString();
     const role = await this.roleModel.findById(roleId).exec();
     if (!role) {
       throw new BadRequestException('Role hak akses tidak ditemukan');
@@ -123,13 +147,20 @@ export class UserService implements OnModuleInit {
     if (role.scope === 'global') {
       updateData.department = null;
     } else {
-      const deptId = updateUserDto.hasOwnProperty('department') ? updateUserDto.department : user.department;
+      const deptId =
+        'department' in updateUserDto
+          ? updateUserDto.department
+          : user.department;
       if (!deptId) {
-        throw new BadRequestException('Departemen wajib dipilih untuk role fungsionaris ini');
+        throw new BadRequestException(
+          'Departemen wajib dipilih untuk role fungsionaris ini',
+        );
       }
     }
 
-    return this.userModel.findByIdAndUpdate(id, { $set: updateData }, { new: true }).exec();
+    return this.userModel
+      .findByIdAndUpdate(id, { $set: updateData }, { new: true })
+      .exec();
   }
 
   async remove(id: string) {
@@ -137,6 +168,8 @@ export class UserService implements OnModuleInit {
     if (!user) {
       throw new NotFoundException('Fungsionaris tidak ditemukan');
     }
-    return this.userModel.findByIdAndUpdate(id, { $set: { isActive: false } }, { new: true }).exec();
+    return this.userModel
+      .findByIdAndUpdate(id, { $set: { isActive: false } }, { new: true })
+      .exec();
   }
 }

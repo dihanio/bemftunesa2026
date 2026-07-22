@@ -21,7 +21,10 @@ import { AuthorizationService } from '../common/auth/authorization.service';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: parseInt(configService.get('JWT_EXPIRES_IN', '604800'), 10),
+          expiresIn: parseInt(
+            configService.get('JWT_EXPIRES_IN', '604800'),
+            10,
+          ),
         },
       }),
       inject: [ConfigService],
@@ -37,4 +40,3 @@ import { AuthorizationService } from '../common/auth/authorization.service';
   exports: [AuthService, JwtModule, AuthorizationService],
 })
 export class AuthModule {}
-

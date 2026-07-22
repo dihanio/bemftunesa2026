@@ -1,4 +1,16 @@
-import { IsString, IsEmail, IsOptional, IsEnum, IsMongoId, IsUrl, IsObject, ValidateNested, IsNumber, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsEnum,
+  IsMongoId,
+  IsUrl,
+  IsObject,
+  ValidateNested,
+  IsNumber,
+  Min,
+  Max,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { APPLICANT_STATUSES } from '../../schemas/applicant.schema';
 import type { ApplicantStatus } from '../../schemas/applicant.schema';

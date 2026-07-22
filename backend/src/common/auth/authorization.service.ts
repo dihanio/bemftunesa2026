@@ -17,7 +17,9 @@ export class AuthorizationService {
    */
   require(user: UserContext, requiredPermission: AppPermission): void {
     if (!this.can(user, requiredPermission)) {
-      throw new ForbiddenException(`Missing required permission: ${requiredPermission}`);
+      throw new ForbiddenException(
+        `Missing required permission: ${requiredPermission}`,
+      );
     }
   }
 
@@ -36,7 +38,9 @@ export class AuthorizationService {
    */
   requireAny(user: UserContext, requiredPermissions: AppPermission[]): void {
     if (!this.canAny(user, requiredPermissions)) {
-      throw new ForbiddenException(`Missing at least one required permission: ${requiredPermissions.join(', ')}`);
+      throw new ForbiddenException(
+        `Missing at least one required permission: ${requiredPermissions.join(', ')}`,
+      );
     }
   }
 
@@ -44,6 +48,6 @@ export class AuthorizationService {
     if (!user || !user.permissions || !Array.isArray(user.permissions)) {
       return false;
     }
-    return requiredPermissions.some(perm => user.permissions.includes(perm));
+    return requiredPermissions.some((perm) => user.permissions.includes(perm));
   }
 }

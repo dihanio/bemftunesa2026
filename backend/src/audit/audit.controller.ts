@@ -13,7 +13,7 @@ export class AuditController {
   @Roles('super-admin', 'kabem', 'wakabem')
   async findRecent(@Query('limit') limit?: string) {
     const data = await this.auditService.findRecent(
-      limit ? parseInt(limit, 10) : 20
+      limit ? parseInt(limit, 10) : 20,
     );
     return { success: true, data };
   }

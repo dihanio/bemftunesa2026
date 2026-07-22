@@ -13,10 +13,11 @@ export class LoggingMiddleware implements NestMiddleware {
     res.on('finish', () => {
       const { statusCode } = res;
       const duration = Date.now() - startTime;
-      const requestId = req['requestId'] || '-';
-      
+      const requestId =
+        (req as Request & { requestId?: string }).requestId || '-';
+
       const logMessage = `${method} ${originalUrl} ${statusCode} - ${duration}ms`;
-      
+
       // Pass request ID and IP in the metadata block
       this.logger.log(logMessage, undefined, {
         requestId,

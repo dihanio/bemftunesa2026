@@ -15,9 +15,12 @@ export function DashboardHeader({ profile, onOpenSidebar, onSwitchRole }: Dashbo
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    setMounted(true);
-    const isDarkMode = document.documentElement.classList.contains("dark");
-    setIsDark(isDarkMode);
+    const timer = setTimeout(() => {
+      setMounted(true);
+      const isDarkMode = document.documentElement.classList.contains("dark");
+      setIsDark(isDarkMode);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const toggleTheme = () => {

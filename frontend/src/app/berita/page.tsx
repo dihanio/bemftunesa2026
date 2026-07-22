@@ -6,7 +6,7 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { PublicApiService, type NewsItem } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Search, ArrowRight, RotateCcw } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 
 export default function BeritaPage() {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -19,7 +19,7 @@ export default function BeritaPage() {
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   useEffect(() => {
-    setLoading(true);
+    setTimeout(() => setLoading(true), 0);
     PublicApiService.getNews({
       category: selectedCategory !== "All" ? selectedCategory : undefined,
       search: debouncedSearch ? debouncedSearch : undefined

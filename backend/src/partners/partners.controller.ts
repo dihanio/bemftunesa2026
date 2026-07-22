@@ -1,13 +1,29 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Param, Body, Query, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequiredPermissions } from '../auth/decorators/required-permission.decorator';
 import { PartnersService } from './partners.service';
-import { CreatePartnerDto, UpdatePartnerDto, PartnerQueryDto } from './dto/partner.dto';
+import {
+  CreatePartnerDto,
+  UpdatePartnerDto,
+  PartnerQueryDto,
+} from './dto/partner.dto';
 
 @ApiTags('partners')
 @Controller('partners')
@@ -18,7 +34,11 @@ export class PartnersController {
 
   @Get('public')
   @ApiOperation({ summary: 'List all active partners/sponsors (public)' })
-  @ApiQuery({ name: 'type', required: false, enum: ['partner', 'sponsor', 'media_partner', 'supporter'] })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    enum: ['partner', 'sponsor', 'media_partner', 'supporter'],
+  })
   @ApiQuery({ name: 'period', required: false })
   async findPublic(
     @Query('type') type?: string,
