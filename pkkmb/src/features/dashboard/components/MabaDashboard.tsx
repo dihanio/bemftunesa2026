@@ -193,14 +193,14 @@ export function MabaDashboard() {
   return (
     <>
       {/* Welcome Banner */}
-      <div className="glass-subtle rounded-2xl p-5 sm:p-6 border border-white/10 mb-6 relative overflow-hidden">
+      <div className="bg-white/5 rounded-xl p-5 sm:p-6 border border-white/10 mb-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 h-full w-40 bg-gradient-to-l from-primary/10 to-transparent pointer-events-none" />
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
-          <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl bg-gradient-to-tr from-primary to-blue-500 flex items-center justify-center text-white text-xl sm:text-2xl font-bold shadow-lg shadow-primary/20 border border-primary/20 shrink-0">
+          <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-lg bg-gradient-to-tr from-primary to-blue-500 flex items-center justify-center text-white text-xl sm:text-2xl font-bold border border-primary/20 shrink-0">
             {maba.name ? maba.name.charAt(0).toUpperCase() : 'M'}
           </div>
           <div className="text-center sm:text-left space-y-1 min-w-0">
-            <h2 className="text-lg sm:text-xl font-extrabold truncate">
+            <h2 className="text-lg sm:text-xl font-bold truncate">
               Selamat datang, {maba.name?.split(' ')[0]}!
             </h2>
             <div className="text-xs text-foreground/50 font-mono">NIM: {maba.nim}</div>
@@ -214,29 +214,29 @@ export function MabaDashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="glass-subtle rounded-xl p-3 sm:p-4 border border-white/10 text-center">
-          <div className="text-xl sm:text-2xl font-extrabold text-sage">{attendedCount}</div>
+        <div className="bg-white/5 rounded-lg p-3 sm:p-4 border border-white/10 text-center">
+          <div className="text-xl sm:text-2xl font-bold text-sage">{attendedCount}</div>
           <div className="text-[11px] sm:text-xs text-foreground/40 mt-0.5">Kehadiran</div>
         </div>
-        <div className="glass-subtle rounded-xl p-3 sm:p-4 border border-white/10 text-center">
-          <div className="text-xl sm:text-2xl font-extrabold text-accent-gold">{submittedCount}<span className="text-foreground/30">/{totalAssignments}</span></div>
+        <div className="bg-white/5 rounded-lg p-3 sm:p-4 border border-white/10 text-center">
+          <div className="text-xl sm:text-2xl font-bold text-accent-gold">{submittedCount}<span className="text-foreground/30">/{totalAssignments}</span></div>
           <div className="text-[11px] sm:text-xs text-foreground/40 mt-0.5">Tugas Dikumpul</div>
         </div>
-        <div className="glass-subtle rounded-xl p-3 sm:p-4 border border-white/10 text-center">
-          <div className="text-xl sm:text-2xl font-extrabold text-teal-400">{gradedCount}</div>
+        <div className="bg-white/5 rounded-lg p-3 sm:p-4 border border-white/10 text-center">
+          <div className="text-xl sm:text-2xl font-bold text-teal-400">{gradedCount}</div>
           <div className="text-[11px] sm:text-xs text-foreground/40 mt-0.5">Tugas Dinilai</div>
         </div>
       </div>
 
       {/* Graduation Banner */}
       {isLulus && (
-        <div className="glass-subtle rounded-2xl p-5 sm:p-6 border border-amber-500/30 mb-6 bg-gradient-to-r from-amber-500/10 to-transparent relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4 animate-scale-in">
+        <div className="bg-amber-500/5 rounded-xl p-5 sm:p-6 border border-amber-500/30 mb-6 relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 border border-amber-500/30 shrink-0">
               <Trophy className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-lg font-extrabold text-amber-500">Selamat! Anda LULUS PKKMB</h3>
+              <h3 className="text-lg font-bold text-amber-500">Selamat! Anda LULUS PKKMB</h3>
               <p className="text-xs text-foreground/70 mt-1">
                 Anda telah menyelesaikan seluruh tugas dengan nilai total {percentage}% (Skor: {totalScore}/{maxPossibleScore}). Status kelulusan ini akan diteruskan ke Universitas.
               </p>
@@ -320,7 +320,7 @@ export function MabaDashboard() {
                 </h3>
 
                 {events.length === 0 ? (
-                  <div className="glass-subtle rounded-2xl p-10 border border-white/5 text-center text-foreground/35 text-sm">
+                  <div className="bg-white/5 rounded-xl p-10 border border-white/5 text-center text-foreground/35 text-sm">
                     <Clock className="h-8 w-8 mx-auto mb-3 text-foreground/20" />
                     Tidak ada sesi presensi aktif saat ini.
                   </div>
@@ -331,9 +331,9 @@ export function MabaDashboard() {
                     const requiresGps = !!(event.coordinates?.latitude && event.coordinates?.longitude);
 
                     return (
-                      <div key={event._id} className="glass-subtle rounded-2xl p-5 border border-white/10 shadow-lg relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-sage/15 transition-all">
+                      <div key={event._id} className="bg-white/5 rounded-lg p-5 border border-white/10 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-sage/15 transition-all">
                         <div className="space-y-2 min-w-0">
-                          <div className="text-base font-extrabold truncate">{event.title}</div>
+                          <div className="text-base font-bold truncate">{event.title}</div>
                           <div className="text-xs text-foreground/50 flex flex-wrap gap-x-4 gap-y-1">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-3.5 w-3.5" />
@@ -401,7 +401,7 @@ export function MabaDashboard() {
                   <span>Riwayat Kehadiran</span>
                 </h3>
 
-                <div className="glass-subtle rounded-2xl p-5 border border-white/10 shadow-lg space-y-3">
+                <div className="bg-white/5 rounded-xl p-5 border border-white/10 space-y-3">
                   {logs.length === 0 ? (
                     <p className="text-sm text-foreground/35 text-center py-4">Belum ada riwayat presensi.</p>
                   ) : (
@@ -438,7 +438,7 @@ export function MabaDashboard() {
               </h3>
 
               {assignments.length === 0 ? (
-                <div className="glass-subtle rounded-2xl p-10 border border-white/5 text-center text-foreground/35 text-sm">
+                <div className="bg-white/5 rounded-xl p-10 border border-white/5 text-center text-foreground/35 text-sm">
                   <FileText className="h-8 w-8 mx-auto mb-3 text-foreground/20" />
                   Tidak ada penugasan aktif saat ini.
                 </div>
@@ -448,10 +448,10 @@ export function MabaDashboard() {
                   const isPastDue = new Date() > new Date(assignment.dueDate);
 
                   return (
-                    <div key={assignment._id} className="glass-subtle rounded-2xl p-5 border border-white/10 shadow-lg relative overflow-hidden space-y-4 hover:border-sage/15 transition-all">
+                    <div key={assignment._id} className="bg-white/5 rounded-lg p-5 border border-white/10 relative overflow-hidden space-y-4 hover:border-sage/15 transition-all">
                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
                         <div className="space-y-1 min-w-0">
-                          <div className="text-base font-extrabold">{assignment.title}</div>
+                          <div className="text-base font-bold">{assignment.title}</div>
                           <p className="text-sm text-foreground/60 whitespace-pre-line leading-relaxed max-w-3xl">
                             {assignment.description}
                           </p>
@@ -531,9 +531,9 @@ export function MabaDashboard() {
       {/* SUBMIT MODAL */}
       {submitModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={handleCloseSubmit}>
-          <div className="w-full max-w-lg glass-subtle rounded-2xl border border-white/10 p-6 sm:p-8 space-y-6 shadow-2xl relative animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="w-full max-w-lg bg-background rounded-xl border border-white/10 p-6 sm:p-8 space-y-6 shadow-2xl relative animate-scale-in" onClick={e => e.stopPropagation()}>
             <div className="space-y-1">
-              <h4 className="text-lg sm:text-xl font-extrabold">Kumpulkan Penugasan</h4>
+              <h4 className="text-lg sm:text-xl font-bold">Kumpulkan Penugasan</h4>
               <p className="text-xs text-foreground/40">{submitModal.title}</p>
             </div>
 

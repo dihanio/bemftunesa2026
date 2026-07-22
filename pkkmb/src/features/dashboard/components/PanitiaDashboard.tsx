@@ -113,13 +113,13 @@ export function PanitiaDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="glass-subtle rounded-2xl p-6 border border-white/10 bg-gradient-to-tr from-primary/10 to-blue-500/10">
+      <div className="bg-white/5 rounded-xl p-6 border border-white/10">
         <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-2xl bg-gradient-to-tr from-primary to-blue-500 flex items-center justify-center text-white text-2xl font-bold">
+          <div className="h-16 w-16 rounded-lg bg-gradient-to-tr from-primary to-blue-500 flex items-center justify-center text-white text-2xl font-bold border border-primary/20">
             {user.name ? user.name.charAt(0).toUpperCase() : 'P'}
           </div>
           <div>
-            <h2 className="text-xl font-extrabold">Dashboard Panitia</h2>
+            <h2 className="text-xl font-bold">Dashboard Panitia</h2>
             <p className="text-sm text-foreground/60 mt-1">Kelola presensi kelompok dan penilaian tugas.</p>
           </div>
         </div>
@@ -181,13 +181,13 @@ export function PanitiaDashboard() {
               </div>
 
               {sessions.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl bg-secondary/30">
+              <div className="text-center py-12 border border-dashed border-white/10 rounded-xl bg-secondary/30">
                   <p className="text-foreground/50">Belum ada sesi presensi yang dibuat.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {sessions.map((s) => (
-                    <Card key={s._id} className="glass-subtle border-white/10">
+                    <Card key={s._id} className="bg-white/5 border-white/10 rounded-lg shadow-none">
                       <CardHeader className="pb-3">
                         <CardTitle className="text-base">{s.title}</CardTitle>
                         <CardDescription>
@@ -231,7 +231,7 @@ export function PanitiaDashboard() {
       {/* MODAL: CREATE SESSION */}
       {showCreateSession && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md glass-subtle rounded-2xl border border-white/10 p-6 space-y-4 shadow-2xl animate-scale-in">
+          <div className="w-full max-w-md bg-background rounded-xl border border-white/10 p-6 space-y-4 shadow-2xl animate-scale-in">
             <h3 className="text-lg font-bold">Buat Sesi Presensi Baru</h3>
             <form onSubmit={handleCreateSession} className="space-y-4">
               <div>
