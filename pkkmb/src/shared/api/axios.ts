@@ -64,6 +64,7 @@ apiClient.interceptors.response.use(
         // Redirect to login or dispatch a logout action
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token');
+          localStorage.removeItem('auth-storage'); // Clear Zustand store to prevent redirect loop
           window.location.href = '/login';
         }
         return Promise.reject(refreshError);

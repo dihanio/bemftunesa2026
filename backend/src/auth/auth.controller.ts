@@ -7,6 +7,7 @@ import {
   Req,
   Res,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
@@ -201,7 +202,15 @@ export class AuthController {
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('refresh')
-  async refresh(@Body('refreshToken') refreshToken: string, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Req() req: Request,
+    @Body('refreshToken') bodyToken: string,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const refreshToken = (req.cookies && req.cookies['refreshToken']) || bodyToken;
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token is missing');
+    }
     const tokens = await this.authService.refreshTokens(refreshToken);
     
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
