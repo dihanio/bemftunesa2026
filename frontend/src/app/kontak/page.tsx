@@ -105,7 +105,7 @@ export default function KontakPage() {
         {/* Left Side: Contact details & Form (7 Cols) */}
         <section className="lg:col-span-7 flex flex-col gap-8">
           {/* Form */}
-          <div className="glass-subtle border border-accent-blue/15 hover:border-accent-gold/30 rounded-3xl p-6 md:p-8">
+          <div className="bg-white dark:bg-transparent glass-subtle border border-accent-blue/15 hover:border-accent-gold/30 rounded-3xl p-6 md:p-8 shadow-sm dark:shadow-none">
             <h2 className="text-sm font-bold text-foreground uppercase tracking-widest border-b border-accent-blue/10 pb-4 mb-6">
               Formulir Pertanyaan
             </h2>
@@ -191,7 +191,7 @@ export default function KontakPage() {
 
         {/* Right Side: FAQ Accordion (5 Cols) */}
         <section className="lg:col-span-5 flex flex-col gap-6">
-          <div className="glass-active border border-accent-blue/15 rounded-3xl p-6 md:p-8 flex flex-col gap-5">
+          <div className="bg-white dark:bg-transparent glass-active border border-accent-blue/15 rounded-3xl p-6 md:p-8 flex flex-col gap-5 shadow-sm dark:shadow-none">
             <h2 className="text-xs font-semibold text-accent-gold uppercase tracking-wide border-b border-accent-blue/15 pb-3">
               Frequently Asked Questions (FAQ)
             </h2>
