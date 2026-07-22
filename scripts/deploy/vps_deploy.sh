@@ -62,13 +62,13 @@ if echo "$CHANGED_FILES" | grep -qE '^packages/|^turbo.json|^package.json|^packa
 fi
 
 if [ "$RESTART_ALL" = true ]; then
-  SERVICES_TO_RESTART=("frontend" "backend" "ims" "pkkmb")
+  SERVICES_TO_RESTART=("public_web" "api" "ims_web" "pkkmb_web")
 else
   # Check individual apps
-  if echo "$CHANGED_FILES" | grep -q '^frontend/'; then SERVICES_TO_RESTART+=("frontend"); fi
-  if echo "$CHANGED_FILES" | grep -q '^backend/'; then SERVICES_TO_RESTART+=("backend"); fi
-  if echo "$CHANGED_FILES" | grep -q '^ims/'; then SERVICES_TO_RESTART+=("ims"); fi
-  if echo "$CHANGED_FILES" | grep -q '^pkkmb/'; then SERVICES_TO_RESTART+=("pkkmb"); fi
+  if echo "$CHANGED_FILES" | grep -q '^frontend/'; then SERVICES_TO_RESTART+=("public_web"); fi
+  if echo "$CHANGED_FILES" | grep -q '^backend/'; then SERVICES_TO_RESTART+=("api"); fi
+  if echo "$CHANGED_FILES" | grep -q '^ims/'; then SERVICES_TO_RESTART+=("ims_web"); fi
+  if echo "$CHANGED_FILES" | grep -q '^pkkmb/'; then SERVICES_TO_RESTART+=("pkkmb_web"); fi
 fi
 
 # ensure .env exists to prevent docker compose env_file error

@@ -7,10 +7,9 @@ if [ -f "$PREV_SHA_FILE" ]; then
   PREV_SHA=$(cat "$PREV_SHA_FILE")
   log "Rolling back to $PREV_SHA"
   git reset --hard "$PREV_SHA" || true
-  # rebuild
-  npx turbo run build || true
-  # restart full stack
-  docker compose -f docker-compose.yml up -d --build || true
+  # We cannot rebuild on the VPS to prevent OOM
+  # Just try to bring up the existing containers if any were stopped
+  docker compose -f docker-compose.yml up -d || true
 else
   log "No previous SHA file. Skip rollback"
 fi
