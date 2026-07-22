@@ -40,7 +40,7 @@ jobs:
 
             chmod +x ./scripts/deploy/vps_deploy.sh || true
             echo "=> remote: invoke vps_deploy.sh"
-            GITHUB_SHA=${{ github.sha }} GITHUB_REF=${{ github.ref }} ./scripts/deploy/vps_deploy.sh ${GITHUB_SHA}
+            GITHUB_SHA=${{ github.sha }} GITHUB_REF=${{ github.ref }} ./scripts/deploy/vps_deploy.sh ${{ github.sha }}
 
       - name: Fetch remote logs (last 2000 lines)
         uses: appleboy/ssh-action@v0.1.8
