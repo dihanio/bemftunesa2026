@@ -1,6 +1,7 @@
 services:
   # === API Backend (NestJS) ===
   api:
+    image: ghcr.io/dihanio/bemftunesa2026-api:latest
     build:
       context: .
       dockerfile: Dockerfile.backend
@@ -11,7 +12,15 @@ services:
       - NODE_ENV=production
     depends_on:
       db:
-        condition: service_started
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:4000/api/docs', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     volumes:
       - uploads_data:/app/backend/public/uploads
     networks:
@@ -20,6 +29,7 @@ services:
 
   # === Public Website (Next.js) ===
   public_web:
+    image: ghcr.io/dihanio/bemftunesa2026-public_web:latest
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -33,13 +43,21 @@ services:
       - PORT=3000
       - HOSTNAME=0.0.0.0
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000', (r) => r.statusCode >= 200 && r.statusCode < 400 ? process.exit(0) : process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - default
     restart: unless-stopped
 
   # === IMS Dashboard (Next.js) ===
   ims_web:
+    image: ghcr.io/dihanio/bemftunesa2026-ims_web:latest
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -53,13 +71,21 @@ services:
       - PORT=3000
       - HOSTNAME=0.0.0.0
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/login', (r) => r.statusCode >= 200 && r.statusCode < 400 ? process.exit(0) : process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - default
     restart: unless-stopped
 
   # === PKKMB Student Portal (Next.js) ===
   pkkmb_web:
+    image: ghcr.io/dihanio/bemftunesa2026-pkkmb_web:latest
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -73,7 +99,14 @@ services:
       - PORT=3000
       - HOSTNAME=0.0.0.0
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000', (r) => r.statusCode >= 200 && r.statusCode < 400 ? process.exit(0) : process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - default
     restart: unless-stopped
@@ -91,10 +124,14 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - api
-      - public_web
-      - ims_web
-      - pkkmb_web
+      api:
+        condition: service_healthy
+      public_web:
+        condition: service_healthy
+      ims_web:
+        condition: service_healthy
+      pkkmb_web:
+        condition: service_healthy
     networks:
       - default
 
@@ -102,6 +139,12 @@ services:
   db:
     image: mongo:6
     restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password}
@@ -117,6 +160,12 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     ports:
       - "6379:6379"
     volumes:

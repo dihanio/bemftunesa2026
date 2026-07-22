@@ -1,0 +1,46 @@
+name: CD Deploy to VPS
+
+on:
+  workflow_run:
+    workflows: ["CI Build & Push"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: cd-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 30m
+          script: |
+            set -e
+            cd ~/bemftunesa2026
+            
+            echo "Pulling latest code for docker-compose.yml..."
+            git pull origin main
+            
+            echo "Pulling new container images from GHCR..."
+            # Note: the VPS must have run 'docker login ghcr.io' beforehand.
+            docker compose pull
+            
+            echo "Restarting containers with zero-downtime rolling update..."
+            docker compose up -d
+            
+            echo "Pruning old images to prevent disk space exhaustion..."
+            docker image prune -af --filter "until=168h"
+            
+            echo "Deployment successful!"

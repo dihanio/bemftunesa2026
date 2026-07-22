@@ -1,0 +1,159 @@
+name: CI Build & Push
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/bemftunesa2026
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      ims: ${{ steps.filter.outputs.ims }}
+      pkkmb: ${{ steps.filter.outputs.pkkmb }}
+      backend: ${{ steps.filter.outputs.backend }}
+      shared: ${{ steps.filter.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            ims:
+              - 'ims/**'
+            pkkmb:
+              - 'pkkmb/**'
+            backend:
+              - 'backend/**'
+            shared:
+              - 'packages/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'Dockerfile.*'
+
+  lint-and-test:
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Lint All
+        run: npx turbo run lint
+
+      - name: Test Backend
+        if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.shared == 'true'
+        run: npx turbo run test --filter=@bemft/backend
+
+  build-and-push:
+    needs: [changes, lint-and-test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [public_web, ims_web, pkkmb_web, api]
+        include:
+          - service: public_web
+            app_name: frontend
+            dockerfile: Dockerfile.frontend
+            change_key: frontend
+          - service: ims_web
+            app_name: ims
+            dockerfile: Dockerfile.frontend
+            change_key: ims
+          - service: pkkmb_web
+            app_name: pkkmb
+            dockerfile: Dockerfile.frontend
+            change_key: pkkmb
+          - service: api
+            app_name: backend
+            dockerfile: Dockerfile.backend
+            change_key: backend
+
+    steps:
+      - name: Check if build needed
+        id: check
+        run: |
+          if [ "${{ needs.changes.outputs.shared }}" == "true" ] || [ "${{ needs.changes.outputs[matrix.change_key] }}" == "true" ]; then
+            echo "build=true" >> $GITHUB_OUTPUT
+          else
+            echo "build=false" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.build == 'true'
+
+      - name: Setup Docker Buildx
+        if: steps.check.outputs.build == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        if: steps.check.outputs.build == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        if: steps.check.outputs.build == 'true'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        if: steps.check.outputs.build == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_NAME=${{ matrix.app_name }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_PUBLIC_URL=${{ vars.NEXT_PUBLIC_PUBLIC_URL }}
+            NEXT_PUBLIC_IMS_URL=${{ vars.NEXT_PUBLIC_IMS_URL }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+          cache-from: type=gha,scope=${{ github.ref }}-${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ github.ref }}-${{ matrix.service }}
+          provenance: true
+          sbom: true
