@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { redirect } from 'next/navigation';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { MabaDashboard } from '@/features/dashboard/components/MabaDashboard';
 import { PanitiaDashboard } from '@/features/dashboard/components/PanitiaDashboard';
@@ -28,7 +29,7 @@ export default function DashboardPage() {
   }
 
   if (user.role === 'ADMIN') {
-    return <AdminDashboard />;
+    redirect('/admin');
   }
 
   // Fallback

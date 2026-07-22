@@ -32,6 +32,10 @@ import {
   GradeSubmissionDto,
   AdminManualCheckinDto,
   PaginationDto,
+  CreateAnnouncementDto,
+  UpdateAnnouncementDto,
+  CreateScheduleDto,
+  UpdateScheduleDto,
 } from './dto/pkkmb.dto';
 
 @ApiTags('pkkmb')
@@ -48,6 +52,14 @@ export class PkkmbController {
   @ApiResponse({ status: 200, description: 'Berhasil' })
   getMe(@CurrentUser() user: UserDocument) {
     return { success: true, data: user };
+  }
+
+  @Get('dashboard/maba')
+  @Roles('MABA')
+  @ApiOperation({ summary: 'Mendapatkan data agregasi untuk Dashboard Maba' })
+  async getMabaDashboard(@CurrentUser() user: UserDocument) {
+    const data = await this.pkkmbService.getMabaDashboard(user._id.toString());
+    return { success: true, data };
   }
 
   @Get('attendance/sessions')
@@ -217,6 +229,14 @@ export class PkkmbController {
     return { success: true, message: 'Nilai tugas berhasil disimpan', data };
   }
 
+  @Get('dashboard/panitia')
+  @Roles('Panitia')
+  @ApiOperation({ summary: 'Mendapatkan data agregasi untuk Dashboard Panitia' })
+  async getPanitiaDashboard(@CurrentUser() user: UserDocument) {
+    const data = await this.pkkmbService.getPanitiaDashboard(user._id.toString());
+    return { success: true, data };
+  }
+
   // ─── ADMIN ENDPOINTS ──────────────────────────────────────────────
 
   @Get('admin/attendance/export/:sessionId')
@@ -231,5 +251,79 @@ export class PkkmbController {
     res.header('Content-Type', 'text/csv');
     res.attachment(`presensi-${sessionId}.csv`);
     return res.send(csv);
+  }
+
+  // ─── ANNOUNCEMENTS & SCHEDULES ──────────────────────────────────────────────
+
+  @Get('announcements')
+  @ApiOperation({ summary: 'Melihat pengumuman PKKMB' })
+  async getAnnouncements(
+    @CurrentUser() user: UserDocument,
+    @Query() query: PaginationDto,
+  ) {
+    const groupId = user.pkkmbGroup?.toString();
+    const data = await this.pkkmbService.getAnnouncements(query, groupId);
+    return { success: true, data };
+  }
+
+  @Post('admin/announcements')
+  @Roles('Panitia', 'Admin', 'Super Admin')
+  @ApiOperation({ summary: 'Membuat Pengumuman PKKMB' })
+  async createAnnouncement(@Body() dto: CreateAnnouncementDto) {
+    const data = await this.pkkmbService.createAnnouncement(dto);
+    return { success: true, message: 'Pengumuman berhasil dibuat', data };
+  }
+
+  @Patch('admin/announcements/:id')
+  @Roles('Panitia', 'Admin', 'Super Admin')
+  @ApiOperation({ summary: 'Mengubah Pengumuman PKKMB' })
+  async updateAnnouncement(
+    @Param('id') id: string,
+    @Body() dto: UpdateAnnouncementDto,
+  ) {
+    const data = await this.pkkmbService.updateAnnouncement(id, dto);
+    return { success: true, message: 'Pengumuman berhasil diubah', data };
+  }
+
+  @Delete('admin/announcements/:id')
+  @Roles('Panitia', 'Admin', 'Super Admin')
+  @ApiOperation({ summary: 'Menghapus Pengumuman PKKMB' })
+  async deleteAnnouncement(@Param('id') id: string) {
+    const data = await this.pkkmbService.deleteAnnouncement(id);
+    return { success: true, message: 'Pengumuman berhasil dihapus', data };
+  }
+
+  @Get('schedules')
+  @ApiOperation({ summary: 'Melihat Jadwal PKKMB' })
+  async getSchedules(@Query() query: PaginationDto) {
+    const data = await this.pkkmbService.getSchedules(query);
+    return { success: true, data };
+  }
+
+  @Post('admin/schedules')
+  @Roles('Panitia', 'Admin', 'Super Admin')
+  @ApiOperation({ summary: 'Membuat Jadwal PKKMB' })
+  async createSchedule(@Body() dto: CreateScheduleDto) {
+    const data = await this.pkkmbService.createSchedule(dto);
+    return { success: true, message: 'Jadwal berhasil dibuat', data };
+  }
+
+  @Patch('admin/schedules/:id')
+  @Roles('Panitia', 'Admin', 'Super Admin')
+  @ApiOperation({ summary: 'Mengubah Jadwal PKKMB' })
+  async updateSchedule(
+    @Param('id') id: string,
+    @Body() dto: UpdateScheduleDto,
+  ) {
+    const data = await this.pkkmbService.updateSchedule(id, dto);
+    return { success: true, message: 'Jadwal berhasil diubah', data };
+  }
+
+  @Delete('admin/schedules/:id')
+  @Roles('Panitia', 'Admin', 'Super Admin')
+  @ApiOperation({ summary: 'Menghapus Jadwal PKKMB' })
+  async deleteSchedule(@Param('id') id: string) {
+    const data = await this.pkkmbService.deleteSchedule(id);
+    return { success: true, message: 'Jadwal berhasil dihapus', data };
   }
 }

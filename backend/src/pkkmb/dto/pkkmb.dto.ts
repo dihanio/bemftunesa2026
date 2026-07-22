@@ -219,3 +219,112 @@ export class PaginationDto {
   @IsOptional()
   sortOrder?: 'asc' | 'desc';
 }
+
+export class CreateAnnouncementDto {
+  @ApiProperty({ description: 'Judul Pengumuman', example: 'Pengumuman Pra-PKKMB' })
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @ApiProperty({ description: 'Isi Pengumuman', example: 'Maba wajib membawa buku...' })
+  @IsString()
+  @IsNotEmpty()
+  content: string;
+
+  @ApiPropertyOptional({ description: 'Target audiens', enum: ['all', 'specific_groups'] })
+  @IsEnum(['all', 'specific_groups'])
+  @IsOptional()
+  targetAudience?: 'all' | 'specific_groups';
+
+  @ApiPropertyOptional({ description: 'ID Grup target (jika specific_groups)' })
+  @IsArray()
+  @IsMongoId({ each: true })
+  @IsOptional()
+  targetGroups?: string[];
+
+  @ApiPropertyOptional({ description: 'Apakah pengumuman ini prioritas (di-pin)?' })
+  @IsOptional()
+  isPriority?: boolean;
+
+  @ApiPropertyOptional({ description: 'Lampiran file URL' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  attachments?: string[];
+}
+
+export class UpdateAnnouncementDto {
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @IsString()
+  @IsOptional()
+  content?: string;
+
+  @IsEnum(['all', 'specific_groups'])
+  @IsOptional()
+  targetAudience?: 'all' | 'specific_groups';
+
+  @IsArray()
+  @IsMongoId({ each: true })
+  @IsOptional()
+  targetGroups?: string[];
+
+  @IsOptional()
+  isPriority?: boolean;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  attachments?: string[];
+}
+
+export class CreateScheduleDto {
+  @ApiProperty({ description: 'Nama Kegiatan', example: 'Materi 1: Kepemimpinan' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({ description: 'Waktu Mulai', example: '2026-08-18T08:00:00Z' })
+  @IsDateString()
+  @IsNotEmpty()
+  startTime: string;
+
+  @ApiProperty({ description: 'Waktu Selesai', example: '2026-08-18T10:00:00Z' })
+  @IsDateString()
+  @IsNotEmpty()
+  endTime: string;
+
+  @ApiPropertyOptional({ description: 'Lokasi' })
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @ApiPropertyOptional({ description: 'Penanggung Jawab (PIC)' })
+  @IsString()
+  @IsOptional()
+  pic?: string;
+}
+
+export class UpdateScheduleDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsDateString()
+  @IsOptional()
+  startTime?: string;
+
+  @IsDateString()
+  @IsOptional()
+  endTime?: string;
+
+  @IsString()
+  @IsOptional()
+  location?: string;
+
+  @IsString()
+  @IsOptional()
+  pic?: string;
+}

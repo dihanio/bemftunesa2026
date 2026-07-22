@@ -45,6 +45,10 @@ import {
   GradeSubmissionDto,
   AdminManualCheckinDto,
   PaginationDto,
+  CreateAnnouncementDto,
+  UpdateAnnouncementDto,
+  CreateScheduleDto,
+  UpdateScheduleDto,
 } from './dto/pkkmb.dto';
 
 function getDistance(
@@ -374,5 +378,292 @@ export class PkkmbService {
       csv += `"${user?.nim || ''}","${user?.name || ''}","${log.status}","${time}","${log.notes || ''}"\n`;
     }
     return csv;
+  }
+
+  // ─── ANNOUNCEMENTS ──────────────────────────────────────────────
+
+  async getAnnouncements(paginationDto: PaginationDto, groupId?: string) {
+    const filter: FilterQuery<unknown> = { deletedAt: null };
+    
+    // If groupId is provided, we can filter announcements targeted to this group or 'all'
+    if (groupId) {
+      filter.$or = [
+        { targetAudience: 'all' },
+        { targetAudience: 'specific_groups', targetGroups: new Types.ObjectId(groupId) }
+      ];
+    }
+    
+    if (paginationDto.search) {
+      filter.title = { $regex: paginationDto.search, $options: 'i' };
+    }
+    const query = this.announcementModel.find(filter);
+    
+    // Default sort by priority first, then createdAt
+    if (!paginationDto.sortBy) {
+      query.sort({ isPriority: -1, createdAt: -1 });
+    }
+    
+    return applyPagination(query, paginationDto).exec();
+  }
+
+  async createAnnouncement(dto: CreateAnnouncementDto) {
+    return this.announcementModel.create({
+      ...dto,
+      targetGroups: dto.targetGroups ? dto.targetGroups.map(id => new Types.ObjectId(id)) : undefined,
+    });
+  }
+
+  async updateAnnouncement(id: string, dto: UpdateAnnouncementDto) {
+    const updateData: any = { ...dto };
+    if (dto.targetGroups) {
+      updateData.targetGroups = dto.targetGroups.map(gid => new Types.ObjectId(gid));
+    }
+    
+    const announcement = await this.announcementModel.findOneAndUpdate(
+      { _id: id, deletedAt: null },
+      { $set: updateData },
+      { new: true }
+    );
+    if (!announcement) throw new NotFoundException('Pengumuman tidak ditemukan');
+    return announcement;
+  }
+
+  async deleteAnnouncement(id: string) {
+    const announcement = await this.announcementModel.findOneAndUpdate(
+      { _id: id, deletedAt: null },
+      { $set: { deletedAt: new Date() } },
+      { new: true }
+    );
+    if (!announcement) throw new NotFoundException('Pengumuman tidak ditemukan');
+    return announcement;
+  }
+
+  // ─── SCHEDULES ──────────────────────────────────────────────
+
+  async getSchedules(paginationDto: PaginationDto) {
+    const filter: FilterQuery<unknown> = { deletedAt: null };
+    if (paginationDto.search) {
+      filter.name = { $regex: paginationDto.search, $options: 'i' };
+    }
+    const query = this.scheduleModel.find(filter);
+    
+    if (!paginationDto.sortBy) {
+      query.sort({ startTime: 1 }); // Sort chronologically by default
+    }
+    
+    return applyPagination(query, paginationDto).exec();
+  }
+
+  async createSchedule(dto: CreateScheduleDto) {
+    return this.scheduleModel.create({
+      ...dto,
+      startTime: new Date(dto.startTime),
+      endTime: new Date(dto.endTime),
+    });
+  }
+
+  async updateSchedule(id: string, dto: UpdateScheduleDto) {
+    const updateData: any = { ...dto };
+    if (dto.startTime) updateData.startTime = new Date(dto.startTime);
+    if (dto.endTime) updateData.endTime = new Date(dto.endTime);
+    
+    const schedule = await this.scheduleModel.findOneAndUpdate(
+      { _id: id, deletedAt: null },
+      { $set: updateData },
+      { new: true }
+    );
+    if (!schedule) throw new NotFoundException('Jadwal tidak ditemukan');
+    return schedule;
+  }
+
+  async deleteSchedule(id: string) {
+    const schedule = await this.scheduleModel.findOneAndUpdate(
+      { _id: id, deletedAt: null },
+      { $set: { deletedAt: new Date() } },
+      { new: true }
+    );
+    if (!schedule) throw new NotFoundException('Jadwal tidak ditemukan');
+    return schedule;
+  }
+
+  // ─── DASHBOARD AGGREGATION ──────────────────────────────────────────────
+
+  async getMabaDashboard(userId: string) {
+    const user = await this.userModel.findById(userId).populate('pkkmbGroup').exec();
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+    
+    const groupId = user.pkkmbGroup ? (user.pkkmbGroup as unknown as any)._id.toString() : null;
+    
+    // 1. Announcements (Priority / Latest)
+    const filterAnn: FilterQuery<unknown> = { deletedAt: null };
+    if (groupId) {
+      filterAnn.$or = [
+        { targetAudience: 'all' },
+        { targetAudience: 'specific_groups', targetGroups: new Types.ObjectId(groupId) }
+      ];
+    } else {
+      filterAnn.targetAudience = 'all';
+    }
+    const announcements = await this.announcementModel
+      .find(filterAnn)
+      .sort({ isPriority: -1, createdAt: -1 })
+      .limit(3)
+      .exec();
+
+    // 2. Upcoming Schedules
+    const now = new Date();
+    const upcomingSchedules = await this.scheduleModel
+      .find({ deletedAt: null, endTime: { $gte: now } })
+      .sort({ startTime: 1 })
+      .limit(3)
+      .exec();
+
+    // 3. Tasks & Submissions
+    const allTasks = await this.taskModel.find({ deletedAt: null }).exec();
+    
+    const queryConds: FilterQuery<unknown>[] = [{ userId: new Types.ObjectId(userId) }];
+    if (groupId) queryConds.push({ groupId: new Types.ObjectId(groupId) });
+    
+    const submissions = await this.submissionModel
+      .find({ $or: queryConds, deletedAt: null })
+      .exec();
+    
+    // 4. Attendance Today
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    
+    const attendanceLogs = await this.logModel
+      .find({
+        userId: new Types.ObjectId(userId),
+        timestamp: { $gte: todayStart, $lte: todayEnd },
+      })
+      .exec();
+
+    // 5. Determine Next Action (Simple rule)
+    let nextAction = 'Persiapkan diri Anda untuk kegiatan selanjutnya.';
+    const activeTasks = allTasks.filter(t => new Date() <= t.deadline);
+    const pendingTasks = activeTasks.filter(t => !submissions.find(s => s.taskId.toString() === t._id.toString()));
+    
+    if (pendingTasks.length > 0) {
+      nextAction = `Ada ${pendingTasks.length} tugas yang belum dikumpulkan. Batas terdekat: ${pendingTasks[0].title}.`;
+    } else if (upcomingSchedules.length > 0) {
+      nextAction = `Kegiatan terdekat: ${upcomingSchedules[0].name} pada ${upcomingSchedules[0].startTime.toLocaleString('id-ID')}.`;
+    }
+
+    // 6. Calculate Progress
+    const totalSteps = 4; // 1. Profil, 2. Grup, 3. Absensi Pertama, 4. Tugas Pertama
+    let completedSteps = 1; // Assume profil is completed if they can login
+    if (groupId) completedSteps++;
+    const hasAttendedAny = await this.logModel.findOne({ userId: new Types.ObjectId(userId) }).exec();
+    if (hasAttendedAny) completedSteps++;
+    if (submissions.length > 0) completedSteps++;
+    
+    const progressPercent = Math.round((completedSteps / totalSteps) * 100);
+
+    return {
+      user,
+      progress: {
+        percent: progressPercent,
+        completedSteps,
+        totalSteps,
+        hasGroup: !!groupId,
+        hasAttendedAny: !!hasAttendedAny,
+        hasSubmittedTask: submissions.length > 0
+      },
+      announcements,
+      upcomingSchedules,
+      tasks: {
+        total: allTasks.length,
+        submitted: submissions.length,
+        pending: pendingTasks.length,
+        graded: submissions.filter(s => s.status === 'graded').length,
+      },
+      attendance: {
+        todayCount: attendanceLogs.length
+      },
+      nextAction
+    };
+  }
+
+  async getPanitiaDashboard(userId: string) {
+    // 1. Statistics
+    const totalPeserta = await this.userModel.countDocuments({ role: 'MABA', deletedAt: null }).exec();
+    
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    
+    const attendanceToday = await this.logModel
+      .countDocuments({ timestamp: { $gte: todayStart, $lte: todayEnd } })
+      .exec();
+
+    // 2. Active Announcements
+    const announcements = await this.announcementModel
+      .find({ deletedAt: null })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .exec();
+
+    // 3. Upcoming Activities (Schedules)
+    const now = new Date();
+    const schedules = await this.scheduleModel
+      .find({ deletedAt: null, endTime: { $gte: now } })
+      .sort({ startTime: 1 })
+      .limit(5)
+      .exec();
+
+    // 4. Tasks Overview
+    const totalSubmissions = await this.submissionModel.countDocuments({ deletedAt: null }).exec();
+    const gradedSubmissions = await this.submissionModel.countDocuments({ status: 'graded', deletedAt: null }).exec();
+
+    // 5. Recent Activities (Mocked or queried from audit logs if exist, simple fallback for now)
+    // We can pull the latest 3 submissions and latest 3 attendance logs as "activities"
+    const recentSubmissions = await this.submissionModel
+      .find({ deletedAt: null })
+      .sort({ updatedAt: -1 })
+      .limit(3)
+      .populate('userId', 'name')
+      .exec();
+      
+    const recentAttendance = await this.logModel
+      .find({ timestamp: { $gte: todayStart } })
+      .sort({ timestamp: -1 })
+      .limit(3)
+      .populate('userId', 'name')
+      .exec();
+
+    const activities = [
+      ...recentSubmissions.map(s => ({
+        type: 'task',
+        message: `${(s.userId as any)?.name || 'Peserta'} mengumpulkan tugas`,
+        time: (s as any).updatedAt
+      })),
+      ...recentAttendance.map(a => ({
+        type: 'attendance',
+        message: `${(a.userId as any)?.name || 'Peserta'} melakukan presensi`,
+        time: (a as any).timestamp || new Date()
+      }))
+    ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
+
+    return {
+      statistics: {
+        totalPeserta,
+        attendanceTodayPercent: totalPeserta > 0 ? Math.round((attendanceToday / totalPeserta) * 100) : 0,
+      },
+      activities,
+      announcements,
+      schedules,
+      tasks: {
+        totalSubmissions,
+        pendingGrading: totalSubmissions - gradedSubmissions,
+        graded: gradedSubmissions,
+      },
+      attendance: {
+        today: attendanceToday
+      }
+    };
   }
 }
