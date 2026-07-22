@@ -59,13 +59,13 @@ fi
 log "Running incremental build with turbo since: ${TURBO_SINCE:-full}"
 if [ -n "$TURBO_SINCE" ]; then
   npx turbo run build --cache-dir="$CACHE_DIR/.turbo" --filter="...[$TURBO_SINCE]" --dry-run=json > build-plan.json
-  npx turbo run build --cache-dir="$CACHE_DIR/.turbo" --filter="...[$TURBO_SINCE]" | tee build-output.log
-  BUILD_EXIT=${PIPESTATUS[0]}
 else
   npx turbo run build --cache-dir="$CACHE_DIR/.turbo" --dry-run=json > build-plan.json
-  npx turbo run build --cache-dir="$CACHE_DIR/.turbo" | tee build-output.log
-  BUILD_EXIT=${PIPESTATUS[0]}
 fi
+
+# In this CI/CD setup, Docker images are pre-built by GitHub Actions and pushed to GHCR.
+# We do not build from source on the VPS.
+BUILD_EXIT=0
 
 if [ "$BUILD_EXIT" -ne 0 ]; then
   log "Build failed, starting rollback"
@@ -116,7 +116,8 @@ touch .env
 # restart services via docker-compose
 for svc in "${SERVICES_TO_RESTART[@]}"; do
   log "Rebuilding and restarting service: $svc"
-  docker compose -f docker-compose.yml up -d --no-deps --build $svc || { log "Failed to restart $svc"; ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"; exit 1; }
+  docker compose pull $svc || log "Failed to pull latest image for $svc"
+  docker compose -f docker-compose.yml up -d --no-deps $svc || { log "Failed to restart $svc"; ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"; exit 1; }
   # wait for health
   for i in $(seq 1 30); do
     STATUS=$(docker inspect --format='{{json .State.Health}}' $(docker compose ps -q $svc) 2>/dev/null || echo "{}")
