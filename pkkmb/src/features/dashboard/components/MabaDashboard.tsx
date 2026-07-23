@@ -9,11 +9,16 @@ import { PkkmbProgressCard } from './cards/PkkmbProgressCard';
 import { NextActionCard } from './cards/NextActionCard';
 
 interface DashboardData {
-  progress: { percent: number };
+  progress: {
+    percent: number;
+    hasGroup: boolean;
+    hasAttendedAny: boolean;
+    hasSubmittedTask: boolean;
+  };
   announcements: { _id: string; title: string; content: string; isPriority: boolean }[];
   upcomingSchedules: { _id: string; name: string; startTime: string; endTime: string }[];
   tasks: { graded: number; total: number };
-  nextAction: unknown;
+  nextAction: string | null;
 }
 
 export function MabaDashboard() {

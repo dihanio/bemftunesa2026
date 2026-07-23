@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 interface NextActionProps {
-  action: string;
+  action: string | null;
 }
 
 export function NextActionCard({ action }: NextActionProps) {

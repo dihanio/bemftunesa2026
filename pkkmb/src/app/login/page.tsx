@@ -126,10 +126,19 @@ function LoginContent() {
                 />
               </div>
 
-              <button type="submit" disabled={isSubmitting} className="btn-primary animate-enter delay-6">
+              <button type="submit" disabled={isSubmitting} className="btn-primary animate-enter delay-6" style={{ marginTop: '1rem' }}>
                 {isSubmitting ? 'Memproses...' : 'Masuk'}
               </button>
             </form>
+
+            <div className="auth-footer animate-enter delay-7" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                Belum punya akun?{' '}
+                <a href="/register" style={{ color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: '500' }}>
+                  Daftar di sini
+                </a>
+              </p>
+            </div>
 
           </div>
         </div>

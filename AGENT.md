@@ -10,16 +10,35 @@
 
 Type safety is a non-negotiable requirement across the entire codebase.
 
-## Rules
+## Dilarang menggunakan `as any`
 
-- Never use `any`.
-- Never use `as any`.
-- Never use `Array<any>`.
-- Never use `Promise<any>`.
-- Never use `Record<string, any>`.
-- Never disable TypeScript errors to bypass typing.
-- Never suppress type errors using `// @ts-ignore` or `// @ts-expect-error` unless explicitly approved.
-- Never weaken existing types to make code compile.
+- Jangan pernah menggunakan `as any` untuk mengatasi error TypeScript.
+- Jangan menonaktifkan type checking dengan `// @ts-ignore` atau `// @ts-expect-error` kecuali benar-benar diperlukan dan disertai alasan yang jelas.
+- Selalu selesaikan masalah tipe dengan pendekatan yang type-safe.
+
+### Alternatif yang wajib digunakan
+
+Prioritaskan pendekatan berikut (urut berdasarkan preferensi):
+
+1. Perbaiki definisi tipe agar sesuai.
+2. Gunakan type narrowing (`if`, `in`, `instanceof`, type predicate).
+3. Gunakan Generic Type.
+4. Gunakan Union atau Discriminated Union.
+5. Gunakan `unknown` kemudian lakukan validasi sebelum digunakan.
+6. Buat interface atau type baru apabila diperlukan.
+7. Gunakan assertion yang spesifik (misalnya `as User`) hanya jika memang dapat dibuktikan aman.
+
+### Review Rule
+
+Setiap penggunaan:
+- `as any`
+- `: any`
+- `@ts-ignore`
+- `@ts-expect-error`
+
+dianggap sebagai code smell dan tidak boleh dimasukkan ke dalam implementasi kecuali tidak ada alternatif yang memungkinkan. Jika memang terpaksa digunakan, agen wajib menjelaskan alasan teknisnya pada hasil implementasi.
+
+**Goal:** Seluruh kode baru harus mempertahankan type safety dan tetap lolos `strict` TypeScript tanpa menggunakan `as any` sebagai jalan pintas.
 
 ## Required Practices
 

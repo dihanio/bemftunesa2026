@@ -2,6 +2,11 @@ import { apiClient } from '@/shared/api/axios';
 import { AuthResponse, MeResponse } from '../types/auth.types';
 
 export const authApi = {
+  registerMaba: async (payload: { name: string; nim: string; email: string; phone: string; password: string; }): Promise<{ success: boolean; message: string; data: { nim: string; name: string; } }> => {
+    const response = await apiClient.post('/auth/register', payload);
+    return response.data;
+  },
+
   loginMaba: async (nim: string, password: string): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/login', { nim, password });
     if (response.data?.data?.user) {

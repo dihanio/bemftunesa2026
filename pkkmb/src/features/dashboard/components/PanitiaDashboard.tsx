@@ -11,7 +11,12 @@ import { ActivityTimeline } from './cards/ActivityTimeline';
 interface PanitiaData {
   activeGroup?: unknown;
   monitoringStats?: { totalMaba: number; present: number; late: number; absent: number };
-  upcomingSchedules?: unknown[];
+  upcomingSchedules?: {
+    _id?: string;
+    name: string;
+    startTime: string;
+    location?: string;
+  }[];
 }
 
 export function PanitiaDashboard() {

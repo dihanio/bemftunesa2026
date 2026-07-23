@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -135,6 +136,42 @@ export class AuthService {
     return user;
   }
 
+  async registerMaba(dto: import('./dto/register.dto').RegisterDto): Promise<UserDocument> {
+    const { nim, name, email, phone, password } = dto;
+    
+    // Check if NIM or Email already exists
+    const existingUser = await this.userModel.findOne({ $or: [{ nim }, { email }] }).exec();
+    if (existingUser) {
+      if (existingUser.nim === nim) {
+        throw new ConflictException('NIM sudah terdaftar.');
+      }
+      throw new ConflictException('Email sudah terdaftar.');
+    }
+
+    // Get default role for Maba (User)
+    const role = await this.roleModel.findOne({ slug: 'user' }).exec();
+    if (!role) {
+      throw new ConflictException('Role tidak ditemukan, hubungi admin.');
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const newUser = new this.userModel({
+      nim,
+      name,
+      email,
+      phone,
+      password: hashedPassword,
+      role: role._id,
+      isActive: true,
+      cabinetPeriod: '2026', // Assuming current period
+    });
+
+    return await newUser.save();
+  }
+
   async validateMabaLogin(nim: string, pass: string): Promise<UserDocument> {
     const user = await this.userModel.findOne({ nim }).exec();
     if (!user) {
@@ -144,10 +181,17 @@ export class AuthService {
       throw new UnauthorizedException('Akun dinonaktifkan.');
     }
 
-    // Check password (default is NIM if not set)
-    const validPassword = user.password ? user.password : user.nim;
-    if (pass !== validPassword) {
-      throw new UnauthorizedException('Password salah.');
+    // Check password (default is NIM if not set, or hashed)
+    if (user.password && user.password.startsWith('$2b$')) {
+      const isMatch = await bcrypt.compare(pass, user.password);
+      if (!isMatch) {
+        throw new UnauthorizedException('Password salah.');
+      }
+    } else {
+      const validPassword = user.password ? user.password : user.nim;
+      if (pass !== validPassword) {
+        throw new UnauthorizedException('Password salah.');
+      }
     }
 
     user.lastLoginAt = new Date();

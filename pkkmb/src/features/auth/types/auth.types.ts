@@ -7,6 +7,7 @@ export interface User {
   email?: string;
   role: Role;
   pkkmbGroupId?: string;
+  pkkmbGroup?: { _id: string; name: string };
 }
 
 export interface AuthResponse {

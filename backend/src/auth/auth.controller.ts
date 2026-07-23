@@ -12,6 +12,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
+import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedRequest } from '../common/interfaces/authenticated-request.interface';
@@ -180,6 +181,20 @@ export class AuthController {
         .status(401)
         .json({ success: false, message: (error as Error).message });
     }
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('register')
+  async registerMaba(@Body() registerDto: RegisterDto) {
+    const user = await this.authService.registerMaba(registerDto);
+    return {
+      success: true,
+      message: 'Pendaftaran berhasil. Silakan login.',
+      data: {
+        nim: user.nim,
+        name: user.name,
+      },
+    };
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
