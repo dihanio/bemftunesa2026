@@ -132,9 +132,9 @@ function LoginContent() {
             </form>
 
             <div className="auth-footer animate-enter delay-7" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              <p style={{ color: '#e2e8f0', fontSize: '0.875rem' }}>
                 Belum punya akun?{' '}
-                <a href="/register" style={{ color: 'var(--brand-primary)', textDecoration: 'none', fontWeight: '500' }}>
+                <a href="/register" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: '500' }}>
                   Daftar di sini
                 </a>
               </p>
