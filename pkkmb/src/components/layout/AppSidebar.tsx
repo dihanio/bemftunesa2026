@@ -30,8 +30,8 @@ export function AppSidebar() {
   };
 
   return (
-    <aside className={`hidden md:flex flex-col border-r border-white/5 glass-subtle h-screen sticky top-0 left-0 z-40 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
-      <div className="p-4 sm:p-6 flex items-center justify-between">
+    <aside className={`hidden md:flex flex-col border-r border-white/5 glass-subtle h-screen sticky top-0 left-0 z-40 transition-all duration-300 shrink-0 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      <div className={`flex items-center justify-between transition-all duration-300 ${isCollapsed ? 'p-3' : 'p-4 sm:p-6'}`}>
         <div className={`flex items-center gap-3 overflow-hidden ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'} transition-all duration-300`}>
           <div className="h-10 w-10 relative shrink-0">
             <Image src="/logo_adrata.png" alt="PKKMB Adrata" fill className="object-contain" />
@@ -51,7 +51,7 @@ export function AppSidebar() {
       </div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-3 space-y-1">
-        <div className={`text-[10px] font-semibold text-foreground/40 mb-3 px-3 uppercase tracking-wider transition-all duration-300 ${isCollapsed ? 'text-center opacity-0 h-0 mb-0' : 'opacity-100'}`}>
+        <div className={`text-[10px] font-semibold text-foreground/40 px-3 uppercase tracking-wider transition-all duration-300 ${isCollapsed ? 'opacity-0 h-0 m-0 overflow-hidden' : 'opacity-100 mb-3 h-auto'}`}>
           Menu Utama
         </div>
         
@@ -62,7 +62,7 @@ export function AppSidebar() {
           const isExpanded = expanded[item.href] ?? active;
 
           return (
-            <div key={item.href} className="space-y-1">
+            <div key={item.href} className="space-y-1 overflow-hidden">
               {hasChildren ? (
                 <button
                   onClick={() => toggleExpand(item.href)}
@@ -116,13 +116,13 @@ export function AppSidebar() {
       </div>
       
       {/* Collapse Toggle */}
-      <div className="p-3 border-t border-white/5">
+      <div className="p-3 border-t border-white/5 mt-auto shrink-0">
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'justify-start px-4'} py-3 gap-3 rounded-xl text-sm font-medium transition-all text-foreground/40 hover:text-foreground/90 hover:bg-white/5`}
         >
           {isCollapsed ? <PanelLeftOpen className="h-5 w-5 shrink-0" /> : <PanelLeftClose className="h-5 w-5 shrink-0" />}
-          {!isCollapsed && <span>Perkecil Sidebar</span>}
+          {!isCollapsed && <span className="whitespace-nowrap">Perkecil Sidebar</span>}
         </button>
       </div>
     </aside>

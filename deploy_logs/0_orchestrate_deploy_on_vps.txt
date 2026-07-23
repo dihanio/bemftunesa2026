@@ -1,0 +1,695 @@
+﻿2026-07-22T15:12:21.9437816Z Current runner version: '2.335.1'
+2026-07-22T15:12:21.9456708Z ##[group]Runner Image Provisioner
+2026-07-22T15:12:21.9457568Z Hosted Compute Agent
+2026-07-22T15:12:21.9458403Z Version: 20260707.563
+2026-07-22T15:12:21.9459045Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-07-22T15:12:21.9459816Z Build Date: 2026-07-07T19:33:50Z
+2026-07-22T15:12:21.9460541Z Worker ID: {1b32a065-57d2-4fcc-8a40-a114d368fad2}
+2026-07-22T15:12:21.9461274Z Azure Region: westus3
+2026-07-22T15:12:21.9461869Z ##[endgroup]
+2026-07-22T15:12:21.9463118Z ##[group]Operating System
+2026-07-22T15:12:21.9463719Z Ubuntu
+2026-07-22T15:12:21.9464265Z 24.04.4
+2026-07-22T15:12:21.9464824Z LTS
+2026-07-22T15:12:21.9465336Z ##[endgroup]
+2026-07-22T15:12:21.9465912Z ##[group]Runner Image
+2026-07-22T15:12:21.9466580Z Image: ***-24.04
+2026-07-22T15:12:21.9467136Z Version: 20260720.247.2
+2026-07-22T15:12:21.9468461Z Included Software: https://github.com/actions/runner-images/blob/***24/20260720.247/images/***/Ubuntu2404-Readme.md
+2026-07-22T15:12:21.9469871Z Image Release: https://github.com/actions/runner-images/releases/tag/***24%2F20260720.247
+2026-07-22T15:12:21.9470773Z ##[endgroup]
+2026-07-22T15:12:21.9471902Z ##[group]GITHUB_TOKEN Permissions
+2026-07-22T15:12:21.9473663Z Contents: read
+2026-07-22T15:12:21.9474279Z Metadata: read
+2026-07-22T15:12:21.9474817Z Packages: read
+2026-07-22T15:12:21.9475354Z ##[endgroup]
+2026-07-22T15:12:21.9477452Z Secret source: Actions
+2026-07-22T15:12:21.9478444Z Prepare workflow directory
+2026-07-22T15:12:21.9742263Z Prepare all required actions
+2026-07-22T15:12:21.9774805Z Getting action download info
+2026-07-22T15:12:22.2967302Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-07-22T15:12:22.9625664Z Download action repository 'appleboy/ssh-action@v0.1.8' (SHA:b60142998894e495c513803efc6d5d72a72c968a)
+2026-07-22T15:12:23.5465294Z Complete job name: orchestrate_deploy_on_vps
+2026-07-22T15:12:23.5869098Z ##[group]Build container for action use: '/home/runner/work/_actions/appleboy/ssh-action/v0.1.8/Dockerfile'.
+2026-07-22T15:12:23.5916534Z ##[command]/usr/bin/docker build -t 7e62c0:b99b73f6d6524c548bdca35dffdc01dc -f "/home/runner/work/_actions/appleboy/ssh-action/v0.1.8/Dockerfile" "/home/runner/work/_actions/appleboy/ssh-action/v0.1.8"
+2026-07-22T15:12:23.9280690Z #0 building with "default" instance using docker driver
+2026-07-22T15:12:23.9281317Z 
+2026-07-22T15:12:23.9281548Z #1 [internal] load build definition from Dockerfile
+2026-07-22T15:12:23.9282062Z #1 transferring dockerfile: 161B done
+2026-07-22T15:12:23.9282489Z #1 DONE 0.0s
+2026-07-22T15:12:23.9282691Z 
+2026-07-22T15:12:23.9282933Z #2 [internal] load metadata for docker.io/appleboy/drone-ssh:1.6.10
+2026-07-22T15:12:24.1111711Z #2 ...
+2026-07-22T15:12:24.1111984Z 
+2026-07-22T15:12:24.1112256Z #3 [auth] appleboy/drone-ssh:pull token for registry-1.docker.io
+2026-07-22T15:12:24.1112753Z #3 DONE 0.0s
+2026-07-22T15:12:24.2603914Z 
+2026-07-22T15:12:24.2604484Z #2 [internal] load metadata for docker.io/appleboy/drone-ssh:1.6.10
+2026-07-22T15:12:24.5333931Z #2 DONE 0.8s
+2026-07-22T15:12:24.6399140Z 
+2026-07-22T15:12:24.6399547Z #4 [internal] load .dockerignore
+2026-07-22T15:12:24.6400137Z #4 transferring context: 2B done
+2026-07-22T15:12:24.6400633Z #4 DONE 0.0s
+2026-07-22T15:12:24.6400946Z 
+2026-07-22T15:12:24.6401147Z #5 [internal] load build context
+2026-07-22T15:12:24.6401915Z #5 transferring context: 108B done
+2026-07-22T15:12:24.6402430Z #5 DONE 0.0s
+2026-07-22T15:12:24.6402707Z 
+2026-07-22T15:12:24.6403258Z #6 [1/3] FROM docker.io/appleboy/drone-ssh:1.6.10@sha256:1f3a7f9db2f6cba6a2777623226dc37f40ac3625052f8fb049107a05069aba2e
+2026-07-22T15:12:24.6405233Z #6 resolve docker.io/appleboy/drone-ssh:1.6.10@sha256:1f3a7f9db2f6cba6a2777623226dc37f40ac3625052f8fb049107a05069aba2e done
+2026-07-22T15:12:24.6406024Z #6 extracting sha256:63b65145d645c1250c391b2d16ebe53b3747c295ca8ba2fcb6b0cf064a4dc21c
+2026-07-22T15:12:24.7528761Z #6 extracting sha256:63b65145d645c1250c391b2d16ebe53b3747c295ca8ba2fcb6b0cf064a4dc21c 0.1s done
+2026-07-22T15:12:24.7530251Z #6 sha256:d191369219130d1d7fa54ba72aee0fc8fe9efad2ec0f389e2e72949f9f9accce 2.78kB / 2.78kB done
+2026-07-22T15:12:24.7531320Z #6 sha256:63b65145d645c1250c391b2d16ebe53b3747c295ca8ba2fcb6b0cf064a4dc21c 3.37MB / 3.37MB 0.1s done
+2026-07-22T15:12:24.7532392Z #6 sha256:7bf7cce1f3ce33b89ec58ea37e1364f457981cddfa7f9aedd8c9d425b5ac2458 284.75kB / 284.75kB 0.1s done
+2026-07-22T15:12:24.7533362Z #6 sha256:c8f2970f865a3f83f0ae5b0b8df6679b1f0128d0b661996ce29fd3922ca722db 2.33MB / 2.33MB 0.2s done
+2026-07-22T15:12:24.7534358Z #6 sha256:1f3a7f9db2f6cba6a2777623226dc37f40ac3625052f8fb049107a05069aba2e 2.38kB / 2.38kB done
+2026-07-22T15:12:24.7535239Z #6 sha256:0e8738c379ccb1406c873783c4f0cc1fe61df0c7a5020eebed7c906147bb987f 864B / 864B done
+2026-07-22T15:12:24.7536124Z #6 extracting sha256:7bf7cce1f3ce33b89ec58ea37e1364f457981cddfa7f9aedd8c9d425b5ac2458
+2026-07-22T15:12:24.8879467Z #6 extracting sha256:7bf7cce1f3ce33b89ec58ea37e1364f457981cddfa7f9aedd8c9d425b5ac2458 0.0s done
+2026-07-22T15:12:24.8880720Z #6 extracting sha256:c8f2970f865a3f83f0ae5b0b8df6679b1f0128d0b661996ce29fd3922ca722db
+2026-07-22T15:12:25.1007091Z #6 extracting sha256:c8f2970f865a3f83f0ae5b0b8df6679b1f0128d0b661996ce29fd3922ca722db 0.0s done
+2026-07-22T15:12:25.1011610Z #6 DONE 0.4s
+2026-07-22T15:12:25.1012340Z 
+2026-07-22T15:12:25.1019000Z #7 [2/3] COPY entrypoint.sh /entrypoint.sh
+2026-07-22T15:12:25.1020616Z #7 DONE 0.0s
+2026-07-22T15:12:25.1021047Z 
+2026-07-22T15:12:25.1021244Z #8 [3/3] RUN chmod +x /entrypoint.sh
+2026-07-22T15:12:25.1021801Z #8 DONE 0.1s
+2026-07-22T15:12:25.2554134Z 
+2026-07-22T15:12:25.2555471Z #9 exporting to image
+2026-07-22T15:12:25.2559856Z #9 exporting layers
+2026-07-22T15:12:26.0092999Z #9 exporting layers 0.9s done
+2026-07-22T15:12:26.0293036Z #9 writing image sha256:cd166f738482754f21d3b120e301b547307b0b6137f5f801c1936b1d22c95e20 done
+2026-07-22T15:12:26.0294406Z #9 naming to docker.io/library/7e62c0:b99b73f6d6524c548bdca35dffdc01dc done
+2026-07-22T15:12:26.0295807Z #9 DONE 0.9s
+2026-07-22T15:12:26.0345301Z ##[endgroup]
+2026-07-22T15:12:26.0612606Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-22T15:12:26.0620553Z ##[group]Run actions/checkout@v4
+2026-07-22T15:12:26.0621158Z with:
+2026-07-22T15:12:26.0621439Z   fetch-depth: 1
+2026-07-22T15:12:26.0621815Z   repository: dihanio/bemftunesa2026
+2026-07-22T15:12:26.0624148Z   token: ***
+2026-07-22T15:12:26.0624512Z   ssh-strict: true
+2026-07-22T15:12:26.0624820Z   ssh-user: git
+2026-07-22T15:12:26.0625177Z   persist-credentials: true
+2026-07-22T15:12:26.0625502Z   clean: true
+2026-07-22T15:12:26.0625878Z   sparse-checkout-cone-mode: true
+2026-07-22T15:12:26.0626210Z   fetch-tags: false
+2026-07-22T15:12:26.0626549Z   show-progress: true
+2026-07-22T15:12:26.0626882Z   lfs: false
+2026-07-22T15:12:26.0627339Z   submodules: false
+2026-07-22T15:12:26.0627612Z   set-safe-directory: true
+2026-07-22T15:12:26.0627998Z   allow-unsafe-pr-checkout: false
+2026-07-22T15:12:26.0628641Z ##[endgroup]
+2026-07-22T15:12:26.1537355Z Syncing repository: dihanio/bemftunesa2026
+2026-07-22T15:12:26.1540005Z ##[group]Getting Git version info
+2026-07-22T15:12:26.1540780Z Working directory is '/home/runner/work/bemftunesa2026/bemftunesa2026'
+2026-07-22T15:12:26.1541952Z [command]/usr/bin/git version
+2026-07-22T15:12:26.1542476Z git version 2.54.0
+2026-07-22T15:12:26.1544209Z ##[endgroup]
+2026-07-22T15:12:26.1549285Z Temporarily overriding HOME='/home/runner/work/_temp/01543e27-8b64-42fd-b792-161ba63d5e12' before making global git config changes
+2026-07-22T15:12:26.1550438Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-22T15:12:26.1551585Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/bemftunesa2026/bemftunesa2026
+2026-07-22T15:12:26.1553500Z Deleting the contents of '/home/runner/work/bemftunesa2026/bemftunesa2026'
+2026-07-22T15:12:26.1554677Z ##[group]Initializing the repository
+2026-07-22T15:12:26.1555655Z [command]/usr/bin/git init /home/runner/work/bemftunesa2026/bemftunesa2026
+2026-07-22T15:12:26.1643223Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-22T15:12:26.1644703Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-22T15:12:26.1646104Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-22T15:12:26.1646973Z hint: call:
+2026-07-22T15:12:26.1647561Z hint:
+2026-07-22T15:12:26.1648202Z hint: 	git config --global init.defaultBranch <name>
+2026-07-22T15:12:26.1649166Z hint:
+2026-07-22T15:12:26.1649891Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-22T15:12:26.1650903Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-22T15:12:26.1651731Z hint:
+2026-07-22T15:12:26.1652363Z hint: 	git branch -m <name>
+2026-07-22T15:12:26.1652966Z hint:
+2026-07-22T15:12:26.1653703Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-22T15:12:26.1655286Z Initialized empty Git repository in /home/runner/work/bemftunesa2026/bemftunesa2026/.git/
+2026-07-22T15:12:26.1657474Z [command]/usr/bin/git remote add origin https://github.com/dihanio/bemftunesa2026
+2026-07-22T15:12:26.1675381Z ##[endgroup]
+2026-07-22T15:12:26.1676271Z ##[group]Disabling automatic garbage collection
+2026-07-22T15:12:26.1679295Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-22T15:12:26.1703455Z ##[endgroup]
+2026-07-22T15:12:26.1704164Z ##[group]Setting up auth
+2026-07-22T15:12:26.1709323Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-22T15:12:26.1734292Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-22T15:12:26.1990312Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-22T15:12:26.2019065Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-22T15:12:26.2217755Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-22T15:12:26.2245444Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-22T15:12:26.2413556Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-22T15:12:26.2440309Z ##[endgroup]
+2026-07-22T15:12:26.2441027Z ##[group]Fetching the repository
+2026-07-22T15:12:26.2447410Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +812ef36817344fe43dcadaae9ea893a208c1a2c3:refs/remotes/origin/main
+2026-07-22T15:12:27.8525605Z From https://github.com/dihanio/bemftunesa2026
+2026-07-22T15:12:27.8543208Z  * [new ref]         812ef36817344fe43dcadaae9ea893a208c1a2c3 -> origin/main
+2026-07-22T15:12:27.8545265Z ##[endgroup]
+2026-07-22T15:12:27.8546001Z ##[group]Determining the checkout info
+2026-07-22T15:12:27.8547125Z ##[endgroup]
+2026-07-22T15:12:27.8554464Z [command]/usr/bin/git sparse-checkout disable
+2026-07-22T15:12:27.8601570Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-22T15:12:27.8626607Z ##[group]Checking out the ref
+2026-07-22T15:12:27.8631053Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-07-22T15:12:28.0739147Z Switched to a new branch 'main'
+2026-07-22T15:12:28.0750400Z branch 'main' set up to track 'origin/main'.
+2026-07-22T15:12:28.0757035Z ##[endgroup]
+2026-07-22T15:12:28.0788691Z [command]/usr/bin/git log -1 --format=%H
+2026-07-22T15:12:28.0809824Z 812ef36817344fe43dcadaae9ea893a208c1a2c3
+2026-07-22T15:12:28.1034798Z ##[group]Run appleboy/ssh-action@v0.1.8
+2026-07-22T15:12:28.1035178Z with:
+2026-07-22T15:12:28.1035678Z   host: ***
+2026-07-22T15:12:28.1035992Z   username: ***
+2026-07-22T15:12:28.1036311Z   port: 22
+2026-07-22T15:12:28.1037900Z   key: ***
+2026-07-22T15:12:28.1038396Z   envs: GITHUB_TOKEN
+2026-07-22T15:12:28.1040883Z   script: set -euo pipefail
+export DEPLOY_PATH="***"
+mkdir -p "$DEPLOY_PATH"
+cd "$DEPLOY_PATH"
+
+echo "=> remote: ensure repo exists"
+if [ -d .git ]; then
+  git fetch --all --prune
+  git reset --hard 812ef36817344fe43dcadaae9ea893a208c1a2c3
+else
+  git clone --depth 1 https://github.com/dihanio/bemftunesa2026 .
+  git fetch --all || true
+  git checkout --force 812ef36817344fe43dcadaae9ea893a208c1a2c3 || true
+  git reset --hard 812ef36817344fe43dcadaae9ea893a208c1a2c3 || true
+fi
+echo "=> remote: authenticate with GHCR"
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u dihanio --password-stdin
+
+chmod +x ./scripts/deploy/vps_deploy.sh || true
+echo "=> remote: invoke vps_deploy.sh"
+GITHUB_SHA=812ef36817344fe43dcadaae9ea893a208c1a2c3 GITHUB_REF=refs/heads/main ./scripts/deploy/vps_deploy.sh 812ef36817344fe43dcadaae9ea893a208c1a2c3
+
+2026-07-22T15:12:28.1043141Z   sync: false
+2026-07-22T15:12:28.1043444Z   use_insecure_cipher: false
+2026-07-22T15:12:28.1043781Z   timeout: 30s
+2026-07-22T15:12:28.1044083Z   command_timeout: 10m
+2026-07-22T15:12:28.1044400Z   proxy_port: 22
+2026-07-22T15:12:28.1044725Z   proxy_timeout: 30s
+2026-07-22T15:12:28.1045050Z   proxy_use_insecure_cipher: false
+2026-07-22T15:12:28.1045343Z   script_stop: false
+2026-07-22T15:12:28.1045674Z   debug: false
+2026-07-22T15:12:28.1045966Z env:
+2026-07-22T15:12:28.1048111Z   GITHUB_TOKEN: ***
+2026-07-22T15:12:28.1048481Z ##[endgroup]
+2026-07-22T15:12:28.1142803Z ##[command]/usr/bin/docker run --name e62c0b99b73f6d6524c548bdca35dffdc01dc_1b8ff4 --label 7e62c0 --workdir /github/workspace --rm -e "GITHUB_TOKEN" -e "INPUT_HOST" -e "INPUT_USERNAME" -e "INPUT_PORT" -e "INPUT_KEY" -e "INPUT_ENVS" -e "INPUT_SCRIPT" -e "INPUT_PASSPHRASE" -e "INPUT_PASSWORD" -e "INPUT_SYNC" -e "INPUT_USE_INSECURE_CIPHER" -e "INPUT_CIPHER" -e "INPUT_TIMEOUT" -e "INPUT_COMMAND_TIMEOUT" -e "INPUT_KEY_PATH" -e "INPUT_FINGERPRINT" -e "INPUT_PROXY_HOST" -e "INPUT_PROXY_PORT" -e "INPUT_PROXY_USERNAME" -e "INPUT_PROXY_PASSWORD" -e "INPUT_PROXY_PASSPHRASE" -e "INPUT_PROXY_TIMEOUT" -e "INPUT_PROXY_KEY" -e "INPUT_PROXY_KEY_PATH" -e "INPUT_PROXY_FINGERPRINT" -e "INPUT_PROXY_CIPHER" -e "INPUT_PROXY_USE_INSECURE_CIPHER" -e "INPUT_SCRIPT_STOP" -e "INPUT_DEBUG" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/bemftunesa2026/bemftunesa2026":"/github/workspace" 7e62c0:b99b73f6d6524c548bdca35dffdc01dc
+2026-07-22T15:12:28.5508879Z ======CMD======
+2026-07-22T15:12:28.5509483Z set -euo pipefail
+2026-07-22T15:12:28.5510301Z export DEPLOY_PATH="***"
+2026-07-22T15:12:28.5510746Z mkdir -p "$DEPLOY_PATH"
+2026-07-22T15:12:28.5511343Z cd "$DEPLOY_PATH"
+2026-07-22T15:12:28.5511568Z 
+2026-07-22T15:12:28.5511778Z echo "=> remote: ensure repo exists"
+2026-07-22T15:12:28.5512270Z if [ -d .git ]; then
+2026-07-22T15:12:28.5512693Z   git fetch --all --prune
+2026-07-22T15:12:28.5513253Z   git reset --hard 812ef36817344fe43dcadaae9ea893a208c1a2c3
+2026-07-22T15:12:28.5513771Z else
+2026-07-22T15:12:28.5514305Z   git clone --depth 1 https://github.com/dihanio/bemftunesa2026 .
+2026-07-22T15:12:28.5514915Z   git fetch --all || true
+2026-07-22T15:12:28.5515525Z   git checkout --force 812ef36817344fe43dcadaae9ea893a208c1a2c3 || true
+2026-07-22T15:12:28.5516192Z   git reset --hard 812ef36817344fe43dcadaae9ea893a208c1a2c3 || true
+2026-07-22T15:12:28.5516757Z fi
+2026-07-22T15:12:28.5517134Z echo "=> remote: authenticate with GHCR"
+2026-07-22T15:12:28.5517920Z echo "$GITHUB_TOKEN" | docker login ghcr.io -u dihanio --password-stdin
+2026-07-22T15:12:28.5518610Z 
+2026-07-22T15:12:28.5518851Z chmod +x ./scripts/deploy/vps_deploy.sh || true
+2026-07-22T15:12:28.5519495Z echo "=> remote: invoke vps_deploy.sh"
+2026-07-22T15:12:28.5520229Z GITHUB_SHA=812ef36817344fe43dcadaae9ea893a208c1a2c3 GITHUB_REF=refs/heads/main ./scripts/deploy/vps_deploy.sh 812ef36817344fe43dcadaae9ea893a208c1a2c3
+2026-07-22T15:12:28.5520864Z 
+2026-07-22T15:12:28.5520992Z ======END======
+2026-07-22T15:12:31.2594022Z out: => remote: ensure repo exists
+2026-07-22T15:12:32.1074047Z err: From https://github.com/dihanio/bemftunesa2026
+2026-07-22T15:12:32.1074767Z err:    f5924c9..812ef36  main       -> origin/main
+2026-07-22T15:12:32.1177820Z out: HEAD is now at 812ef36 style(aspirasi): fix input and container background colors for light theme
+2026-07-22T15:12:32.1179055Z out: => remote: authenticate with GHCR
+2026-07-22T15:12:33.0251443Z err: WARNING! Your credentials are stored unencrypted in '/home/***/.docker/config.json'.
+2026-07-22T15:12:33.0252223Z err: Configure a credential helper to remove this warning. See
+2026-07-22T15:12:33.0252854Z err: https://docs.docker.com/go/credential-store/
+2026-07-22T15:12:33.0253334Z out: Login Succeeded
+2026-07-22T15:12:33.0282245Z out: => remote: invoke vps_deploy.sh
+2026-07-22T15:12:33.0368960Z out: [2026-07-22T23:12:32+08:00] Starting deploy for 812ef36817344fe43dcadaae9ea893a208c1a2c3
+2026-07-22T15:12:33.0390660Z out: [2026-07-22T23:12:32+08:00] Previous SHA: f5924c92c0b79587309b7af82c9ec91110f61fac
+2026-07-22T15:12:33.5969382Z out: HEAD is now at 812ef36 style(aspirasi): fix input and container background colors for light theme
+2026-07-22T15:12:33.6019620Z out: HEAD is now at 812ef36 style(aspirasi): fix input and container background colors for light theme
+2026-07-22T15:12:33.6060544Z out: [2026-07-22T23:12:33+08:00] Changed files detected.
+2026-07-22T15:12:33.6182576Z out: [2026-07-22T23:12:33+08:00] Rebuilding and restarting service: public_web
+2026-07-22T15:12:33.6756536Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6757510Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6758506Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6759403Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6769126Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6770307Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6771492Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6772324Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6780882Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6781776Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6782601Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.6783387Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:33.7956264Z out:  Image ghcr.io/dihanio/bemftunesa2026-public_web:latest Pulling 
+2026-07-22T15:12:38.3048582Z out:  3c6fc62959a0 Pulling fs layer 0B
+2026-07-22T15:12:38.3049283Z out:  66ecb9ebc680 Pulling fs layer 0B
+2026-07-22T15:12:38.3049695Z out:  ff53b7f8e2d8 Pulling fs layer 0B
+2026-07-22T15:12:38.9729845Z out:  da2c62e4e9a5 Download complete 0B
+2026-07-22T15:12:38.9730694Z out:  aa966cde17d3 Downloading 2.92MB
+2026-07-22T15:12:39.0703864Z out:  ff53b7f8e2d8 Download complete 0B
+2026-07-22T15:12:39.0704538Z out:  aa966cde17d3 Download complete 0B
+2026-07-22T15:12:39.2710770Z out:  3c6fc62959a0 Downloading 1.049MB
+2026-07-22T15:12:39.3697180Z out:  3c6fc62959a0 Downloading 1.049MB
+2026-07-22T15:12:39.4707979Z out:  3c6fc62959a0 Downloading 2.097MB
+2026-07-22T15:12:39.5707118Z out:  3c6fc62959a0 Downloading 3.146MB
+2026-07-22T15:12:39.6711777Z out:  3c6fc62959a0 Downloading 4.194MB
+2026-07-22T15:12:39.7699193Z out:  3c6fc62959a0 Downloading 5.243MB
+2026-07-22T15:12:39.8704209Z out:  3c6fc62959a0 Downloading 7.34MB
+2026-07-22T15:12:39.9696820Z out:  3c6fc62959a0 Downloading 8.389MB
+2026-07-22T15:12:40.0707522Z out:  3c6fc62959a0 Downloading 10.49MB
+2026-07-22T15:12:40.1699505Z out:  3c6fc62959a0 Downloading 10.49MB
+2026-07-22T15:12:40.2707005Z out:  3c6fc62959a0 Downloading 10.49MB
+2026-07-22T15:12:40.3702072Z out:  3c6fc62959a0 Download complete 0B
+2026-07-22T15:12:41.1704988Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:41.2722486Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:41.3722808Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:41.4706676Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:41.5711445Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:41.6699124Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:41.7700447Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:41.8702375Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:41.9701699Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:42.0704959Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:42.1704788Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:42.2703531Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:42.3711819Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:42.4705999Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:42.5703700Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:12:42.6702999Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:42.7702871Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:42.8721833Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:42.9696023Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:43.0703774Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:43.1700047Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:43.2705621Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:43.3702889Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:43.4700618Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:43.5703838Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:43.6711608Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:43.7699910Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:12:43.8704248Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:12:43.9705241Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:12:44.0707619Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:12:44.1702049Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:12:44.2703938Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:12:44.3703283Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:12:44.4705032Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:12:44.5701329Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:12:44.6697718Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:12:44.7696858Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:12:44.8711254Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:12:44.9697894Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:12:45.0710544Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:12:45.1703631Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:12:45.2703356Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:12:45.3700270Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:12:45.4704037Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:12:45.5696886Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:12:45.6702416Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:12:45.7706733Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:12:45.8709155Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:12:45.9712651Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:12:46.0706882Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:12:46.1704513Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:12:46.2702753Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:12:46.3706915Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:12:46.4735033Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:12:46.5704792Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:12:46.6698035Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:12:46.7709174Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:12:46.8712317Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:12:46.9706744Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:12:47.0696182Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:12:47.1701168Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:12:47.2705579Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:12:47.3698707Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:12:47.4700117Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:12:47.5703888Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:12:47.6701169Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:12:47.7704298Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:12:47.8706453Z out:  66ecb9ebc680 Downloading 8.389MB
+2026-07-22T15:12:47.9701394Z out:  66ecb9ebc680 Downloading 8.389MB
+2026-07-22T15:12:48.0706043Z out:  66ecb9ebc680 Downloading 8.389MB
+2026-07-22T15:12:48.1699181Z out:  66ecb9ebc680 Downloading 8.389MB
+2026-07-22T15:12:48.2700989Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:12:48.3702866Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:12:48.4698149Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:12:48.5707665Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:12:48.6707197Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:12:48.7702067Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:12:48.8704614Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:12:48.9710203Z out:  66ecb9ebc680 Downloading 10.49MB
+2026-07-22T15:12:49.0713748Z out:  66ecb9ebc680 Downloading 10.49MB
+2026-07-22T15:12:49.1704302Z out:  66ecb9ebc680 Downloading 10.49MB
+2026-07-22T15:12:49.2701080Z out:  66ecb9ebc680 Downloading 11.53MB
+2026-07-22T15:12:49.3703665Z out:  66ecb9ebc680 Download complete 0B
+2026-07-22T15:12:49.3810509Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:12:49.4906756Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:12:49.5855075Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:12:49.6893055Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:12:49.7903094Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:12:49.8911265Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:12:49.9739465Z out:  ff53b7f8e2d8 Pull complete 0B
+2026-07-22T15:12:49.9815349Z out:  3c6fc62959a0 Extracting 1B
+2026-07-22T15:12:49.9887983Z out:  66ecb9ebc680 Pull complete 0B
+2026-07-22T15:12:50.0802121Z out:  3c6fc62959a0 Pull complete 0B
+2026-07-22T15:12:50.0850857Z out:  Image ghcr.io/dihanio/bemftunesa2026-public_web:latest Pulled 
+2026-07-22T15:12:50.1963622Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1964785Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1965800Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1967082Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1970572Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1971845Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1972700Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1973429Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1974259Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1975004Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1975800Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.1976560Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:12:50.3085460Z out:  Container bemft-deploy-public_web-1 Recreate 
+2026-07-22T15:13:00.6384142Z out:  Container bemft-deploy-public_web-1 Recreated 
+2026-07-22T15:13:00.6890715Z out:  Container bemft-deploy-public_web-1 Starting 
+2026-07-22T15:13:00.8760566Z out:  Container bemft-deploy-public_web-1 Started 
+2026-07-22T15:13:00.9511839Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9512861Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9513788Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9514577Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9515400Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9516182Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9517299Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9518942Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9522402Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9550317Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9551260Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:00.9552023Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0836223Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0837400Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0838451Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0839334Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0840176Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0841012Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0841837Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0842735Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0843578Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0844395Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0845210Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:03.0846064Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2032582Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2033770Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2034618Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2035521Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2036354Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2040655Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2041586Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2043250Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2044094Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2044990Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2045828Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:05.2046863Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3282926Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3283897Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3284763Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3285662Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3286565Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3293089Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3294364Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3295726Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3303873Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3305367Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3306301Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.3307177Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:07.4101837Z out: [2026-07-22T23:13:07+08:00] public_web healthy
+2026-07-22T15:13:07.4111520Z out: [2026-07-22T23:13:07+08:00] Deploy successful for 812ef36817344fe43dcadaae9ea893a208c1a2c3
+2026-07-22T15:13:07.4115093Z ==============================================
+2026-07-22T15:13:07.4115913Z ✅ Successfully executed commands to all host.
+2026-07-22T15:13:07.4116624Z ==============================================
+2026-07-22T15:13:07.5276224Z ##[group]Run appleboy/ssh-action@v0.1.8
+2026-07-22T15:13:07.5276619Z with:
+2026-07-22T15:13:07.5277109Z   host: ***
+2026-07-22T15:13:07.5277539Z   username: ***
+2026-07-22T15:13:07.5277921Z   port: 22
+2026-07-22T15:13:07.5279899Z   key: ***
+2026-07-22T15:13:07.5280994Z   script: set -euo pipefail
+export DEPLOY_PATH="***"
+LOG_FILE=$(ls -1t "$DEPLOY_PATH"/deploy-logs/deploy-*.log 2>/dev/null | head -n1 || true)
+if [ -n "$LOG_FILE" ]; then
+  echo "--- remote deploy log: $LOG_FILE ---"
+  tail -n 2000 "$LOG_FILE" || true
+else
+  echo "No remote log found"
+fi
+
+2026-07-22T15:13:07.5282028Z   sync: false
+2026-07-22T15:13:07.5282689Z   use_insecure_cipher: false
+2026-07-22T15:13:07.5283067Z   timeout: 30s
+2026-07-22T15:13:07.5283434Z   command_timeout: 10m
+2026-07-22T15:13:07.5283957Z   proxy_port: 22
+2026-07-22T15:13:07.5284283Z   proxy_timeout: 30s
+2026-07-22T15:13:07.5284655Z   proxy_use_insecure_cipher: false
+2026-07-22T15:13:07.5285060Z   script_stop: false
+2026-07-22T15:13:07.5285508Z   debug: false
+2026-07-22T15:13:07.5285836Z ##[endgroup]
+2026-07-22T15:13:07.5304512Z ##[command]/usr/bin/docker run --name e62c0b99b73f6d6524c548bdca35dffdc01dc_60eb7f --label 7e62c0 --workdir /github/workspace --rm -e "INPUT_HOST" -e "INPUT_USERNAME" -e "INPUT_PORT" -e "INPUT_KEY" -e "INPUT_SCRIPT" -e "INPUT_PASSPHRASE" -e "INPUT_PASSWORD" -e "INPUT_SYNC" -e "INPUT_USE_INSECURE_CIPHER" -e "INPUT_CIPHER" -e "INPUT_TIMEOUT" -e "INPUT_COMMAND_TIMEOUT" -e "INPUT_KEY_PATH" -e "INPUT_FINGERPRINT" -e "INPUT_PROXY_HOST" -e "INPUT_PROXY_PORT" -e "INPUT_PROXY_USERNAME" -e "INPUT_PROXY_PASSWORD" -e "INPUT_PROXY_PASSPHRASE" -e "INPUT_PROXY_TIMEOUT" -e "INPUT_PROXY_KEY" -e "INPUT_PROXY_KEY_PATH" -e "INPUT_PROXY_FINGERPRINT" -e "INPUT_PROXY_CIPHER" -e "INPUT_PROXY_USE_INSECURE_CIPHER" -e "INPUT_SCRIPT_STOP" -e "INPUT_ENVS" -e "INPUT_DEBUG" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/bemftunesa2026/bemftunesa2026":"/github/workspace" 7e62c0:b99b73f6d6524c548bdca35dffdc01dc
+2026-07-22T15:13:07.6880041Z ======CMD======
+2026-07-22T15:13:07.6880886Z set -euo pipefail
+2026-07-22T15:13:07.6881939Z export DEPLOY_PATH="***"
+2026-07-22T15:13:07.6882652Z LOG_FILE=$(ls -1t "$DEPLOY_PATH"/deploy-logs/deploy-*.log 2>/dev/null | head -n1 || true)
+2026-07-22T15:13:07.6883363Z if [ -n "$LOG_FILE" ]; then
+2026-07-22T15:13:07.6884315Z   echo "--- remote deploy log: $LOG_FILE ---"
+2026-07-22T15:13:07.6884877Z   tail -n 2000 "$LOG_FILE" || true
+2026-07-22T15:13:07.6885319Z else
+2026-07-22T15:13:07.6885673Z   echo "No remote log found"
+2026-07-22T15:13:07.6886027Z fi
+2026-07-22T15:13:07.6886184Z 
+2026-07-22T15:13:07.6886359Z ======END======
+2026-07-22T15:13:09.9317953Z out: --- remote deploy log: ***/deploy-logs/deploy-20260722-231232.log ---
+2026-07-22T15:13:10.1262872Z out: [2026-07-22T23:12:32+08:00] Starting deploy for 812ef36817344fe43dcadaae9ea893a208c1a2c3
+2026-07-22T15:13:10.1265960Z out: [2026-07-22T23:12:32+08:00] Previous SHA: f5924c92c0b79587309b7af82c9ec91110f61fac
+2026-07-22T15:13:10.1267220Z out: HEAD is now at 812ef36 style(aspirasi): fix input and container background colors for light theme
+2026-07-22T15:13:10.1268743Z out: HEAD is now at 812ef36 style(aspirasi): fix input and container background colors for light theme
+2026-07-22T15:13:10.1279245Z out: [2026-07-22T23:12:33+08:00] Changed files detected.
+2026-07-22T15:13:10.1281200Z out: [2026-07-22T23:12:33+08:00] Rebuilding and restarting service: public_web
+2026-07-22T15:13:10.1283418Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1285095Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1286550Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1287915Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1289038Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1290419Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1291685Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1293035Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1294312Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1295629Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1296662Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1297689Z out: time="2026-07-22T23:12:33+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1298702Z out:  Image ghcr.io/dihanio/bemftunesa2026-public_web:latest Pulling 
+2026-07-22T15:13:10.1299481Z out:  3c6fc62959a0 Pulling fs layer 0B
+2026-07-22T15:13:10.1300002Z out:  66ecb9ebc680 Pulling fs layer 0B
+2026-07-22T15:13:10.1300531Z out:  ff53b7f8e2d8 Pulling fs layer 0B
+2026-07-22T15:13:10.1301050Z out:  da2c62e4e9a5 Download complete 0B
+2026-07-22T15:13:10.1301636Z out:  aa966cde17d3 Downloading 2.92MB
+2026-07-22T15:13:10.1302196Z out:  ff53b7f8e2d8 Download complete 0B
+2026-07-22T15:13:10.1302753Z out:  aa966cde17d3 Download complete 0B
+2026-07-22T15:13:10.1303278Z out:  3c6fc62959a0 Downloading 1.049MB
+2026-07-22T15:13:10.1304041Z out:  3c6fc62959a0 Downloading 1.049MB
+2026-07-22T15:13:10.1304515Z out:  3c6fc62959a0 Downloading 2.097MB
+2026-07-22T15:13:10.1305040Z out:  3c6fc62959a0 Downloading 3.146MB
+2026-07-22T15:13:10.1305554Z out:  3c6fc62959a0 Downloading 4.194MB
+2026-07-22T15:13:10.1306104Z out:  3c6fc62959a0 Downloading 5.243MB
+2026-07-22T15:13:10.1306765Z out:  3c6fc62959a0 Downloading 7.34MB
+2026-07-22T15:13:10.1307339Z out:  3c6fc62959a0 Downloading 8.389MB
+2026-07-22T15:13:10.1307818Z out:  3c6fc62959a0 Downloading 10.49MB
+2026-07-22T15:13:10.1308473Z out:  3c6fc62959a0 Downloading 10.49MB
+2026-07-22T15:13:10.1309314Z out:  3c6fc62959a0 Downloading 10.49MB
+2026-07-22T15:13:10.1309905Z out:  3c6fc62959a0 Download complete 0B
+2026-07-22T15:13:10.1310462Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1311028Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1311488Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1312009Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1312639Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1313174Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1313676Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1314312Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1314803Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1315319Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1316077Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1316562Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1317143Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1317635Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1318162Z out:  66ecb9ebc680 Downloading 1.049MB
+2026-07-22T15:13:10.1318944Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1319505Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1319996Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1320537Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1321046Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1322150Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1322671Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1323195Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1323775Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1324343Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1324874Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1325360Z out:  66ecb9ebc680 Downloading 2.097MB
+2026-07-22T15:13:10.1325914Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:13:10.1326458Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:13:10.1326998Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:13:10.1327546Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:13:10.1328052Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:13:10.1328976Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:13:10.1329440Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:13:10.1329971Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:13:10.1330482Z out:  66ecb9ebc680 Downloading 3.146MB
+2026-07-22T15:13:10.1330986Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:13:10.1331519Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:13:10.1332037Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:13:10.1332499Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:13:10.1333068Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:13:10.1333647Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:13:10.1334193Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:13:10.1334705Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:13:10.1335291Z out:  66ecb9ebc680 Downloading 4.194MB
+2026-07-22T15:13:10.1335759Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:13:10.1336267Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:13:10.1336821Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:13:10.1337336Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:13:10.1337876Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:13:10.1338611Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:13:10.1339082Z out:  66ecb9ebc680 Downloading 5.243MB
+2026-07-22T15:13:10.1339570Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:13:10.1340214Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:13:10.1340732Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:13:10.1341247Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:13:10.1341793Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:13:10.1342323Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:13:10.1342691Z out:  66ecb9ebc680 Downloading 6.291MB
+2026-07-22T15:13:10.1343252Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:13:10.1343783Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:13:10.1344187Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:13:10.1344607Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:13:10.1345117Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:13:10.1345618Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:13:10.1346080Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:13:10.1346535Z out:  66ecb9ebc680 Downloading 7.34MB
+2026-07-22T15:13:10.1347034Z out:  66ecb9ebc680 Downloading 8.389MB
+2026-07-22T15:13:10.1347555Z out:  66ecb9ebc680 Downloading 8.389MB
+2026-07-22T15:13:10.1348137Z out:  66ecb9ebc680 Downloading 8.389MB
+2026-07-22T15:13:10.1348903Z out:  66ecb9ebc680 Downloading 8.389MB
+2026-07-22T15:13:10.1349528Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:13:10.1350099Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:13:10.1353103Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:13:10.1353788Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:13:10.1354373Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:13:10.1354956Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:13:10.1355434Z out:  66ecb9ebc680 Downloading 9.437MB
+2026-07-22T15:13:10.1356012Z out:  66ecb9ebc680 Downloading 10.49MB
+2026-07-22T15:13:10.1356565Z out:  66ecb9ebc680 Downloading 10.49MB
+2026-07-22T15:13:10.1357166Z out:  66ecb9ebc680 Downloading 10.49MB
+2026-07-22T15:13:10.1357682Z out:  66ecb9ebc680 Downloading 11.53MB
+2026-07-22T15:13:10.1358543Z out:  66ecb9ebc680 Download complete 0B
+2026-07-22T15:13:10.1359123Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:13:10.1359714Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:13:10.1360202Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:13:10.1360745Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:13:10.1361172Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:13:10.1361686Z out:  66ecb9ebc680 Extracting 1B
+2026-07-22T15:13:10.1362232Z out:  ff53b7f8e2d8 Pull complete 0B
+2026-07-22T15:13:10.1362753Z out:  3c6fc62959a0 Extracting 1B
+2026-07-22T15:13:10.1366215Z out:  66ecb9ebc680 Pull complete 0B
+2026-07-22T15:13:10.1366991Z out:  3c6fc62959a0 Pull complete 0B
+2026-07-22T15:13:10.1367613Z out:  Image ghcr.io/dihanio/bemftunesa2026-public_web:latest Pulled 
+2026-07-22T15:13:10.1369121Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1370466Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1371633Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1372676Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1373746Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1374943Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1376036Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1377500Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1378957Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1380057Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1381440Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1382474Z out: time="2026-07-22T23:12:50+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1383172Z out:  Container bemft-deploy-public_web-1 Recreate 
+2026-07-22T15:13:10.1383639Z out:  Container bemft-deploy-public_web-1 Recreated 
+2026-07-22T15:13:10.1384078Z out:  Container bemft-deploy-public_web-1 Starting 
+2026-07-22T15:13:10.1384530Z out:  Container bemft-deploy-public_web-1 Started 
+2026-07-22T15:13:10.1385308Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1386246Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1387007Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1387772Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1388823Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1389726Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1390500Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1391305Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1392104Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1392912Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1393738Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1394567Z out: time="2026-07-22T23:13:00+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1395352Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1396190Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1397046Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1397865Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1399062Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1400149Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1401304Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1402317Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1403446Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1404507Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1405567Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1406792Z out: time="2026-07-22T23:13:02+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1407985Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1409351Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1410616Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1411815Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1412859Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1413820Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1414761Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1415892Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1416737Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1417557Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1418577Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1419467Z out: time="2026-07-22T23:13:05+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1420427Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1421411Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1422406Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1423392Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1424331Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1425190Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1426183Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1427144Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1428197Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_PUBLIC_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1429651Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_IMS_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1430812Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_GOOGLE_CLIENT_ID\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1431968Z out: time="2026-07-22T23:13:07+08:00" level=warning msg="The \"NEXT_PUBLIC_API_URL\" variable is not set. Defaulting to a blank string."
+2026-07-22T15:13:10.1432935Z out: [2026-07-22T23:13:07+08:00] public_web healthy
+2026-07-22T15:13:10.1433656Z out: [2026-07-22T23:13:07+08:00] Deploy successful for 812ef36817344fe43dcadaae9ea893a208c1a2c3
+2026-07-22T15:13:10.1434357Z ==============================================
+2026-07-22T15:13:10.1435716Z ✅ Successfully executed commands to all host.
+2026-07-22T15:13:10.1436363Z ==============================================
+2026-07-22T15:13:10.2543333Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-07-22T15:13:10.2545227Z Post job cleanup.
+2026-07-22T15:13:10.3306265Z [command]/usr/bin/git version
+2026-07-22T15:13:10.3339094Z git version 2.54.0
+2026-07-22T15:13:10.3370933Z Temporarily overriding HOME='/home/runner/work/_temp/422ee8d3-f1f5-4cf6-b448-aefc218d909d' before making global git config changes
+2026-07-22T15:13:10.3372237Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-22T15:13:10.3376527Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/bemftunesa2026/bemftunesa2026
+2026-07-22T15:13:10.3405133Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-22T15:13:10.3434402Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-22T15:13:10.3637914Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-22T15:13:10.3655823Z http.https://github.com/.extraheader
+2026-07-22T15:13:10.3664664Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-07-22T15:13:10.3691129Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-22T15:13:10.3892359Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-22T15:13:10.3925878Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-22T15:13:10.4234146Z Cleaning up orphan processes
+2026-07-22T15:13:10.4432033Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

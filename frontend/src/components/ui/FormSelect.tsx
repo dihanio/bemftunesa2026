@@ -56,7 +56,7 @@ export function FormSelect({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full px-4.5 py-3 rounded-xl bg-slate-800/60 border ${
+          className={`w-full px-4.5 py-3 rounded-xl bg-black/5 dark:bg-slate-800/60 border ${
             error ? "border-rose-500/60 focus:border-rose-500" : "border-accent-blue/15 focus:border-accent-blue/40"
           } text-sm text-left focus:outline-none transition-colors flex items-center justify-between gap-2 cursor-pointer`}
         >
@@ -71,7 +71,7 @@ export function FormSelect({
         </button>
 
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-slate-800 border border-accent-blue/15 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+          <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-white dark:bg-slate-800 border border-accent-blue/15 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
             {options.map((option) => (
               <button
                 key={option.value}

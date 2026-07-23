@@ -221,17 +221,26 @@ export class PaginationDto {
 }
 
 export class CreateAnnouncementDto {
-  @ApiProperty({ description: 'Judul Pengumuman', example: 'Pengumuman Pra-PKKMB' })
+  @ApiProperty({
+    description: 'Judul Pengumuman',
+    example: 'Pengumuman Pra-PKKMB',
+  })
   @IsString()
   @IsNotEmpty()
   title: string;
 
-  @ApiProperty({ description: 'Isi Pengumuman', example: 'Maba wajib membawa buku...' })
+  @ApiProperty({
+    description: 'Isi Pengumuman',
+    example: 'Maba wajib membawa buku...',
+  })
   @IsString()
   @IsNotEmpty()
   content: string;
 
-  @ApiPropertyOptional({ description: 'Target audiens', enum: ['all', 'specific_groups'] })
+  @ApiPropertyOptional({
+    description: 'Target audiens',
+    enum: ['all', 'specific_groups'],
+  })
   @IsEnum(['all', 'specific_groups'])
   @IsOptional()
   targetAudience?: 'all' | 'specific_groups';
@@ -242,7 +251,9 @@ export class CreateAnnouncementDto {
   @IsOptional()
   targetGroups?: string[];
 
-  @ApiPropertyOptional({ description: 'Apakah pengumuman ini prioritas (di-pin)?' })
+  @ApiPropertyOptional({
+    description: 'Apakah pengumuman ini prioritas (di-pin)?',
+  })
   @IsOptional()
   isPriority?: boolean;
 
@@ -281,7 +292,10 @@ export class UpdateAnnouncementDto {
 }
 
 export class CreateScheduleDto {
-  @ApiProperty({ description: 'Nama Kegiatan', example: 'Materi 1: Kepemimpinan' })
+  @ApiProperty({
+    description: 'Nama Kegiatan',
+    example: 'Materi 1: Kepemimpinan',
+  })
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -291,7 +305,10 @@ export class CreateScheduleDto {
   @IsNotEmpty()
   startTime: string;
 
-  @ApiProperty({ description: 'Waktu Selesai', example: '2026-08-18T10:00:00Z' })
+  @ApiProperty({
+    description: 'Waktu Selesai',
+    example: '2026-08-18T10:00:00Z',
+  })
   @IsDateString()
   @IsNotEmpty()
   endTime: string;
