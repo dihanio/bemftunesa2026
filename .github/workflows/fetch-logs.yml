@@ -28,4 +28,4 @@ jobs:
             echo "--- API LOGS ---"
             docker compose logs --tail=${{ github.event.inputs.lines }} api
             echo "--- PKKMB LOGS ---"
-            docker exec bemft-deploy-pkkmb_web-1 sh -c "wget -qO- http://localhost:3000/register | head -n 5 && ls -la /app/pkkmb/.next/server/app/register || echo no-register-folder"
+            docker exec bemft-deploy-pkkmb_web-1 sh -c "wget -S http://localhost:3000/register 2>&1 | head -n 15 && ls -la /app/pkkmb/.next/server/app/register || echo no-register-folder"
