@@ -35,7 +35,11 @@ export class StructuredLogger implements LoggerService {
         level,
         context: activeContext,
         message:
-          typeof message === 'object' ? JSON.stringify(message) : message,
+          message instanceof Error
+            ? message.stack || message.message
+            : typeof message === 'object'
+              ? JSON.stringify(message, Object.getOwnPropertyNames(message))
+              : message,
         ...meta,
       });
     } else {
