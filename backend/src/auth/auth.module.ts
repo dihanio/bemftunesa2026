@@ -25,7 +25,7 @@ import { AuthorizationService } from '../common/auth/authorization.service';
         return {
           secret: configService.get<string>('JWT_SECRET'),
           signOptions: {
-            expiresIn,
+            expiresIn: expiresIn as any,
           },
         };
       },
