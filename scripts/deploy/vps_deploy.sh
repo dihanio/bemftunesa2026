@@ -71,8 +71,13 @@ else
   if echo "$CHANGED_FILES" | grep -q '^pkkmb/'; then SERVICES_TO_RESTART+=("pkkmb_web"); fi
 fi
 
-# ensure .env exists to prevent docker compose env_file error
-touch .env
+# ensure .env exists and is populated
+if [ ! -s .env ] && [ -f .env.production ]; then
+  log "Copying .env.production to .env because .env is empty or missing"
+  cp .env.production .env
+else
+  touch .env
+fi
 
 # restart services via docker-compose
 for svc in "${SERVICES_TO_RESTART[@]}"; do
