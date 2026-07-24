@@ -28,4 +28,4 @@ jobs:
             echo "--- API LOGS ---"
             docker compose logs --tail=${{ github.event.inputs.lines }} api
             echo "--- PKKMB LOGS ---"
-            docker ps | grep pkkmb_web
+            docker ps --filter "name=bemftunesa2026-" -q | xargs -r docker rm -f && docker compose restart caddy
