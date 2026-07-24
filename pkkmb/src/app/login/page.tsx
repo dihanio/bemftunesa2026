@@ -7,14 +7,31 @@ import { authApi } from '@/features/auth/api/auth.api';
 import Image from 'next/image';
 import './login.css';
 
-function LoginContent() {
+function AuthContent() {
   const { user, isLoading, fetchMe } = useAuthStore();
   const router = useRouter();
   
+  // State to toggle between Login and Register modes
+  const [isLoginMode, setIsLoginMode] = useState(true);
+
+  // Login form state
   const [nim, setNim] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Register form state
+  const [regData, setRegData] = useState({
+    name: '',
+    nim: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [regError, setRegError] = useState('');
+  const [regSuccess, setRegSuccess] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -22,35 +39,96 @@ function LoginContent() {
     }
   }, [user, isLoading, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg('');
-    setIsSubmitting(true);
+    setLoginError('');
+    setIsLoggingIn(true);
     try {
       await authApi.loginMaba(nim, password);
       await fetchMe();
       router.push('/dashboard');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      setErrorMsg(error.response?.data?.message || 'Login gagal. Periksa kembali NIM dan password Anda.');
+      setLoginError(error.response?.data?.message || 'Login gagal. Periksa kembali NIM dan password Anda.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleRegChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setRegData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError('');
+    setRegSuccess('');
+
+    if (regData.password !== regData.confirmPassword) {
+      setRegError('Password dan Konfirmasi Password tidak cocok.');
+      return;
+    }
+    if (regData.password.length < 8) {
+      setRegError('Password minimal 8 karakter.');
+      return;
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(regData.email)) {
+      setRegError('Format email tidak valid.');
+      return;
+    }
+
+    setIsRegistering(true);
+    try {
+      await authApi.registerMaba({
+        name: regData.name,
+        nim: regData.nim,
+        email: regData.email,
+        phone: regData.phone,
+        password: regData.password
+      });
+      
+      setRegSuccess('Pendaftaran berhasil! Silakan masuk.');
+      setTimeout(() => {
+        setIsLoginMode(true);
+        // Pre-fill NIM for login convenience
+        setNim(regData.nim);
+        setPassword('');
+        setRegSuccess('');
+        setRegData({ name: '', nim: '', email: '', phone: '', password: '', confirmPassword: '' });
+      }, 2000);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string | string[] } } };
+      const errorResponse = error?.response?.data;
+      if (errorResponse?.message) {
+        if (Array.isArray(errorResponse.message)) {
+          setRegError(errorResponse.message.join(', '));
+        } else {
+          setRegError(errorResponse.message);
+        }
+      } else {
+        setRegError('Registrasi gagal. Silakan coba lagi.');
+      }
+    } finally {
+      setIsRegistering(false);
     }
   };
 
   if (isLoading) {
-    return null; // or a very minimal spinner, but null is fine to prevent flash
+    return null;
   }
 
   return (
-    <div className="auth-layout">
+    <div className="auth-layout" style={{ overflowY: 'auto' }}>
       {/* Dynamic Animated Backgrounds */}
       <div className="auth-bg-image"></div>
       <div className="auth-ambient-light-1"></div>
       <div className="auth-ambient-light-2"></div>
       <div className="auth-hero-pattern"></div>
 
-      <div className="auth-container">
+      <div className="auth-container" style={{ padding: '2rem 0' }}>
         {/* Hero Left Side */}
         <div className="auth-hero">
           <div className="auth-logo animate-enter delay-1">
@@ -75,7 +153,8 @@ function LoginContent() {
 
         {/* Form Right Side */}
         <div className="auth-content">
-          <div className="auth-form-wrapper animate-enter delay-2">
+          <div className={`auth-form-wrapper animate-enter delay-2 ${!isLoginMode ? 'register-mode' : ''}`}>
+            
             <div className="auth-mobile-logo">
               <div className="logo-group">
                 <Image src="/logobemft.png" alt="BEM FT UNESA" width={48} height={48} className="logo-img" />
@@ -87,59 +166,177 @@ function LoginContent() {
                 <span className="auth-logo-sub">KABINET DANADYAKSA</span>
               </div>
             </div>
-            
-            <div className="auth-form-header animate-enter delay-3">
-              <h2>Masuk Portal</h2>
-              <p>Masukkan NIM Anda untuk melanjutkan.</p>
-            </div>
 
-            {errorMsg && (
-              <div className="auth-error animate-enter delay-3">
-                {errorMsg}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="auth-form">
-              <div className="input-group animate-enter delay-4">
-                <label htmlFor="nim">Nomor Induk Mahasiswa (NIM)</label>
-                <input 
-                  type="text" 
-                  id="nim" 
-                  className="input-control"
-                  value={nim}
-                  onChange={(e) => setNim(e.target.value)}
-                  placeholder="24050001"
-                  required 
-                />
-              </div>
+            <div className="view-transition-wrapper">
               
-              <div className="input-group animate-enter delay-5">
-                <label htmlFor="password">Password</label>
-                <input 
-                  type="password" 
-                  id="password" 
-                  className="input-control"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required 
-                />
+              {/* --- LOGIN VIEW --- */}
+              <div className={`slide-content login-view ${isLoginMode ? 'active' : 'inactive'}`}>
+                <div className="auth-form-header">
+                  <h2>Masuk Portal</h2>
+                  <p>Masukkan NIM Anda untuk melanjutkan.</p>
+                </div>
+
+                {loginError && (
+                  <div className="auth-error">
+                    {loginError}
+                  </div>
+                )}
+                {regSuccess && (
+                  <div className="auth-error" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                    {regSuccess}
+                  </div>
+                )}
+
+                <form onSubmit={handleLoginSubmit} className="auth-form">
+                  <div className="input-group">
+                    <label htmlFor="nim">Nomor Induk Mahasiswa (NIM)</label>
+                    <input 
+                      type="text" 
+                      id="nim" 
+                      className="input-control"
+                      value={nim}
+                      onChange={(e) => setNim(e.target.value)}
+                      placeholder="24050001"
+                      required={isLoginMode}
+                    />
+                  </div>
+                  
+                  <div className="input-group">
+                    <label htmlFor="password">Password</label>
+                    <input 
+                      type="password" 
+                      id="password" 
+                      className="input-control"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required={isLoginMode}
+                    />
+                  </div>
+
+                  <button type="submit" disabled={isLoggingIn} className="btn-primary">
+                    {isLoggingIn ? 'Memproses...' : 'Masuk'}
+                  </button>
+                </form>
+
+                <div className="auth-footer" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+                  <p style={{ color: '#e2e8f0', fontSize: '0.875rem' }}>
+                    Belum punya akun?{' '}
+                    <button type="button" onClick={() => setIsLoginMode(false)} style={{ background: 'none', border: 'none', color: '#60a5fa', fontWeight: '500', cursor: 'pointer', padding: 0 }}>
+                      Daftar di sini
+                    </button>
+                  </p>
+                </div>
               </div>
 
-              <button type="submit" disabled={isSubmitting} className="btn-primary animate-enter delay-6" style={{ marginTop: '1rem' }}>
-                {isSubmitting ? 'Memproses...' : 'Masuk'}
-              </button>
-            </form>
+              {/* --- REGISTER VIEW --- */}
+              <div className={`slide-content register-view ${!isLoginMode ? 'active' : 'inactive'}`}>
+                <div className="auth-form-header">
+                  <h2>Daftar Akun Baru</h2>
+                  <p>Lengkapi data di bawah ini untuk mendaftar.</p>
+                </div>
 
-            <div className="auth-footer animate-enter delay-7" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-              <p style={{ color: '#e2e8f0', fontSize: '0.875rem' }}>
-                Belum punya akun?{' '}
-                <a href="/register" style={{ color: '#60a5fa', textDecoration: 'none', fontWeight: '500' }}>
-                  Daftar di sini
-                </a>
-              </p>
+                {regError && (
+                  <div className="auth-error">
+                    {regError}
+                  </div>
+                )}
+
+                <form onSubmit={handleRegisterSubmit} className="auth-form">
+                  <div className="input-group">
+                    <label htmlFor="name">Nama Lengkap</label>
+                    <input 
+                      type="text" 
+                      id="name" 
+                      className="input-control"
+                      value={regData.name}
+                      onChange={handleRegChange}
+                      placeholder="John Doe"
+                      required={!isLoginMode}
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="nim_reg">Nomor Induk Mahasiswa (NIM)</label>
+                    <input 
+                      type="text" 
+                      id="nim" 
+                      className="input-control"
+                      value={regData.nim}
+                      onChange={handleRegChange}
+                      placeholder="24050001"
+                      required={!isLoginMode}
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="email">Email</label>
+                    <input 
+                      type="email" 
+                      id="email" 
+                      className="input-control"
+                      value={regData.email}
+                      onChange={handleRegChange}
+                      placeholder="email@mhs.unesa.ac.id"
+                      required={!isLoginMode}
+                    />
+                  </div>
+                  
+                  <div className="input-group">
+                    <label htmlFor="phone">Nomor HP/WhatsApp</label>
+                    <input 
+                      type="text" 
+                      id="phone" 
+                      className="input-control"
+                      value={regData.phone}
+                      onChange={handleRegChange}
+                      placeholder="081234567890"
+                      required={!isLoginMode}
+                    />
+                  </div>
+                  
+                  <div className="input-group">
+                    <label htmlFor="reg_password">Password</label>
+                    <input 
+                      type="password" 
+                      id="password" 
+                      className="input-control"
+                      value={regData.password}
+                      onChange={handleRegChange}
+                      placeholder="Minimal 8 karakter"
+                      required={!isLoginMode}
+                    />
+                  </div>
+
+                  <div className="input-group">
+                    <label htmlFor="confirmPassword">Konfirmasi Password</label>
+                    <input 
+                      type="password" 
+                      id="confirmPassword" 
+                      className="input-control"
+                      value={regData.confirmPassword}
+                      onChange={handleRegChange}
+                      placeholder="Ulangi password"
+                      required={!isLoginMode}
+                    />
+                  </div>
+
+                  <button type="submit" disabled={isRegistering} className="btn-primary">
+                    {isRegistering ? 'Memproses...' : 'Daftar Sekarang'}
+                  </button>
+                </form>
+
+                <div className="auth-footer" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+                  <p style={{ color: '#e2e8f0', fontSize: '0.875rem' }}>
+                    Sudah punya akun?{' '}
+                    <button type="button" onClick={() => setIsLoginMode(true)} style={{ background: 'none', border: 'none', color: '#60a5fa', fontWeight: '500', cursor: 'pointer', padding: 0 }}>
+                      Masuk di sini
+                    </button>
+                  </p>
+                </div>
+              </div>
+
             </div>
-
           </div>
         </div>
       </div>
@@ -150,7 +347,7 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={null}>
-      <LoginContent />
+      <AuthContent />
     </Suspense>
   );
 }

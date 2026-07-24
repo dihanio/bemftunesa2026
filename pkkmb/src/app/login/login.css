@@ -378,3 +378,67 @@ body {
 .delay-5 { animation-delay: 0.5s; }
 .delay-6 { animation-delay: 0.6s; }
 .delay-7 { animation-delay: 0.7s; }
+
+/* Form Switching Animation */
+.form-container-relative {
+  position: relative;
+  width: 100%;
+}
+
+.auth-form-wrapper {
+  width: 100%;
+  max-width: 440px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(2, 6, 23, 0.95) 100%);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  padding: 3.5rem 3rem;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.02);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-form-wrapper.register-mode {
+  max-width: 500px;
+}
+
+.view-transition-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Base styles for sliding content */
+.slide-content {
+  width: 100%;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-content.inactive {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Login Sliding (Moves Left when inactive) */
+.slide-content.login-view.inactive {
+  transform: translateX(-30px);
+}
+
+/* Register Sliding (Moves Right when inactive) */
+.slide-content.register-view.inactive {
+  transform: translateX(30px);
+}
+
+.slide-content.active {
+  position: relative;
+  opacity: 1;
+  transform: translateX(0);
+}
+
