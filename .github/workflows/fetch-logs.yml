@@ -28,4 +28,4 @@ jobs:
             echo "--- API LOGS ---"
             docker compose logs --tail=${{ github.event.inputs.lines }} api
             echo "--- PKKMB LOGS ---"
-            docker compose logs --tail=100 pkkmb_web
+            docker exec bemft-deploy-pkkmb_web-1 curl -sI http://localhost:3000/register
