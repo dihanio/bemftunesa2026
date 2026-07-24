@@ -203,12 +203,12 @@ export class AuthController {
     @Body() body: Record<string, string>,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { nim, password } = body;
-    if (!nim || !password) {
-      throw new ForbiddenException('NIM dan password harus diisi.');
+    const { email, password } = body;
+    if (!email || !password) {
+      throw new ForbiddenException('Email dan password harus diisi.');
     }
 
-    const user = await this.authService.validateMabaLogin(nim, password);
+    const user = await this.authService.validateMabaLogin(email, password);
     const tokens = this.authService.generateTokens(user);
 
     const isProduction =

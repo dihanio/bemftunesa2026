@@ -140,9 +140,12 @@ export class AuthService {
     const { nim, name, email, phone, password } = dto;
     
     // Check if NIM or Email already exists
-    const existingUser = await this.userModel.findOne({ $or: [{ nim }, { email }] }).exec();
+    const orQuery: any[] = [{ email }];
+    if (nim) orQuery.push({ nim });
+    
+    const existingUser = await this.userModel.findOne({ $or: orQuery }).exec();
     if (existingUser) {
-      if (existingUser.nim === nim) {
+      if (nim && existingUser.nim === nim) {
         throw new ConflictException('NIM sudah terdaftar.');
       }
       throw new ConflictException('Email sudah terdaftar.');
@@ -172,10 +175,10 @@ export class AuthService {
     return await newUser.save();
   }
 
-  async validateMabaLogin(nim: string, pass: string): Promise<UserDocument> {
-    const user = await this.userModel.findOne({ nim }).exec();
+  async validateMabaLogin(email: string, pass: string): Promise<UserDocument> {
+    const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
-      throw new UnauthorizedException('NIM tidak ditemukan.');
+      throw new UnauthorizedException('Email tidak ditemukan.');
     }
     if (!user.isActive) {
       throw new UnauthorizedException('Akun dinonaktifkan.');

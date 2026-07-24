@@ -1,9 +1,9 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional } from 'class-validator';
 
 export class RegisterDto {
   @IsString()
-  @IsNotEmpty({ message: 'NIM tidak boleh kosong' })
-  nim: string;
+  @IsOptional()
+  nim?: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Nama tidak boleh kosong' })

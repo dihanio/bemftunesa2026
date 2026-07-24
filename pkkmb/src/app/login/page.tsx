@@ -15,7 +15,7 @@ function AuthContent() {
   const [isLoginMode, setIsLoginMode] = useState(true);
 
   // Login form state
-  const [nim, setNim] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -44,12 +44,12 @@ function AuthContent() {
     setLoginError('');
     setIsLoggingIn(true);
     try {
-      await authApi.loginMaba(nim, password);
+      await authApi.loginMaba(email, password);
       await fetchMe();
       router.push('/dashboard');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      setLoginError(error.response?.data?.message || 'Login gagal. Periksa kembali NIM dan password Anda.');
+      setLoginError(error.response?.data?.message || 'Login gagal. Periksa kembali Email dan password Anda.');
     } finally {
       setIsLoggingIn(false);
     }
@@ -93,8 +93,8 @@ function AuthContent() {
       setRegSuccess('Pendaftaran berhasil! Silakan masuk.');
       setTimeout(() => {
         setIsLoginMode(true);
-        // Pre-fill NIM for login convenience
-        setNim(regData.nim);
+        // Pre-fill email for login convenience
+        setEmail(regData.email);
         setPassword('');
         setRegSuccess('');
         setRegData({ name: '', nim: '', email: '', phone: '', password: '', confirmPassword: '' });
@@ -173,7 +173,7 @@ function AuthContent() {
               <div className={`slide-content login-view ${isLoginMode ? 'active' : 'inactive'}`}>
                 <div className="auth-form-header">
                   <h2>Masuk Portal</h2>
-                  <p>Masukkan NIM Anda untuk melanjutkan.</p>
+                  <p>Masukkan Email Anda untuk melanjutkan.</p>
                 </div>
 
                 {loginError && (
@@ -189,14 +189,14 @@ function AuthContent() {
 
                 <form onSubmit={handleLoginSubmit} className="auth-form">
                   <div className="input-group">
-                    <label htmlFor="nim">Nomor Induk Mahasiswa (NIM)</label>
+                    <label htmlFor="email_login">Email</label>
                     <input 
-                      type="text" 
-                      id="nim" 
+                      type="email" 
+                      id="email_login" 
                       className="input-control"
-                      value={nim}
-                      onChange={(e) => setNim(e.target.value)}
-                      placeholder="24050001"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="email@mhs.unesa.ac.id"
                       required={isLoginMode}
                     />
                   </div>
@@ -257,15 +257,15 @@ function AuthContent() {
                   </div>
 
                   <div className="input-group">
-                    <label htmlFor="nim_reg">Nomor Induk Mahasiswa (NIM)</label>
+                    <label htmlFor="nim">Nomor Induk Mahasiswa (NIM) <span style={{fontSize: '0.8em', color: '#94a3b8'}}>(Opsional)</span></label>
                     <input 
                       type="text" 
                       id="nim" 
                       className="input-control"
                       value={regData.nim}
                       onChange={handleRegChange}
-                      placeholder="24050001"
-                      required={!isLoginMode}
+                      placeholder="Jika sudah ada"
+                      required={false}
                     />
                   </div>
 

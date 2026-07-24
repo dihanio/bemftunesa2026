@@ -7,8 +7,8 @@ export const authApi = {
     return response.data;
   },
 
-  loginMaba: async (nim: string, password: string): Promise<AuthResponse> => {
-    const response = await apiClient.post<AuthResponse>('/auth/login', { nim, password });
+  loginMaba: async (email: string, password: string): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>('/auth/login', { email, password });
     if (response.data?.data?.user) {
       response.data.data.user.role = 'MABA';
     }
