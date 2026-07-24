@@ -194,8 +194,10 @@ export class AuthService {
       }
     }
 
-    user.lastLoginAt = new Date();
-    await user.save();
+    await this.userModel.updateOne(
+      { _id: user._id },
+      { $set: { lastLoginAt: new Date() } }
+    );
 
     return user;
   }
@@ -203,12 +205,11 @@ export class AuthService {
   generateTokens(user: UserDocument) {
     const payload = { sub: user._id.toString(), email: user.email };
 
-    // expiresIn uses module-level signOptions; override per-call with parsed int
+    const expiresInConfig = this.configService.get<string>('JWT_EXPIRES_IN', '604800');
+    const expiresIn = /^\d+$/.test(expiresInConfig) ? parseInt(expiresInConfig, 10) : expiresInConfig;
+
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: parseInt(
-        this.configService.get<string>('JWT_EXPIRES_IN', '604800'),
-        10,
-      ),
+      expiresIn,
     });
 
     const refreshToken = this.jwtService.sign(payload, {

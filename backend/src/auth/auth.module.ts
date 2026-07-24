@@ -18,15 +18,17 @@ import { AuthorizationService } from '../common/auth/authorization.service';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: parseInt(
-            configService.get('JWT_EXPIRES_IN', '604800'),
-            10,
-          ),
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const expiresInConfig = configService.get<string>('JWT_EXPIRES_IN', '604800');
+        const expiresIn = /^\\d+$/.test(expiresInConfig) ? parseInt(expiresInConfig, 10) : expiresInConfig;
+        
+        return {
+          secret: configService.get<string>('JWT_SECRET'),
+          signOptions: {
+            expiresIn,
+          },
+        };
+      },
       inject: [ConfigService],
     }),
     MongooseModule.forFeature([
