@@ -71,9 +71,9 @@ else
   if echo "$CHANGED_FILES" | grep -q '^pkkmb/'; then SERVICES_TO_RESTART+=("pkkmb_web"); fi
 fi
 
-# ensure .env exists and is populated
-if [ ! -s .env ] && [ -f .env.production ]; then
-  log "Copying .env.production to .env because .env is empty or missing"
+# ensure .env exists and has required variables
+if ! grep -q "^JWT_SECRET=." .env 2>/dev/null; then
+  log "JWT_SECRET not found or empty in .env, copying from .env.production"
   cp .env.production .env
 else
   touch .env
