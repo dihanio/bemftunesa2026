@@ -11,27 +11,11 @@ function AuthContent() {
   const { user, isLoading, fetchMe } = useAuthStore();
   const router = useRouter();
   
-  // State to toggle between Login and Register modes
-  const [isLoginMode, setIsLoginMode] = useState(true);
-
   // Login form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  // Register form state
-  const [regData, setRegData] = useState({
-    name: '',
-    nim: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [regError, setRegError] = useState('');
-  const [regSuccess, setRegSuccess] = useState('');
-  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     if (!isLoading && user) {
@@ -52,67 +36,6 @@ function AuthContent() {
       setLoginError(error.response?.data?.message || 'Login gagal. Periksa kembali Email dan password Anda.');
     } finally {
       setIsLoggingIn(false);
-    }
-  };
-
-  const handleRegChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setRegData(prev => ({ ...prev, [id]: value }));
-  };
-
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRegError('');
-    setRegSuccess('');
-
-    if (regData.password !== regData.confirmPassword) {
-      setRegError('Password dan Konfirmasi Password tidak cocok.');
-      return;
-    }
-    if (regData.password.length < 8) {
-      setRegError('Password minimal 8 karakter.');
-      return;
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(regData.email)) {
-      setRegError('Format email tidak valid.');
-      return;
-    }
-
-    setIsRegistering(true);
-    try {
-      await authApi.registerMaba({
-        name: regData.name,
-        nim: regData.nim,
-        email: regData.email,
-        phone: regData.phone,
-        password: regData.password
-      });
-      
-      setRegSuccess('Pendaftaran berhasil! Silakan masuk.');
-      setTimeout(() => {
-        setIsLoginMode(true);
-        // Pre-fill email for login convenience
-        setEmail(regData.email);
-        setPassword('');
-        setRegSuccess('');
-        setRegData({ name: '', nim: '', email: '', phone: '', password: '', confirmPassword: '' });
-      }, 2000);
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string | string[] } } };
-      const errorResponse = error?.response?.data;
-      if (errorResponse?.message) {
-        if (Array.isArray(errorResponse.message)) {
-          setRegError(errorResponse.message.join(', '));
-        } else {
-          setRegError(errorResponse.message);
-        }
-      } else {
-        setRegError('Registrasi gagal. Silakan coba lagi.');
-      }
-    } finally {
-      setIsRegistering(false);
     }
   };
 
@@ -153,7 +76,7 @@ function AuthContent() {
 
         {/* Form Right Side */}
         <div className="auth-content">
-          <div className={`auth-form-wrapper animate-enter delay-2 ${!isLoginMode ? 'register-mode' : ''}`}>
+          <div className="auth-form-wrapper animate-enter delay-2">
             
             <div className="auth-mobile-logo">
               <div className="logo-group">
@@ -170,7 +93,7 @@ function AuthContent() {
             <div className="view-transition-wrapper">
               
               {/* --- LOGIN VIEW --- */}
-              <div className={`slide-content login-view ${isLoginMode ? 'active' : 'inactive'}`}>
+              <div className="slide-content login-view active">
                 <div className="auth-form-header">
                   <h2>Masuk Portal</h2>
                   <p>Masukkan Email Anda untuk melanjutkan.</p>
@@ -179,11 +102,6 @@ function AuthContent() {
                 {loginError && (
                   <div className="auth-error">
                     {loginError}
-                  </div>
-                )}
-                {regSuccess && (
-                  <div className="auth-error" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
-                    {regSuccess}
                   </div>
                 )}
 
@@ -197,7 +115,7 @@ function AuthContent() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="email@mhs.unesa.ac.id"
-                      required={isLoginMode}
+                      required
                     />
                   </div>
                   
@@ -210,7 +128,7 @@ function AuthContent() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      required={isLoginMode}
+                      required
                     />
                   </div>
 
@@ -218,122 +136,6 @@ function AuthContent() {
                     {isLoggingIn ? 'Memproses...' : 'Masuk'}
                   </button>
                 </form>
-
-                <div className="auth-footer" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-                  <p style={{ color: '#e2e8f0', fontSize: '0.875rem' }}>
-                    Belum punya akun?{' '}
-                    <button type="button" onClick={() => setIsLoginMode(false)} style={{ background: 'none', border: 'none', color: '#60a5fa', fontWeight: '500', cursor: 'pointer', padding: 0 }}>
-                      Daftar di sini
-                    </button>
-                  </p>
-                </div>
-              </div>
-
-              {/* --- REGISTER VIEW --- */}
-              <div className={`slide-content register-view ${!isLoginMode ? 'active' : 'inactive'}`}>
-                <div className="auth-form-header">
-                  <h2>Daftar Akun Baru</h2>
-                  <p>Lengkapi data di bawah ini untuk mendaftar.</p>
-                </div>
-
-                {regError && (
-                  <div className="auth-error">
-                    {regError}
-                  </div>
-                )}
-
-                <form onSubmit={handleRegisterSubmit} className="auth-form">
-                  <div className="input-group">
-                    <label htmlFor="name">Nama Lengkap</label>
-                    <input 
-                      type="text" 
-                      id="name" 
-                      className="input-control"
-                      value={regData.name}
-                      onChange={handleRegChange}
-                      placeholder="John Doe"
-                      required={!isLoginMode}
-                    />
-                  </div>
-
-                  <div className="input-group">
-                    <label htmlFor="nim">Nomor Induk Mahasiswa (NIM) <span style={{fontSize: '0.8em', color: '#94a3b8'}}>(Opsional)</span></label>
-                    <input 
-                      type="text" 
-                      id="nim" 
-                      className="input-control"
-                      value={regData.nim}
-                      onChange={handleRegChange}
-                      placeholder="Jika sudah ada"
-                      required={false}
-                    />
-                  </div>
-
-                  <div className="input-group">
-                    <label htmlFor="email">Email</label>
-                    <input 
-                      type="email" 
-                      id="email" 
-                      className="input-control"
-                      value={regData.email}
-                      onChange={handleRegChange}
-                      placeholder="email@mhs.unesa.ac.id"
-                      required={!isLoginMode}
-                    />
-                  </div>
-                  
-                  <div className="input-group">
-                    <label htmlFor="phone">Nomor HP/WhatsApp</label>
-                    <input 
-                      type="text" 
-                      id="phone" 
-                      className="input-control"
-                      value={regData.phone}
-                      onChange={handleRegChange}
-                      placeholder="081234567890"
-                      required={!isLoginMode}
-                    />
-                  </div>
-                  
-                  <div className="input-group">
-                    <label htmlFor="reg_password">Password</label>
-                    <input 
-                      type="password" 
-                      id="password" 
-                      className="input-control"
-                      value={regData.password}
-                      onChange={handleRegChange}
-                      placeholder="Minimal 8 karakter"
-                      required={!isLoginMode}
-                    />
-                  </div>
-
-                  <div className="input-group">
-                    <label htmlFor="confirmPassword">Konfirmasi Password</label>
-                    <input 
-                      type="password" 
-                      id="confirmPassword" 
-                      className="input-control"
-                      value={regData.confirmPassword}
-                      onChange={handleRegChange}
-                      placeholder="Ulangi password"
-                      required={!isLoginMode}
-                    />
-                  </div>
-
-                  <button type="submit" disabled={isRegistering} className="btn-primary">
-                    {isRegistering ? 'Memproses...' : 'Daftar Sekarang'}
-                  </button>
-                </form>
-
-                <div className="auth-footer" style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-                  <p style={{ color: '#e2e8f0', fontSize: '0.875rem' }}>
-                    Sudah punya akun?{' '}
-                    <button type="button" onClick={() => setIsLoginMode(true)} style={{ background: 'none', border: 'none', color: '#60a5fa', fontWeight: '500', cursor: 'pointer', padding: 0 }}>
-                      Masuk di sini
-                    </button>
-                  </p>
-                </div>
               </div>
 
             </div>
