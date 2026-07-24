@@ -28,4 +28,4 @@ jobs:
             echo "--- API LOGS ---"
             docker compose logs --tail=${{ github.event.inputs.lines }} api
             echo "--- PKKMB LOGS ---"
-            docker exec bemft-deploy-pkkmb_web-1 curl -sI http://localhost:3000/register
+            docker pull ghcr.io/dihanio/bemftunesa2026-pkkmb_web:latest && docker compose up -d --no-deps --force-recreate pkkmb_web
