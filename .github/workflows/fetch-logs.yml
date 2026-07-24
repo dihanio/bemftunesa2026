@@ -20,7 +20,12 @@ jobs:
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            echo "Fetching backend API logs..."
+            echo "Fetching all logs..."
             cd ${{ secrets.DEPLOY_PATH }} || exit 1
-            docker compose logs --tail=${{ github.event.inputs.lines }} api > /tmp/api-logs.txt
-            cat /tmp/api-logs.txt
+            docker compose ps
+            echo "--- DB LOGS ---"
+            docker compose logs --tail=100 db
+            echo "--- API LOGS ---"
+            docker compose logs --tail=${{ github.event.inputs.lines }} api
+            echo "--- PKKMB LOGS ---"
+            docker compose logs --tail=100 pkkmb_web
