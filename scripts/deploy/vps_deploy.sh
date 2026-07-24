@@ -62,7 +62,7 @@ if echo "$CHANGED_FILES" | grep -qE '^packages/|^turbo.json|^package.json|^packa
 fi
 
 if [ "$RESTART_ALL" = true ]; then
-  SERVICES_TO_RESTART=("public_web" "api" "ims_web" "pkkmb_web")
+  SERVICES_TO_RESTART=("api" "public_web" "ims_web" "pkkmb_web")
 else
   # Check individual apps
   if echo "$CHANGED_FILES" | grep -q '^frontend/'; then SERVICES_TO_RESTART+=("public_web"); fi
@@ -103,8 +103,8 @@ else
 fi
 
 # Ensure backing services are running before restarting apps
-log "Starting backing services (db, redis, caddy)..."
-docker compose up -d db redis caddy
+log "Starting backing services (db, redis)..."
+docker compose up -d db redis
 
 # restart services via docker-compose
 for svc in "${SERVICES_TO_RESTART[@]}"; do
