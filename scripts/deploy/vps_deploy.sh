@@ -73,10 +73,23 @@ fi
 
 # ensure .env exists and has required variables
 if ! grep -q "^JWT_SECRET=." .env 2>/dev/null; then
-  log "JWT_SECRET not found or empty in .env, copying from .env.production"
-  cp .env.production .env
-else
-  touch .env
+  log "JWT_SECRET not found or empty in .env, generating basic .env"
+  cat <<EOF > .env
+NEXT_PUBLIC_API_URL=https://api.bemftunesa.org/api/v1
+NEXT_PUBLIC_PUBLIC_URL=https://bemftunesa.org
+NEXT_PUBLIC_IMS_URL=https://ims.bemftunesa.org
+PORT=4000
+NODE_ENV=production
+MONGODB_URI=mongodb://admin:password@db:27017/bemft-cms?authSource=admin
+JWT_SECRET=super-secret-key-change-me-in-production
+JWT_EXPIRES_IN=7d
+FRONTEND_URL=https://bemftunesa.org
+IMS_URL=https://ims.bemftunesa.org
+UPLOAD_DIR=./public/uploads
+BASE_URL=https://api.bemftunesa.org
+MONGO_ROOT_USER=admin
+MONGO_ROOT_PASSWORD=password
+EOF
 fi
 
 # restart services via docker-compose
