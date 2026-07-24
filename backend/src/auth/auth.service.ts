@@ -209,7 +209,7 @@ export class AuthService {
     const expiresIn = /^\d+$/.test(expiresInConfig) ? parseInt(expiresInConfig, 10) : expiresInConfig;
 
     const accessToken = this.jwtService.sign(payload, {
-      expiresIn: expiresIn as any,
+      expiresIn: expiresIn as import('@nestjs/jwt').JwtSignOptions['expiresIn'],
     });
 
     const refreshToken = this.jwtService.sign(payload, {

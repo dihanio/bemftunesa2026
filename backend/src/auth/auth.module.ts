@@ -25,7 +25,7 @@ import { AuthorizationService } from '../common/auth/authorization.service';
         return {
           secret: configService.get<string>('JWT_SECRET'),
           signOptions: {
-            expiresIn: expiresIn as any,
+            expiresIn: expiresIn as import('@nestjs/jwt').JwtSignOptions['expiresIn'],
           },
         };
       },
