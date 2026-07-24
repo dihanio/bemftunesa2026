@@ -102,6 +102,10 @@ else
   fi
 fi
 
+# Ensure backing services are running before restarting apps
+log "Starting backing services (db, redis, caddy)..."
+docker compose up -d db redis caddy
+
 # restart services via docker-compose
 for svc in "${SERVICES_TO_RESTART[@]}"; do
   log "Rebuilding and restarting service: $svc"
