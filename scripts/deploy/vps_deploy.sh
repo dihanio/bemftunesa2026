@@ -89,7 +89,17 @@ UPLOAD_DIR=./public/uploads
 BASE_URL=https://api.bemftunesa.org
 MONGO_ROOT_USER=admin
 MONGO_ROOT_PASSWORD=password
+GOOGLE_CLIENT_ID=dummy-google-client-id
+GOOGLE_CLIENT_SECRET=dummy-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:4000/api/v1/auth/google/callback
 EOF
+else
+  if ! grep -q "^GOOGLE_CLIENT_ID=" .env 2>/dev/null; then
+    log "GOOGLE_CLIENT_ID not found in .env, appending dummy values"
+    echo "GOOGLE_CLIENT_ID=dummy-google-client-id" >> .env
+    echo "GOOGLE_CLIENT_SECRET=dummy-google-client-secret" >> .env
+    echo "GOOGLE_CALLBACK_URL=http://localhost:4000/api/v1/auth/google/callback" >> .env
+  fi
 fi
 
 # restart services via docker-compose
