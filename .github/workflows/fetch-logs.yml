@@ -1,0 +1,26 @@
+name: Fetch API Logs from VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      lines:
+        description: 'Number of log lines to fetch'
+        required: true
+        default: '1000'
+
+jobs:
+  fetch_logs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Docker logs
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            echo "Fetching backend API logs..."
+            cd ${{ secrets.DEPLOY_PATH }} || exit 1
+            docker compose logs --tail=${{ github.event.inputs.lines }} api > /tmp/api-logs.txt
+            cat /tmp/api-logs.txt
