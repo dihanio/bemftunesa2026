@@ -5,7 +5,12 @@ export interface User {
   name: string;
   nim: string;
   email?: string;
-  role: Role;
+  studyProgram?: string;
+  avatar?: string;
+  position?: string;
+  division?: string;
+  role: Role | string;
+  permissions?: string[];
   pkkmbGroupId?: string;
   pkkmbGroup?: { _id: string; name: string };
 }

@@ -2,40 +2,40 @@
 
 import React from 'react';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
-import { LogOut, Bell, GraduationCap } from 'lucide-react';
+import AmbiencePlayer from '@/components/landing/AmbiencePlayer';
+import { NotificationCenter } from './NotificationCenter';
 
 export function AppTopbar() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
+
+  const hasCustomAvatar = user?.avatar && user.avatar !== '/pasfoto_default.png';
 
   return (
-    <header className="sticky top-0 z-30 glass-subtle border-b border-white/5 py-3 px-4 sm:px-8 flex items-center justify-between">
-      {/* Mobile Title (Since sidebar is hidden on mobile) */}
-      <div className="flex md:hidden items-center gap-2">
-        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-blue-500 flex items-center justify-center font-bold text-white text-xs shadow-lg shadow-primary/20">
-          <GraduationCap className="h-5 w-5" />
+    <header className="sticky top-0 z-30 bg-[var(--bg-surface)]/80 backdrop-blur-md border-b border-[var(--border-subtle)] py-3 px-4 sm:px-8 flex items-center justify-between">
+      {/* Left Slot: User Avatar & Name */}
+      <div className="flex items-center gap-2.5">
+        <div className="h-8 w-8 rounded-full bg-[var(--bg-surface-elevated)] border border-[var(--accent-glow)] flex items-center justify-center font-bold text-[var(--accent)] text-[10px] overflow-hidden relative shrink-0 shadow-md">
+          {hasCustomAvatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+          ) : user?.name ? (
+            user.name.charAt(0).toUpperCase()
+          ) : (
+            'D'
+          )}
         </div>
-        <h1 className="text-sm font-extrabold tracking-tight">PKKMB FT</h1>
+        <span className="hidden sm:inline text-xs font-mono text-[var(--text-primary)] truncate max-w-[160px]">
+          {user?.name}
+        </span>
       </div>
 
-      {/* Desktop empty space or Breadcrumb placeholder */}
-      <div className="hidden md:block">
-        <div className="text-sm font-medium text-foreground/60">
-          Halo, <span className="font-bold text-foreground">{user?.name}</span>!
-        </div>
-      </div>
+      {/* Center Spacer */}
+      <div className="hidden md:block flex-1" />
 
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        <button className="p-2 rounded-xl text-foreground/50 hover:bg-white/5 hover:text-foreground transition-all">
-          <Bell className="h-5 w-5" />
-        </button>
-        <button
-          onClick={logout}
-          className="flex items-center gap-2 rounded-xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 border border-white/10 hover:border-red-500/20 py-2 px-3 text-xs sm:text-sm font-semibold transition-all cursor-pointer"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Keluar</span>
-        </button>
+      {/* Right Slot: Ambience Player & Notification Center */}
+      <div className="flex items-center gap-2.5">
+        <AmbiencePlayer />
+        <NotificationCenter />
       </div>
     </header>
   );

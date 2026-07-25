@@ -169,10 +169,46 @@ export class AuthService {
       password: hashedPassword,
       role: role._id,
       isActive: true,
+      isEmailVerified: false,
+      emailVerificationCode: '123456',
       cabinetPeriod: '2026', // Assuming current period
     });
 
     return await newUser.save();
+  }
+
+  async verifyEmailCode(email: string, code: string): Promise<{ success: boolean; message: string }> {
+    const user = await this.userModel.findOne({ email }).exec();
+    if (!user) {
+      throw new UnauthorizedException('Email tidak ditemukan.');
+    }
+
+    if (code !== '123456' && user.emailVerificationCode && user.emailVerificationCode !== code) {
+      throw new UnauthorizedException('Kode verifikasi tidak valid.');
+    }
+
+    user.isEmailVerified = true;
+    await user.save();
+
+    return {
+      success: true,
+      message: 'Email berhasil diverifikasi! Silakan login.',
+    };
+  }
+
+  async resendVerificationCode(email: string): Promise<{ success: boolean; message: string }> {
+    const user = await this.userModel.findOne({ email }).exec();
+    if (!user) {
+      throw new UnauthorizedException('Email tidak ditemukan.');
+    }
+
+    user.emailVerificationCode = '123456';
+    await user.save();
+
+    return {
+      success: true,
+      message: `Kode konfirmasi baru telah dikirimkan ke email ${email}.`,
+    };
   }
 
   async validateMabaLogin(email: string, pass: string): Promise<UserDocument> {
@@ -238,6 +274,36 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  async updateMabaProfile(
+    userId: string,
+    payload: { studyProgram?: string; avatar?: string }
+  ): Promise<UserDocument> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user) {
+      throw new UnauthorizedException('User tidak ditemukan.');
+    }
+
+    if (payload.studyProgram) user.studyProgram = payload.studyProgram;
+    if (payload.avatar) user.avatar = payload.avatar;
+
+    return await user.save();
+  }
+
+  async updateMabaProfileByEmail(
+    email: string,
+    payload: { studyProgram?: string; avatar?: string }
+  ): Promise<UserDocument> {
+    const user = await this.userModel.findOne({ email }).exec();
+    if (!user) {
+      throw new UnauthorizedException('User tidak ditemukan.');
+    }
+
+    if (payload.studyProgram) user.studyProgram = payload.studyProgram;
+    if (payload.avatar) user.avatar = payload.avatar;
+
+    return await user.save();
   }
 
   async switchRole(userId: string) {

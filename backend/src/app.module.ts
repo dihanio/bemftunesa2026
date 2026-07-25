@@ -25,6 +25,7 @@ import { PkkmbModule } from './pkkmb/pkkmb.module';
 import { LettersModule } from './letters/letters.module';
 import { CommitteesModule } from './committees/committees.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { RolesModule } from './roles/roles.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { LoggingMiddleware } from './common/middleware/logging.middleware';
 import { NestModule, MiddlewareConsumer } from '@nestjs/common';
@@ -93,6 +94,7 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
     LettersModule,
     CommitteesModule,
     OrganizationsModule,
+    RolesModule,
   ],
   providers: [
     {

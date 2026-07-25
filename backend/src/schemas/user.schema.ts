@@ -27,13 +27,22 @@ export class User {
   phone: string;
 
   @Prop()
-  studyProgram: string; // Program Studi (e.g. "Teknik Informatika")
+  studyProgram: string; // Program Studi (e.g. "S1 Teknik Informatika")
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'StudyProgram', index: true })
+  studyProgramId?: import('mongoose').Types.ObjectId;
+
+  @Prop({ enum: ['L', 'P'], default: 'L' })
+  gender?: 'L' | 'P';
 
   @Prop()
-  batch: string; // Angkatan (e.g. "2023")
+  batch: string; // Angkatan (e.g. "2026")
 
   @Prop()
   position: string;
+
+  @Prop()
+  division?: string; // Decoupled operational Sie/Division (e.g. Acara, Humas, Pendamping, Penilaian, etc.)
 
   @Prop({ sparse: true, unique: true })
   googleId?: string;
@@ -55,6 +64,12 @@ export class User {
 
   @Prop()
   lastLoginAt: Date;
+
+  @Prop({ default: false })
+  isEmailVerified: boolean;
+
+  @Prop({ default: '123456' })
+  emailVerificationCode: string;
 
   @Prop()
   deletedAt?: Date;

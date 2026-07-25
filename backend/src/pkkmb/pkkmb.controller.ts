@@ -7,6 +7,7 @@ import {
   Body,
   UseGuards,
   Res,
+  Req,
   BadRequestException,
   Query,
   Delete,
@@ -18,20 +19,21 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import type { Response } from 'express';
+import type { Response, Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { RequiredPermissions } from '../auth/decorators/required-permission.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PkkmbService } from './pkkmb.service';
 import type { UserDocument } from '../schemas/user.schema';
+import { PkkmbPermission } from '../common/auth/pkkmb-permissions';
 import {
-  MabaCheckinDto,
   MabaSubmitTaskDto,
   CreateAttendanceSessionDto,
+  CheckInDto,
+  AttendanceFilterDto,
   CreateTaskDto,
   GradeSubmissionDto,
-  AdminManualCheckinDto,
   PaginationDto,
   CreateAnnouncementDto,
   UpdateAnnouncementDto,
@@ -41,7 +43,7 @@ import {
 
 @ApiTags('pkkmb')
 @ApiBearerAuth('JWT')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('pkkmb')
 export class PkkmbController {
   constructor(private readonly pkkmbService: PkkmbService) {}
@@ -56,78 +58,150 @@ export class PkkmbController {
   }
 
   @Get('dashboard/maba')
-  @Roles('MABA')
   @ApiOperation({ summary: 'Mendapatkan data agregasi untuk Dashboard Maba' })
-  async getMabaDashboard(@CurrentUser() user: UserDocument) {
-    const data = await this.pkkmbService.getMabaDashboard(user._id.toString());
+  async getMabaDashboard(@CurrentUser() user: { userId: string }) {
+    const data = await this.pkkmbService.getMabaDashboard(user.userId);
     return { success: true, data };
   }
 
+  // ─── GUGUS & MASTER DATA ENDPOINTS ───────────────────────────────────────
+
+  @Get('master/rumpun')
+  @ApiOperation({ summary: 'Mendapatkan daftar Master Rumpun Akademik FT UNESA' })
+  async getAllRumpun() {
+    const data = await this.pkkmbService.getAllRumpun();
+    return { success: true, data };
+  }
+
+  @Get('master/study-programs')
+  @ApiOperation({ summary: 'Mendapatkan daftar Master Program Studi FT UNESA' })
+  async getAllStudyPrograms() {
+    const data = await this.pkkmbService.getAllStudyPrograms();
+    return { success: true, data };
+  }
+
+  @Get('gugus')
+  @ApiOperation({ summary: 'Mendapatkan daftar 50 Gugus PKKMB FT UNESA 2026' })
+  async getAllGugus() {
+    const data = await this.pkkmbService.getAllGugus();
+    return { success: true, data };
+  }
+
+  @Get('gugus/analytics')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Mendapatkan analitik distribusi Gugus, Prodi, dan Rumpun' })
+  async getAdminGugusAnalytics() {
+    const data = await this.pkkmbService.getAdminGugusAnalytics();
+    return { success: true, data };
+  }
+
+  @Get('gugus/:id')
+  @ApiOperation({ summary: 'Mendapatkan detail Gugus & statistik distribusi lintas prodi' })
+  async getGugusDetail(@Param('id') id: string) {
+    const data = await this.pkkmbService.getGugusDetail(id);
+    return { success: true, data };
+  }
+
+  @Post('gugus/auto-distribute')
+  @RequiredPermissions(PkkmbPermission.GROUP_CREATE)
+  @ApiOperation({ summary: 'Menjalankan Algoritma Pembagian Gugus Otomatis Lintas Program Studi (Round-Robin)' })
+  async autoDistributeGugus() {
+    const data = await this.pkkmbService.autoDistributeGugus();
+    return { success: true, ...data };
+  }
+
+  // ─── UNIVERSAL ATTENDANCE MODULE ──────────────────────────────────────────
+
   @Get('attendance/sessions')
-  @ApiOperation({ summary: 'Melihat sesi presensi aktif untuk kelompok maba' })
-  async getActiveAttendanceSessions(@CurrentUser() user: UserDocument) {
-    if (!user.pkkmbGroup)
-      throw new BadRequestException('Anda belum masuk ke kelompok manapun');
-    const data = await this.pkkmbService.getActiveAttendanceSessions(
-      user.pkkmbGroup.toString(),
+  @ApiOperation({ summary: 'Melihat sesi presensi universal (MABA & Panitia)' })
+  async getAttendanceSessions(
+    @Query('participantType') participantType?: string,
+    @Query('status') status?: string,
+  ) {
+    const data = await this.pkkmbService.getAttendanceSessions(
+      participantType,
+      status,
     );
     return { success: true, data };
+  }
+
+  @Post('attendance/sessions')
+  @RequiredPermissions(PkkmbPermission.ATTENDANCE_SESSION_CREATE)
+  @ApiOperation({ summary: 'Membuat sesi presensi universal baru' })
+  async createAttendanceSession(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: CreateAttendanceSessionDto,
+  ) {
+    const data = await this.pkkmbService.createAttendanceSession(
+      user.userId,
+      dto,
+    );
+    return { success: true, message: 'Sesi presensi baru berhasil dibuat', data };
+  }
+
+  @Patch('attendance/sessions/:id/status')
+  @RequiredPermissions(PkkmbPermission.ATTENDANCE_SESSION_CREATE)
+  @ApiOperation({ summary: 'Memperbarui status sesi presensi (DRAFT, PUBLISHED, CLOSED)' })
+  async updateAttendanceSessionStatus(
+    @Param('id') id: string,
+    @Body('status') status: 'DRAFT' | 'PUBLISHED' | 'CLOSED',
+  ) {
+    const data = await this.pkkmbService.updateAttendanceSessionStatus(id, status);
+    return { success: true, message: 'Status sesi presensi berhasil diperbarui', data };
   }
 
   @Post('attendance/checkin')
-  @ApiOperation({ summary: 'Melakukan presensi maba (Mendukung GPS dan QR)' })
+  @RequiredPermissions(PkkmbPermission.ATTENDANCE_CHECKIN)
+  @ApiOperation({ summary: 'Melakukan check-in presensi universal (QR, Manual Operator, Search NIM)' })
   async checkIn(
-    @CurrentUser() user: UserDocument,
-    @Body() dto: MabaCheckinDto,
+    @CurrentUser() user: { userId: string },
+    @Body() dto: CheckInDto,
+    @Req() req: Request,
   ) {
-    if (!user.pkkmbGroup)
-      throw new BadRequestException('Anda belum masuk ke kelompok manapun');
+    const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || undefined;
+    const userAgent = req.headers['user-agent'];
+
     const data = await this.pkkmbService.checkIn(
-      user._id.toString(),
-      user.pkkmbGroup.toString(),
       dto,
+      user.userId,
+      ipAddress,
+      userAgent,
     );
-    return { success: true, message: 'Presensi berhasil dicatat', data };
+    return { success: true, message: 'Presensi berhasil dicatat!', data };
   }
 
-  @Get('attendance/my-logs')
-  @ApiOperation({ summary: 'Melihat riwayat presensi sendiri' })
-  async getMyAttendanceLogs(
-    @CurrentUser() user: UserDocument,
-    @Query() query: PaginationDto,
-  ) {
-    const data = await this.pkkmbService.getMyAttendanceLogs(
-      user._id.toString(),
-      query,
-    );
+  @Get('attendance/monitoring')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Monitoring dashboard & laporan presensi real-time' })
+  async getAttendanceMonitoring(@Query() query: AttendanceFilterDto) {
+    const data = await this.pkkmbService.getAttendanceMonitoring(query);
     return { success: true, data };
   }
+
+  @Get('attendance/my-history')
+  @RequiredPermissions(PkkmbPermission.PROFILE_READ_OWN)
+  @ApiOperation({ summary: 'Melihat riwayat presensi sendiri (MABA/Panitia)' })
+  async getMyAttendanceHistory(@CurrentUser() user: { userId: string }) {
+    const data = await this.pkkmbService.getMyAttendanceHistory(user.userId);
+    return { success: true, data };
+  }
+
+  // ─── TASKS & SUBMISSIONS ──────────────────────────────────────────────────
 
   @Get('tasks')
-  @ApiOperation({ summary: 'Melihat daftar seluruh penugasan' })
-  async getTasks(@Query() query: PaginationDto) {
-    const data = await this.pkkmbService.getTasks(query);
-    return { success: true, data };
-  }
-
-  @Get('tasks/my-submissions')
-  @ApiOperation({
-    summary: 'Melihat status pengumpulan tugas (individu & kelompok)',
-  })
-  async getMySubmissions(
-    @CurrentUser() user: UserDocument,
+  @ApiOperation({ summary: 'Melihat daftar tugas' })
+  async getTasks(
+    @CurrentUser() user: { role?: string },
     @Query() query: PaginationDto,
   ) {
-    const data = await this.pkkmbService.getMySubmissions(
-      user._id.toString(),
-      query,
-      user.pkkmbGroup?.toString(),
-    );
+    const isPanitia = user?.role !== 'user' && user?.role !== 'maba';
+    const data = await this.pkkmbService.getTasks(query, isPanitia);
     return { success: true, data };
   }
 
-  @Post('tasks/:id/submit')
-  @ApiOperation({ summary: 'Mengumpulkan tugas' })
+  @Post('maba/tasks/:id/submit')
+  @RequiredPermissions(PkkmbPermission.TASK_SUBMIT)
+  @ApiOperation({ summary: 'Pengumpulan Tugas (Metode Google Drive / Cloud Link)' })
   @ApiParam({ name: 'id', description: 'ID Tugas' })
   async submitTask(
     @CurrentUser() user: UserDocument,
@@ -145,115 +219,39 @@ export class PkkmbController {
     return { success: true, message: 'Tugas berhasil dikumpulkan', data };
   }
 
-  // ─── KAKAK PENDAMPING ENDPOINTS ──────────────────────────────────────────────
-
-  @Post('mentor/attendance/sessions')
-  @Roles('Kakak Pendamping')
-  @ApiOperation({ summary: 'Membuat sesi presensi untuk kelompok' })
-  async createAttendanceSession(
-    @CurrentUser() mentor: UserDocument,
-    @Body() dto: CreateAttendanceSessionDto,
-  ) {
-    if (!mentor.pkkmbGroup)
-      throw new BadRequestException('Anda belum di-assign ke kelompok manapun');
-    const data = await this.pkkmbService.createAttendanceSession(
-      mentor._id.toString(),
-      mentor.pkkmbGroup.toString(),
-      dto,
-    );
-    return {
-      success: true,
-      message: 'Sesi presensi berhasil dibuka untuk kelompok Anda',
-      data,
-    };
-  }
-
-  @Get('mentor/attendance/sessions')
-  @Roles('Kakak Pendamping')
-  @ApiOperation({ summary: 'Melihat riwayat sesi presensi kelompoknya' })
-  async getMentorAttendanceSessions(
-    @CurrentUser() mentor: UserDocument,
-    @Query() query: PaginationDto,
-  ) {
-    if (!mentor.pkkmbGroup)
-      throw new BadRequestException('Anda belum di-assign ke kelompok manapun');
-    const data = await this.pkkmbService.getMentorAttendanceSessions(
-      mentor.pkkmbGroup.toString(),
-      query,
-    );
-    return { success: true, data };
-  }
-
-  @Post('mentor/attendance/sessions/:sessionId/manual-checkin')
-  @Roles('Kakak Pendamping')
-  @ApiOperation({ summary: 'Memasukkan presensi manual Maba' })
-  @ApiParam({ name: 'sessionId', description: 'ID Sesi Presensi' })
-  async mentorManualCheckin(
-    @CurrentUser() mentor: UserDocument,
-    @Param('sessionId') sessionId: string,
-    @Body() dto: AdminManualCheckinDto,
-  ) {
-    if (!mentor.pkkmbGroup)
-      throw new BadRequestException('Anda belum di-assign ke kelompok manapun');
-    const data = await this.pkkmbService.mentorManualCheckin(
-      sessionId,
-      mentor.pkkmbGroup.toString(),
-      dto,
-    );
-    return { success: true, message: 'Presensi manual berhasil dicatat', data };
-  }
-
-  // ─── PEMATERI / PANITIA ENDPOINTS ──────────────────────────────────────────────
+  // ─── EVALUATOR & PANITIA ENDPOINTS ──────────────────────────────────────
 
   @Post('pemateri/tasks')
-  @Roles('Pemateri', 'Panitia')
-  @ApiOperation({ summary: 'Membuat tugas baru (Individu/Kelompok)' })
+  @RequiredPermissions(PkkmbPermission.TASK_CREATE)
+  @ApiOperation({ summary: 'Membuat tugas baru (Draft / Published)' })
   async createTask(@Body() dto: CreateTaskDto) {
     const data = await this.pkkmbService.createTask(dto);
     return { success: true, message: 'Tugas berhasil dibuat', data };
   }
 
   @Patch('pemateri/submissions/:id/grade')
-  @Roles('Pemateri', 'Panitia')
+  @RequiredPermissions(PkkmbPermission.GRADING_UPDATE)
   @ApiOperation({ summary: 'Menilai dan memberi feedback pada tugas' })
   @ApiParam({ name: 'id', description: 'ID Pengumpulan Tugas (Submission)' })
   async gradeSubmission(
-    @CurrentUser() grader: UserDocument,
+    @CurrentUser() grader: { userId: string },
     @Param('id') submissionId: string,
     @Body() dto: GradeSubmissionDto,
   ) {
     const data = await this.pkkmbService.gradeSubmission(
       submissionId,
-      grader._id.toString(),
+      grader.userId,
       dto,
     );
     return { success: true, message: 'Nilai tugas berhasil disimpan', data };
   }
 
   @Get('dashboard/panitia')
-  @Roles('Panitia')
-  @ApiOperation({
-    summary: 'Mendapatkan data agregasi untuk Dashboard Panitia',
-  })
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Mendapatkan data agregasi untuk Dashboard Panitia' })
   async getPanitiaDashboard() {
     const data = await this.pkkmbService.getPanitiaDashboard();
     return { success: true, data };
-  }
-
-  // ─── ADMIN ENDPOINTS ──────────────────────────────────────────────
-
-  @Get('admin/attendance/export/:sessionId')
-  @Roles('Admin', 'Panitia', 'Super Admin')
-  @ApiOperation({ summary: 'Mengunduh rekap presensi (CSV)' })
-  @ApiParam({ name: 'sessionId', description: 'ID Sesi Presensi' })
-  async exportAttendanceCsv(
-    @Param('sessionId') sessionId: string,
-    @Res() res: Response,
-  ) {
-    const csv = await this.pkkmbService.exportAttendanceToCsv(sessionId);
-    res.header('Content-Type', 'text/csv');
-    res.attachment(`presensi-${sessionId}.csv`);
-    return res.send(csv);
   }
 
   // ─── ANNOUNCEMENTS & SCHEDULES ──────────────────────────────────────────────
@@ -261,16 +259,21 @@ export class PkkmbController {
   @Get('announcements')
   @ApiOperation({ summary: 'Melihat pengumuman PKKMB' })
   async getAnnouncements(
-    @CurrentUser() user: UserDocument,
+    @CurrentUser() user: UserDocument & { role?: string },
     @Query() query: PaginationDto,
   ) {
     const groupId = user.pkkmbGroup?.toString();
-    const data = await this.pkkmbService.getAnnouncements(query, groupId);
+    const isPanitia = user.role !== 'user' && user.role !== 'maba';
+    const data = await this.pkkmbService.getAnnouncements(
+      query,
+      groupId,
+      isPanitia,
+    );
     return { success: true, data };
   }
 
   @Post('admin/announcements')
-  @Roles('Panitia', 'Admin', 'Super Admin')
+  @RequiredPermissions(PkkmbPermission.ANNOUNCEMENT_CREATE)
   @ApiOperation({ summary: 'Membuat Pengumuman PKKMB' })
   async createAnnouncement(@Body() dto: CreateAnnouncementDto) {
     const data = await this.pkkmbService.createAnnouncement(dto);
@@ -278,7 +281,7 @@ export class PkkmbController {
   }
 
   @Patch('admin/announcements/:id')
-  @Roles('Panitia', 'Admin', 'Super Admin')
+  @RequiredPermissions(PkkmbPermission.ANNOUNCEMENT_CREATE)
   @ApiOperation({ summary: 'Mengubah Pengumuman PKKMB' })
   async updateAnnouncement(
     @Param('id') id: string,
@@ -289,7 +292,7 @@ export class PkkmbController {
   }
 
   @Delete('admin/announcements/:id')
-  @Roles('Panitia', 'Admin', 'Super Admin')
+  @RequiredPermissions(PkkmbPermission.ANNOUNCEMENT_CREATE)
   @ApiOperation({ summary: 'Menghapus Pengumuman PKKMB' })
   async deleteAnnouncement(@Param('id') id: string) {
     const data = await this.pkkmbService.deleteAnnouncement(id);
@@ -304,7 +307,7 @@ export class PkkmbController {
   }
 
   @Post('admin/schedules')
-  @Roles('Panitia', 'Admin', 'Super Admin')
+  @RequiredPermissions(PkkmbPermission.SCHEDULE_CREATE)
   @ApiOperation({ summary: 'Membuat Jadwal PKKMB' })
   async createSchedule(@Body() dto: CreateScheduleDto) {
     const data = await this.pkkmbService.createSchedule(dto);
@@ -312,7 +315,7 @@ export class PkkmbController {
   }
 
   @Patch('admin/schedules/:id')
-  @Roles('Panitia', 'Admin', 'Super Admin')
+  @RequiredPermissions(PkkmbPermission.SCHEDULE_CREATE)
   @ApiOperation({ summary: 'Mengubah Jadwal PKKMB' })
   async updateSchedule(
     @Param('id') id: string,
@@ -323,7 +326,7 @@ export class PkkmbController {
   }
 
   @Delete('admin/schedules/:id')
-  @Roles('Panitia', 'Admin', 'Super Admin')
+  @RequiredPermissions(PkkmbPermission.SCHEDULE_CREATE)
   @ApiOperation({ summary: 'Menghapus Jadwal PKKMB' })
   async deleteSchedule(@Param('id') id: string) {
     const data = await this.pkkmbService.deleteSchedule(id);

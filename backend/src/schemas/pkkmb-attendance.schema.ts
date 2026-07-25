@@ -1,47 +1,52 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
-// --- Attendance Session ---
+// --- Attendance Session (Universal) ---
 export type PkkmbAttendanceSessionDocument =
   HydratedDocument<PkkmbAttendanceSession>;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, collection: 'pkkmb_attendance_sessions' })
 export class PkkmbAttendanceSession {
-  @Prop({
-    type: MongooseSchema.Types.ObjectId,
-    ref: 'PkkmbGroup',
-    required: true,
-    index: true,
-  })
-  groupId: Types.ObjectId;
-
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
-  createdBy: Types.ObjectId;
-
-  @Prop({ required: true })
-  title: string; // e.g., "Hari 1 - Sesi Pagi"
+  @Prop({ required: true, trim: true })
+  title: string; // e.g. "Hari 1 - Registrasi & Chekin Pagi", "Opening Ceremony"
 
   @Prop({ required: true })
   date: Date;
 
-  @Prop()
-  qrToken?: string;
+  @Prop({ required: true })
+  startTime: Date;
+
+  @Prop({ required: true })
+  endTime: Date;
+
+  @Prop({ required: true, trim: true })
+  location: string; // e.g. "Gedung Dekanat FT UNESA"
+
+  @Prop({
+    required: true,
+    enum: ['ALL', 'MABA', 'PANITIA'],
+    default: 'ALL',
+  })
+  targetParticipantType: 'ALL' | 'MABA' | 'PANITIA';
+
+  @Prop({ trim: true })
+  targetDivision?: string; // Optional filter if session is specifically for a division e.g. "Sie Acara"
+
+  @Prop({ trim: true })
+  qrCode?: string; // Payload string for QR Code scanning
 
   @Prop()
   qrExpiry?: Date;
 
   @Prop({
-    type: {
-      latitude: Number,
-      longitude: Number,
-      radiusMeter: Number,
-    },
+    required: true,
+    enum: ['DRAFT', 'PUBLISHED', 'CLOSED'],
+    default: 'PUBLISHED',
   })
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-    radiusMeter: number;
-  };
+  status: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  createdBy: Types.ObjectId;
 
   @Prop()
   deletedAt?: Date;
@@ -51,18 +56,22 @@ export const PkkmbAttendanceSessionSchema = SchemaFactory.createForClass(
   PkkmbAttendanceSession,
 );
 
-// --- Attendance Log ---
-export type PkkmbAttendanceLogDocument = HydratedDocument<PkkmbAttendanceLog>;
+PkkmbAttendanceSessionSchema.index({ date: 1, status: 1 });
+PkkmbAttendanceSessionSchema.index({ targetParticipantType: 1 });
 
-@Schema({ timestamps: true })
-export class PkkmbAttendanceLog {
+// --- Attendance Record (Universal Single Log for MABA & PANITIA) ---
+export type PkkmbAttendanceRecordDocument =
+  HydratedDocument<PkkmbAttendanceRecord>;
+
+@Schema({ timestamps: true, collection: 'pkkmb_attendance_records' })
+export class PkkmbAttendanceRecord {
   @Prop({
     type: MongooseSchema.Types.ObjectId,
     ref: 'PkkmbAttendanceSession',
     required: true,
     index: true,
   })
-  sessionId: Types.ObjectId;
+  session: Types.ObjectId;
 
   @Prop({
     type: MongooseSchema.Types.ObjectId,
@@ -70,37 +79,61 @@ export class PkkmbAttendanceLog {
     required: true,
     index: true,
   })
-  userId: Types.ObjectId;
+  participant: Types.ObjectId;
 
   @Prop({
     required: true,
-    enum: ['Hadir', 'Telat', 'Tidak Hadir'],
-    default: 'Hadir',
+    enum: ['MABA', 'PANITIA'],
+    index: true,
   })
-  status: string;
+  participantType: 'MABA' | 'PANITIA';
 
-  @Prop({ default: () => new Date() })
-  timestamp: Date;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Role' })
+  role?: Types.ObjectId; // For Panitia
+
+  @Prop({ trim: true, index: true })
+  division?: string; // For Panitia (e.g. "Sie Acara", "Sie Humas", "Sie Pendamping")
+
+  @Prop({ required: true, default: () => new Date() })
+  checkInTime: Date;
 
   @Prop()
-  notes?: string;
+  checkOutTime?: Date;
 
   @Prop({
-    type: {
-      latitude: Number,
-      longitude: Number,
-    },
+    required: true,
+    enum: ['Hadir', 'Telat', 'Izin', 'Sakit', 'Tidak Hadir'],
+    default: 'Hadir',
+    index: true,
   })
-  coordinatesUsed?: {
-    latitude: number;
-    longitude: number;
-  };
+  status: 'Hadir' | 'Telat' | 'Izin' | 'Sakit' | 'Tidak Hadir';
+
+  @Prop({
+    required: true,
+    enum: ['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM'],
+    default: 'QR_CODE',
+  })
+  attendanceMethod: 'QR_CODE' | 'MANUAL_OPERATOR' | 'SEARCH_NIM';
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  operator?: Types.ObjectId; // Operator performing manual check-in
+
+  @Prop({ trim: true })
+  device?: string; // User agent or scanner device name
+
+  @Prop({ trim: true })
+  ipAddress?: string;
+
+  @Prop({ trim: true })
+  notes?: string;
 
   @Prop()
   deletedAt?: Date;
 }
 
-export const PkkmbAttendanceLogSchema =
-  SchemaFactory.createForClass(PkkmbAttendanceLog);
+export const PkkmbAttendanceRecordSchema = SchemaFactory.createForClass(
+  PkkmbAttendanceRecord,
+);
 
-PkkmbAttendanceLogSchema.index({ sessionId: 1, userId: 1 }, { unique: true });
+PkkmbAttendanceRecordSchema.index({ session: 1, participant: 1 }, { unique: true });
+PkkmbAttendanceRecordSchema.index({ participantType: 1, division: 1, status: 1 });

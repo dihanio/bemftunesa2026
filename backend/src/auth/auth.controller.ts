@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   UseGuards,
   Req,
@@ -189,11 +190,45 @@ export class AuthController {
     const user = await this.authService.registerMaba(registerDto);
     return {
       success: true,
-      message: 'Pendaftaran berhasil. Silakan login.',
+      message: 'Pendaftaran berhasil. Silakan verifikasi email Anda.',
       data: {
         nim: user.nim,
         name: user.name,
       },
+    };
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('verify-email')
+  async verifyEmailCode(@Body() body: { email: string; code: string }) {
+    return await this.authService.verifyEmailCode(body.email, body.code);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('resend-verification')
+  async resendVerificationCode(@Body() body: { email: string }) {
+    return await this.authService.resendVerificationCode(body.email);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Patch('profile')
+  async updateProfile(
+    @Body() body: { userId?: string; email?: string; studyProgram?: string; avatar?: string }
+  ) {
+    // If email or userId is provided, find and update
+    const emailToUse = body.email;
+    if (!emailToUse && !body.userId) {
+      throw new ForbiddenException('User ID atau Email wajib diisi.');
+    }
+
+    const user = emailToUse
+      ? await this.authService.updateMabaProfileByEmail(emailToUse, body)
+      : await this.authService.updateMabaProfile(body.userId!, body);
+
+    return {
+      success: true,
+      message: 'Profil berhasil diperbarui.',
+      data: user,
     };
   }
 
@@ -343,6 +378,34 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: AuthenticatedRequest['user']) {
     const profile = await this.authService.getProfile(user.userId.toString());
-    return { success: true, data: profile };
+    if (!profile) return { success: true, data: null };
+
+    const rawObj = profile.toObject ? profile.toObject() : profile;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const roleObj = rawObj.role as any;
+    let permissions: string[] = user.permissions || [];
+
+    if (roleObj && typeof roleObj === 'object' && Array.isArray(roleObj.permissions)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      permissions = roleObj.permissions.map((p: any) =>
+        typeof p === 'string' ? p : p.name,
+      );
+    }
+
+    if (
+      roleObj?.slug === 'super_admin' ||
+      roleObj?.slug === 'super-admin' ||
+      roleObj?.name === 'Super Admin'
+    ) {
+      permissions = ['manage:all', ...permissions];
+    }
+
+    return {
+      success: true,
+      data: {
+        ...rawObj,
+        permissions,
+      },
+    };
   }
 }

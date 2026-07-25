@@ -18,8 +18,8 @@ import { join } from 'path';
       useFactory: (configService: ConfigService) => ({
         transport: {
           host: configService.get<string>('SMTP_HOST'),
-          port: configService.get<number>('SMTP_PORT'),
-          secure: false, // use false for Ethereal/STARTTLS
+          port: Number(configService.get('SMTP_PORT')) || 587,
+          secure: Number(configService.get('SMTP_PORT')) === 465,
           auth: {
             user: configService.get<string>('SMTP_USER'),
             pass: configService.get<string>('SMTP_PASS'),

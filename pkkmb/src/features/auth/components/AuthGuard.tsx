@@ -7,7 +7,7 @@ import { Role } from "../types/auth.types";
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  allowedRoles?: Role[];
+  allowedRoles?: (Role | string)[];
 }
 
 const emptySubscribe = () => () => {};

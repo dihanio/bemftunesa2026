@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
 interface RequestUser {
-  role: { name?: string } | string;
+  role: { name?: string; slug?: string } | string;
 }
 
 @Injectable()
@@ -32,20 +32,35 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('Authentication required');
     }
 
-    // Role should be populated by JwtAuthGuard
     const role = user.role;
 
     if (!role) {
       throw new ForbiddenException('Invalid role configuration (no role)');
     }
 
-    // Assume role document has a 'name' field based on role.schema.ts
-    const roleName = (typeof role === 'object' ? role.name : role) as string;
+    const roleName = typeof role === 'object' ? role.name || '' : String(role);
+    const roleSlug = typeof role === 'object' ? role.slug || '' : String(role);
 
-    const hasRole = requiredRoles.includes(roleName);
+    const normRequired = requiredRoles.map((r) => r.toLowerCase());
 
-    // Super Admin has all access
-    if (roleName === 'Super Admin' || hasRole) {
+    const userAliases = [
+      roleName.toLowerCase(),
+      roleSlug.toLowerCase(),
+    ];
+
+    // If user's role slug/name is 'user', treat as 'maba'
+    if (roleSlug.toLowerCase() === 'user' || roleName.toLowerCase() === 'user') {
+      userAliases.push('maba');
+    }
+
+    const hasRole = userAliases.some((alias) => normRequired.includes(alias));
+
+    // Super Admin has full access
+    if (
+      roleName.toLowerCase() === 'super admin' ||
+      roleSlug.toLowerCase() === 'super-admin' ||
+      hasRole
+    ) {
       return true;
     }
 

@@ -23,6 +23,16 @@ export class PkkmbAnnouncement {
   @Prop({ default: false })
   isPriority: boolean;
 
+  @Prop({
+    required: true,
+    enum: ['PUBLISHED', 'DRAFT', 'SCHEDULED'],
+    default: 'PUBLISHED',
+  })
+  status: string;
+
+  @Prop()
+  scheduledAt?: Date;
+
   @Prop()
   deletedAt?: Date;
 }

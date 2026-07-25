@@ -3,14 +3,16 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { OnEvent } from '@nestjs/event-emitter';
 import { AuditLog, AuditLogDocument } from '../schemas/audit-log.schema';
-import { AuditAction } from '../common/enums/audit-action.enum';
 
-export interface AuditEventPayload {
+export interface AuditLogPayload {
   actor: Types.ObjectId | string;
+  actorRole: string;
+  action: string; // LOGIN, LOGOUT, CREATE, UPDATE, DELETE, PUBLISH, APPROVE, REJECT, EXPORT
   resourceType: string;
-  resourceId: Types.ObjectId | string;
-  resourceName: string;
-  action: AuditAction;
+  resourceId?: Types.ObjectId | string;
+  resourceName?: string;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   requestId?: string;
@@ -25,37 +27,55 @@ export class AuditService {
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
   ) {}
 
-  @OnEvent('audit.log', { async: true })
-  async handleAuditLogEvent(payload: AuditEventPayload) {
+  async log(payload: AuditLogPayload) {
     try {
-      const log = new this.auditLogModel({
+      const logEntry = new this.auditLogModel({
         ...payload,
         actor:
           typeof payload.actor === 'string'
             ? new Types.ObjectId(payload.actor)
             : payload.actor,
         resourceId:
-          typeof payload.resourceId === 'string'
+          payload.resourceId && typeof payload.resourceId === 'string'
             ? new Types.ObjectId(payload.resourceId)
             : payload.resourceId,
       });
-      await log.save();
+      await logEntry.save();
     } catch (error) {
-      // We only log the error to console/logger to prevent audit failures from breaking the app
       this.logger.error(
-        `Failed to save audit log for action ${payload.action} on ${payload.resourceType}`,
+        `Gagal menyimpan audit log [${payload.action}] pada ${payload.resourceType}:`,
         error,
       );
     }
   }
 
-  async findRecent(limit: number = 20) {
-    return this.auditLogModel
-      .find()
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .populate('actor', 'name email')
-      .lean()
-      .exec();
+  @OnEvent('audit.log', { async: true })
+  async handleAuditLogEvent(payload: AuditLogPayload) {
+    await this.log(payload);
+  }
+
+  async findAll(limit: number = 50, page: number = 1) {
+    const skip = (page - 1) * limit;
+    const [logs, total] = await Promise.all([
+      this.auditLogModel
+        .find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('actor', 'name email nim role division')
+        .lean()
+        .exec(),
+      this.auditLogModel.countDocuments(),
+    ]);
+
+    return {
+      logs,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }

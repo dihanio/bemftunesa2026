@@ -3,12 +3,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth/auth.module';
 
 import { User, UserSchema } from '../schemas/user.schema';
+import { Role, RoleSchema } from '../schemas/role.schema';
 import { PkkmbGroup, PkkmbGroupSchema } from '../schemas/pkkmb-group.schema';
 import {
   PkkmbAttendanceSession,
   PkkmbAttendanceSessionSchema,
-  PkkmbAttendanceLog,
-  PkkmbAttendanceLogSchema,
+  PkkmbAttendanceRecord,
+  PkkmbAttendanceRecordSchema,
 } from '../schemas/pkkmb-attendance.schema';
 import {
   PkkmbTask,
@@ -33,6 +34,9 @@ import {
   PkkmbGallerySchema,
 } from '../schemas/pkkmb-gallery.schema';
 
+import { Rumpun, RumpunSchema } from '../schemas/rumpun.schema';
+import { StudyProgram, StudyProgramSchema } from '../schemas/study-program.schema';
+
 import { PkkmbController } from './pkkmb.controller';
 import { PkkmbService } from './pkkmb.service';
 
@@ -41,18 +45,21 @@ import { PkkmbService } from './pkkmb.service';
     AuthModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
+      { name: Role.name, schema: RoleSchema },
       { name: PkkmbGroup.name, schema: PkkmbGroupSchema },
       {
         name: PkkmbAttendanceSession.name,
         schema: PkkmbAttendanceSessionSchema,
       },
-      { name: PkkmbAttendanceLog.name, schema: PkkmbAttendanceLogSchema },
+      { name: PkkmbAttendanceRecord.name, schema: PkkmbAttendanceRecordSchema },
       { name: PkkmbTask.name, schema: PkkmbTaskSchema },
       { name: PkkmbSubmission.name, schema: PkkmbSubmissionSchema },
       { name: PkkmbSchedule.name, schema: PkkmbScheduleSchema },
       { name: PkkmbAnnouncement.name, schema: PkkmbAnnouncementSchema },
       { name: PkkmbPointLog.name, schema: PkkmbPointLogSchema },
       { name: PkkmbGallery.name, schema: PkkmbGallerySchema },
+      { name: Rumpun.name, schema: RumpunSchema },
+      { name: StudyProgram.name, schema: StudyProgramSchema },
     ]),
   ],
   controllers: [PkkmbController],

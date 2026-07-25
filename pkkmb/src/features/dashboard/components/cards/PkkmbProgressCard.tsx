@@ -1,5 +1,6 @@
 import React from 'react';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle2, Circle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 interface ProgressProps {
   progress: {
@@ -12,36 +13,84 @@ interface ProgressProps {
 
 export function PkkmbProgressCard({ progress }: ProgressProps) {
   return (
-    <div className="bg-white/5 border border-white/5 rounded-2xl p-6">
-      <h3 className="text-lg font-bold mb-4">Kesiapan PKKMB</h3>
-      
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-sm font-medium text-foreground/70">Progres Administrasi & Tugas</span>
-        <span className="text-sm font-bold text-primary">{progress.percent}%</span>
+    <div className="surface-card p-6">
+      {/* Title Header */}
+      <div className="flex items-center justify-between mb-4 border-b border-[var(--border-subtle)] pb-3">
+        <h3 className="text-xs font-mono font-bold text-[var(--accent)] uppercase tracking-wider">
+          PROGRES PKKMB
+        </h3>
+        <span className="text-xs font-mono font-bold text-[var(--accent)] bg-[var(--accent-muted)] border border-[var(--accent-glow)] px-2.5 py-0.5 rounded">
+          {progress.percent}%
+        </span>
       </div>
-      <div className="w-full bg-black/40 rounded-full h-3 mb-6 overflow-hidden">
-        <div 
-          className="bg-gradient-to-r from-primary to-blue-500 h-3 rounded-full transition-all duration-1000" 
-          style={{ width: `${progress.percent}%` }}
-        />
+
+      {/* Custom Animated Progress Bar */}
+      <div className="mb-6">
+        <Progress value={progress.percent} />
       </div>
-      
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className={`p-3 rounded-xl border flex flex-col items-center justify-center text-center gap-2 ${true ? 'bg-sage/10 border-sage/20 text-sage' : 'bg-white/5 border-white/5 text-foreground/40'}`}>
-          <CheckCircle className="h-5 w-5" />
-          <span className="text-xs font-semibold">Profil<br/>Lengkap</span>
+
+      {/* 4 Step Badges */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Step 1: Profil */}
+        <div className="p-3 rounded bg-[var(--accent-muted)] border border-[var(--accent-glow)] text-[var(--accent)] flex flex-col items-center justify-center text-center gap-1.5">
+          <CheckCircle2 className="h-4 w-4 text-[var(--accent)]" />
+          <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+            01 &middot; PROFIL LENGKAP
+          </span>
         </div>
-        <div className={`p-3 rounded-xl border flex flex-col items-center justify-center text-center gap-2 ${progress.hasGroup ? 'bg-sage/10 border-sage/20 text-sage' : 'bg-white/5 border-white/5 text-foreground/40'}`}>
-          <CheckCircle className="h-5 w-5" />
-          <span className="text-xs font-semibold">Masuk<br/>Kelompok</span>
+
+        {/* Step 2: Kelompok */}
+        <div
+          className={`p-3 rounded border flex flex-col items-center justify-center text-center gap-1.5 transition-all ${
+            progress.hasGroup
+              ? 'bg-[var(--accent-muted)] border-[var(--accent-glow)] text-[var(--accent)]'
+              : 'bg-white/[0.02] border-[var(--border-subtle)] text-[var(--text-muted)]'
+          }`}
+        >
+          {progress.hasGroup ? (
+            <CheckCircle2 className="h-4 w-4 text-[var(--accent)]" />
+          ) : (
+            <Circle className="h-4 w-4 text-[var(--text-muted)]" />
+          )}
+          <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+            02 &middot; KELOMPOK
+          </span>
         </div>
-        <div className={`p-3 rounded-xl border flex flex-col items-center justify-center text-center gap-2 ${progress.hasAttendedAny ? 'bg-sage/10 border-sage/20 text-sage' : 'bg-white/5 border-white/5 text-foreground/40'}`}>
-          <CheckCircle className="h-5 w-5" />
-          <span className="text-xs font-semibold">Absensi<br/>Pertama</span>
+
+        {/* Step 3: Presensi */}
+        <div
+          className={`p-3 rounded border flex flex-col items-center justify-center text-center gap-1.5 transition-all ${
+            progress.hasAttendedAny
+              ? 'bg-[var(--accent-muted)] border-[var(--accent-glow)] text-[var(--accent)]'
+              : 'bg-white/[0.02] border-[var(--border-subtle)] text-[var(--text-muted)]'
+          }`}
+        >
+          {progress.hasAttendedAny ? (
+            <CheckCircle2 className="h-4 w-4 text-[var(--accent)]" />
+          ) : (
+            <Circle className="h-4 w-4 text-[var(--text-muted)]" />
+          )}
+          <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+            03 &middot; PRESENSI
+          </span>
         </div>
-        <div className={`p-3 rounded-xl border flex flex-col items-center justify-center text-center gap-2 ${progress.hasSubmittedTask ? 'bg-sage/10 border-sage/20 text-sage' : 'bg-white/5 border-white/5 text-foreground/40'}`}>
-          <CheckCircle className="h-5 w-5" />
-          <span className="text-xs font-semibold">Tugas<br/>Pertama</span>
+
+        {/* Step 4: Tugas */}
+        <div
+          className={`p-3 rounded border flex flex-col items-center justify-center text-center gap-1.5 transition-all ${
+            progress.hasSubmittedTask
+              ? 'bg-[var(--accent-muted)] border-[var(--accent-glow)] text-[var(--accent)]'
+              : 'bg-white/[0.02] border-[var(--border-subtle)] text-[var(--text-muted)]'
+          }`}
+        >
+          {progress.hasSubmittedTask ? (
+            <CheckCircle2 className="h-4 w-4 text-[var(--accent)]" />
+          ) : (
+            <Circle className="h-4 w-4 text-[var(--text-muted)]" />
+          )}
+          <span className="text-[10px] font-mono uppercase tracking-wider font-bold">
+            04 &middot; PENUGASAN
+          </span>
         </div>
       </div>
     </div>

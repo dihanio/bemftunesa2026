@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
-import { AuditAction } from '../common/enums/audit-action.enum';
 
 export type AuditLogDocument = HydratedDocument<AuditLog>;
 
@@ -10,16 +9,25 @@ export class AuditLog {
   actor: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
-  resourceType: string;
-
-  @Prop({ type: MongooseSchema.Types.ObjectId, required: true })
-  resourceId: Types.ObjectId;
+  actorRole: string;
 
   @Prop({ required: true, trim: true })
-  resourceName: string;
+  resourceType: string;
 
-  @Prop({ type: String, enum: AuditAction, required: true })
-  action: AuditAction;
+  @Prop({ type: MongooseSchema.Types.ObjectId })
+  resourceId?: Types.ObjectId;
+
+  @Prop({ trim: true })
+  resourceName?: string;
+
+  @Prop({ required: true, trim: true })
+  action: string; // e.g. LOGIN, LOGOUT, CREATE, UPDATE, DELETE, PUBLISH, APPROVE, REJECT, EXPORT
+
+  @Prop({ type: Object })
+  before?: Record<string, unknown>;
+
+  @Prop({ type: Object })
+  after?: Record<string, unknown>;
 
   @Prop({ trim: true })
   ipAddress?: string;

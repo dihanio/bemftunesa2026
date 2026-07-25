@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-6">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 relative shrink-0">
-              <Image src="/logo_adrata.png" alt="Admin" fill className="object-contain" />
+              <Image src="/logo_adrata.png" alt="Admin" fill sizes="40px" className="object-contain" />
             </div>
             <div>
               <h1 className="text-lg font-extrabold tracking-tight text-red-500">ADMIN PKKMB</h1>

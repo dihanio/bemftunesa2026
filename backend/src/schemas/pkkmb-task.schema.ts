@@ -15,8 +15,15 @@ export class PkkmbTask {
   @Prop({ required: true })
   deadline: Date;
 
-  @Prop({ required: true, enum: ['individu', 'kelompok'] })
+  @Prop({ required: true, enum: ['individu', 'kelompok', 'INDIVIDU', 'KELOMPOK'] })
   type: string;
+
+  @Prop({
+    required: true,
+    enum: ['PUBLISHED', 'DRAFT'],
+    default: 'PUBLISHED',
+  })
+  status: string;
 
   @Prop({ type: [String] })
   allowedFormats: string[]; // e.g. ['.pdf', '.zip']

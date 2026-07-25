@@ -7,16 +7,19 @@ import {
 import { Reflector } from '@nestjs/core';
 import { REQUIRED_PERMISSIONS_KEY } from '../decorators/required-permission.decorator';
 
-interface PopulatedPermission {
+interface PermissionItem {
   name: string;
 }
 
-interface PopulatedRole {
-  permissions: PopulatedPermission[];
+interface RoleItem {
+  slug?: string;
+  name?: string;
+  permissions?: (PermissionItem | string)[];
 }
 
-interface RequestUser {
-  role: PopulatedRole | string;
+interface AuthenticatedUserRequest {
+  permissions?: string[];
+  role?: RoleItem | string;
 }
 
 @Injectable()
@@ -33,36 +36,51 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<{ user: RequestUser }>();
+    const request = context.switchToHttp().getRequest<{
+      user?: AuthenticatedUserRequest;
+    }>();
     const user = request.user;
 
     if (!user) {
-      throw new ForbiddenException('Authentication required');
+      throw new ForbiddenException('Akses ditolak: Autentikasi diperlukan.');
     }
 
-    // JwtStrategy already populates user.role with full role document
-    const role = user.role as PopulatedRole;
+    // Extract user permissions from JwtStrategy user payload
+    const userPermissions: string[] = [];
 
-    if (!role) {
-      throw new ForbiddenException('Invalid role configuration (no role)');
+    if (Array.isArray(user.permissions)) {
+      userPermissions.push(...user.permissions);
     }
 
-    if (!Array.isArray(role.permissions)) {
+    if (
+      user.role &&
+      typeof user.role === 'object' &&
+      Array.isArray(user.role.permissions)
+    ) {
+      user.role.permissions.forEach((p) => {
+        if (typeof p === 'string') {
+          userPermissions.push(p);
+        } else if (p && typeof p === 'object' && 'name' in p) {
+          userPermissions.push(p.name);
+        }
+      });
+    }
+
+    const uniquePermissions = Array.from(new Set(userPermissions));
+
+    // Super Admin wildcard permission
+    if (uniquePermissions.includes('manage:all')) {
+      return true;
+    }
+
+    const hasPermission = requiredPermissions.every((permission) =>
+      uniquePermissions.includes(permission),
+    );
+
+    if (!hasPermission) {
       throw new ForbiddenException(
-        'Invalid role configuration (permissions not populated)',
+        `Akses ditolak: Anda tidak memiliki izin [${requiredPermissions.join(', ')}].`,
       );
-    }
-
-    const userPermissions = role.permissions.map((p) => p.name);
-
-    const hasAllPermissions =
-      userPermissions.includes('manage:all') ||
-      requiredPermissions.every((permission) =>
-        userPermissions.includes(permission),
-      );
-
-    if (!hasAllPermissions) {
-      throw new ForbiddenException('Insufficient permissions');
     }
 
     return true;

@@ -13,6 +13,8 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+
+
 export class MabaCheckinDto {
   @ApiProperty({
     description: 'ID Sesi Presensi',
@@ -59,61 +61,141 @@ export class MabaSubmitTaskDto {
 export class CreateAttendanceSessionDto {
   @ApiProperty({
     description: 'Judul Sesi Presensi',
-    example: 'Presensi Materi 1',
+    example: 'Hari 1 - Opening Ceremony & Registrasi Pagi',
   })
   @IsString()
   @IsNotEmpty()
   title: string;
 
-  @ApiProperty({
-    description: 'Tanggal dan Waktu Presensi',
-    example: '2026-08-15T08:00:00Z',
-  })
+  @ApiProperty({ description: 'Tanggal Sesi', example: '2026-08-15' })
   @IsDateString()
   @IsNotEmpty()
   date: string;
 
+  @ApiProperty({ description: 'Jam Mulai Sesi', example: '2026-08-15T07:00:00Z' })
+  @IsDateString()
+  @IsNotEmpty()
+  startTime: string;
+
+  @ApiProperty({ description: 'Jam Selesai Sesi', example: '2026-08-15T09:00:00Z' })
+  @IsDateString()
+  @IsNotEmpty()
+  endTime: string;
+
+  @ApiProperty({ description: 'Lokasi Sesi Presensi', example: 'Gedung Dekanat FT UNESA' })
+  @IsString()
+  @IsNotEmpty()
+  location: string;
+
   @ApiPropertyOptional({
-    description: 'Token QR (Jika presensi via QR)',
-    example: 'xyz987',
+    description: 'Target Jenis Peserta',
+    enum: ['ALL', 'MABA', 'PANITIA'],
+    default: 'ALL',
   })
+  @IsEnum(['ALL', 'MABA', 'PANITIA'])
+  @IsOptional()
+  targetParticipantType?: 'ALL' | 'MABA' | 'PANITIA';
+
+  @ApiPropertyOptional({ description: 'Target Divisi Panitia (Opsional)', example: 'Sie Acara' })
   @IsString()
   @IsOptional()
-  qrCodeToken?: string;
+  targetDivision?: string;
+
+  @ApiPropertyOptional({ description: 'Status Sesi', enum: ['DRAFT', 'PUBLISHED', 'CLOSED'] })
+  @IsEnum(['DRAFT', 'PUBLISHED', 'CLOSED'])
+  @IsOptional()
+  status?: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
+}
+
+export class CheckInDto {
+  @ApiProperty({ description: 'ID Sesi Presensi' })
+  @IsMongoId()
+  @IsNotEmpty()
+  sessionId: string;
+
+  @ApiPropertyOptional({ description: 'ID User Peserta (Jika via Operator)' })
+  @IsMongoId()
+  @IsOptional()
+  participantId?: string;
+
+  @ApiPropertyOptional({ description: 'NIM / NIP / Email Peserta (Pencarian)' })
+  @IsString()
+  @IsOptional()
+  nim?: string;
 
   @ApiPropertyOptional({
-    description: 'Waktu kedaluwarsa Token QR',
-    example: '2026-08-15T09:00:00Z',
+    description: 'Metode Check-in',
+    enum: ['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM'],
+    default: 'QR_CODE',
   })
-  @IsDateString()
+  @IsEnum(['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM'])
   @IsOptional()
-  qrExpiry?: string;
+  method?: 'QR_CODE' | 'MANUAL_OPERATOR' | 'SEARCH_NIM';
 
   @ApiPropertyOptional({
-    description: 'Garis Lintang titik presensi',
-    example: -7.311,
+    description: 'Status Kehadiran',
+    enum: ['Hadir', 'Telat', 'Izin', 'Sakit', 'Tidak Hadir'],
+    default: 'Hadir',
   })
-  @IsNumber()
+  @IsEnum(['Hadir', 'Telat', 'Izin', 'Sakit', 'Tidak Hadir'])
   @IsOptional()
-  latitude?: number;
+  status?: 'Hadir' | 'Telat' | 'Izin' | 'Sakit' | 'Tidak Hadir';
+
+  @ApiPropertyOptional({ description: 'Catatan tambahan presensi' })
+  @IsString()
+  @IsOptional()
+  notes?: string;
+}
+
+export class PaginationDto {
+  @ApiPropertyOptional({ description: 'Nomor halaman', example: 1, default: 1 })
+  @IsOptional()
+  page?: string;
 
   @ApiPropertyOptional({
-    description: 'Garis Bujur titik presensi',
-    example: 112.729,
+    description: 'Jumlah data per halaman',
+    example: 10,
+    default: 10,
   })
-  @IsNumber()
   @IsOptional()
-  longitude?: number;
+  limit?: string;
 
-  @ApiPropertyOptional({
-    description: 'Batas radius (meter) yang diizinkan',
-    example: 50,
-    default: 50,
-  })
-  @IsNumber()
-  @Min(10)
+  @ApiPropertyOptional({ description: 'Kata kunci pencarian' })
+  @IsString()
   @IsOptional()
-  radiusMeter?: number;
+  search?: string;
+
+  @ApiPropertyOptional({ description: 'Kolom untuk sorting' })
+  @IsString()
+  @IsOptional()
+  sortBy?: string;
+
+  @ApiPropertyOptional({ description: 'Urutan sorting (asc / desc)' })
+  @IsString()
+  @IsOptional()
+  sortOrder?: 'asc' | 'desc';
+}
+
+export class AttendanceFilterDto extends PaginationDto {
+  @ApiPropertyOptional({ description: 'ID Sesi Presensi' })
+  @IsMongoId()
+  @IsOptional()
+  sessionId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter Jenis Peserta', enum: ['MABA', 'PANITIA'] })
+  @IsEnum(['MABA', 'PANITIA'])
+  @IsOptional()
+  participantType?: 'MABA' | 'PANITIA';
+
+  @ApiPropertyOptional({ description: 'Filter Divisi Panitia (Sie)' })
+  @IsString()
+  @IsOptional()
+  division?: string;
+
+  @ApiPropertyOptional({ description: 'Filter Status Kehadiran' })
+  @IsString()
+  @IsOptional()
+  status?: string;
 }
 
 export class CreateTaskDto {
@@ -142,6 +224,11 @@ export class CreateTaskDto {
   @IsEnum(['individu', 'kelompok'])
   @IsNotEmpty()
   type: string;
+
+  @ApiPropertyOptional({ description: 'Status Tugas', enum: ['PUBLISHED', 'DRAFT'] })
+  @IsEnum(['PUBLISHED', 'DRAFT'])
+  @IsOptional()
+  status?: 'PUBLISHED' | 'DRAFT';
 
   @ApiPropertyOptional({
     description: 'Format file yang diperbolehkan',
@@ -187,38 +274,7 @@ export class AdminManualCheckinDto {
   status: string;
 }
 
-export class PaginationDto {
-  @ApiPropertyOptional({ description: 'Nomor halaman', example: 1, default: 1 })
-  @IsOptional()
-  page?: string;
 
-  @ApiPropertyOptional({
-    description: 'Jumlah data per halaman',
-    example: 10,
-    default: 10,
-  })
-  @IsOptional()
-  limit?: string;
-
-  @ApiPropertyOptional({ description: 'Kata kunci pencarian' })
-  @IsString()
-  @IsOptional()
-  search?: string;
-
-  @ApiPropertyOptional({ description: 'Kolom untuk sorting' })
-  @IsString()
-  @IsOptional()
-  sortBy?: string;
-
-  @ApiPropertyOptional({
-    description: 'Arah sorting',
-    enum: ['asc', 'desc'],
-    default: 'desc',
-  })
-  @IsEnum(['asc', 'desc'])
-  @IsOptional()
-  sortOrder?: 'asc' | 'desc';
-}
 
 export class CreateAnnouncementDto {
   @ApiProperty({
@@ -257,6 +313,16 @@ export class CreateAnnouncementDto {
   @IsOptional()
   isPriority?: boolean;
 
+  @ApiPropertyOptional({ description: 'Status pengumuman', enum: ['PUBLISHED', 'DRAFT', 'SCHEDULED'] })
+  @IsEnum(['PUBLISHED', 'DRAFT', 'SCHEDULED'])
+  @IsOptional()
+  status?: 'PUBLISHED' | 'DRAFT' | 'SCHEDULED';
+
+  @ApiPropertyOptional({ description: 'Waktu rilis otomatis jika dijadwalkan' })
+  @IsString()
+  @IsOptional()
+  scheduledAt?: string;
+
   @ApiPropertyOptional({ description: 'Lampiran file URL' })
   @IsArray()
   @IsString({ each: true })
@@ -281,6 +347,14 @@ export class UpdateAnnouncementDto {
   @IsMongoId({ each: true })
   @IsOptional()
   targetGroups?: string[];
+
+  @IsEnum(['PUBLISHED', 'DRAFT', 'SCHEDULED'])
+  @IsOptional()
+  status?: 'PUBLISHED' | 'DRAFT' | 'SCHEDULED';
+
+  @IsString()
+  @IsOptional()
+  scheduledAt?: string;
 
   @IsOptional()
   isPriority?: boolean;
