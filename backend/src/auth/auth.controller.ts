@@ -386,10 +386,9 @@ export class AuthController {
     const profile = await this.authService.getProfile(user.userId.toString());
     if (!profile) return { success: true, data: null };
 
-    const rawObj = (profile.toObject ? profile.toObject() : profile) as Record<
-      string,
-      unknown
-    >;
+    const rawObj = (profile.toObject
+      ? profile.toObject()
+      : profile) as unknown as Record<string, unknown>;
     const roleObj = rawObj.role as
       | {
           name?: string;

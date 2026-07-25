@@ -516,7 +516,7 @@ export class PkkmbService {
     // Determine Participant Type & Division
     const roleSlug =
       typeof participantUser.role === 'object' && participantUser.role
-        ? (participantUser.role as RoleDocument).slug
+        ? (participantUser.role as unknown as RoleDocument).slug
         : 'user';
 
     const participantType: 'MABA' | 'PANITIA' =
@@ -526,7 +526,7 @@ export class PkkmbService {
       participantUser.division || participantUser.position || undefined;
     const roleId =
       typeof participantUser.role === 'object' && participantUser.role
-        ? (participantUser.role as RoleDocument)._id
+        ? (participantUser.role as unknown as RoleDocument)._id
         : undefined;
 
     // Determine status (Hadir vs Telat)
