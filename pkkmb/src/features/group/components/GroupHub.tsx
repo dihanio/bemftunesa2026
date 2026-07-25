@@ -31,7 +31,7 @@ export function GroupHub({ groupId, userRole }: { groupId: string; userRole: str
         
         const res = await apiClient.get(endpoint);
         setSessions(res.data?.data || []);
-      } catch (error) {
+      } catch {
         // Quietly handle unassigned group state
         setSessions([]);
       } finally {

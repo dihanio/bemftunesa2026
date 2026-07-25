@@ -257,7 +257,7 @@ function AuthContent() {
     setIsResending(true);
     setVerifyError("");
     try {
-      const res = await authApi.resendVerificationCode(newEmailInput);
+      await authApi.resendVerificationCode(newEmailInput);
       setVerifyEmail(newEmailInput);
       setEmail(newEmailInput);
       setVerifySuccess(`Email berhasil diperbarui ke ${newEmailInput}! Kode konfirmasi baru telah dikirimkan.`);

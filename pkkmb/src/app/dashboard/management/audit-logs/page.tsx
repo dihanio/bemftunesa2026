@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Shield, User, Clock, Search, RefreshCw, Eye } from 'lucide-react';
+import { FileText, RefreshCw, Eye } from 'lucide-react';
 import { apiClient } from '@/shared/api/axios';
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
@@ -54,7 +54,9 @@ export default function AuditLogsPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAuditLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Megaphone, Calendar, CheckCircle2, AlertTriangle, Check, ChevronRight } from 'lucide-react';
+import { Bell, Megaphone, Calendar, AlertTriangle, Check, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { apiClient } from '@/shared/api/axios';

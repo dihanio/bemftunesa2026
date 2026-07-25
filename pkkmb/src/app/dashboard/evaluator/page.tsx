@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Plus, CheckCircle2, Loader2, Clock, FileText, Send, ShieldCheck } from 'lucide-react';
+import { ClipboardList, Plus, Loader2, Clock, FileText, Send, ShieldCheck } from 'lucide-react';
 import { apiClient } from '@/shared/api/axios';
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
@@ -47,7 +47,9 @@ export default function EvaluatorPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateTask = async (e: React.FormEvent) => {

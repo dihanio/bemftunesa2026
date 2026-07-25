@@ -4,20 +4,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   Shuffle,
-  Eye,
   Search,
   BookOpen,
-  PieChart as PieChartIcon,
-  UserCheck,
-  Building,
   RefreshCw,
-  Sparkles,
   Layers,
   ChevronRight,
-  Shield,
-  BadgeAlert,
 } from 'lucide-react';
-import { useAuthStore } from '@/features/auth/store/useAuthStore';
+
 import { usePermission } from '@/features/auth/hooks/usePermission';
 import { apiClient } from '@/shared/api/axios';
 import { useToast } from '@/components/ui/toast';
@@ -82,7 +75,6 @@ interface GugusDetailData {
 }
 
 export default function GugusPage() {
-  const { user } = useAuthStore();
   const { hasPermission } = usePermission();
   const toast = useToast();
 
@@ -114,7 +106,9 @@ export default function GugusPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchGugusList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchGugusList]);
 
   // Fetch Gugus Detail

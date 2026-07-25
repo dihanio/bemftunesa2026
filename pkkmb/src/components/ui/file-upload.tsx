@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, X, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
+import { UploadCloud, X, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 
 interface FileUploadProps {
   accept?: string;

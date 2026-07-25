@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface ProcessedPhotoResult {
   file: File;
@@ -29,11 +29,13 @@ export function usePhotoUpload(initialPhotoUrl?: string) {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   // Sync state if initialPhotoUrl updates externally
-  useEffect(() => {
+  const [prevInitialUrl, setPrevInitialUrl] = useState(initialPhotoUrl);
+  if (initialPhotoUrl !== prevInitialUrl) {
+    setPrevInitialUrl(initialPhotoUrl);
     if (initialPhotoUrl && !photoResult) {
       setCurrentPhotoUrl(initialPhotoUrl);
     }
-  }, [initialPhotoUrl, photoResult]);
+  }
 
   // 1. User selects a local file
   const handleSelectFile = useCallback((file: File) => {

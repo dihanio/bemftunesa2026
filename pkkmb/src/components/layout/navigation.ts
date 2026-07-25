@@ -9,11 +9,6 @@ import {
   Shield,
   FileText,
   CheckSquare,
-  FolderOpen,
-  UserCheck,
-  Layers,
-  Settings,
-  Key,
   type LucideIcon,
 } from 'lucide-react';
 

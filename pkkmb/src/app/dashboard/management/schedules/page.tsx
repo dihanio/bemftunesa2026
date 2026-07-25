@@ -46,7 +46,9 @@ export default function SchedulesManagementPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSchedules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateSchedule = async (e: React.FormEvent) => {

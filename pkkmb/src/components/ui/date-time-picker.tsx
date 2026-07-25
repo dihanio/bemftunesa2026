@@ -73,7 +73,9 @@ export function DateTimePicker({
   const [viewYear, setViewYear] = useState(selectedDate.getFullYear());
   const [viewMonth, setViewMonth] = useState(selectedDate.getMonth());
 
-  useEffect(() => {
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     if (value) {
       const d = new Date(value);
       if (!isNaN(d.getTime())) {
@@ -84,7 +86,7 @@ export function DateTimePicker({
         setMinutes(String(d.getMinutes()).padStart(2, '0'));
       }
     }
-  }, [value]);
+  }
 
   // Close popover on click outside
   useEffect(() => {

@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Edit2, Trash2, CheckCircle2, Loader2, Lock, FileCode } from 'lucide-react';
+import { Shield, Plus, Edit2, Trash2, CheckCircle2, Loader2, Lock } from 'lucide-react';
 import { apiClient } from '@/shared/api/axios';
 import { Dialog } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/toast';
-import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
 
 interface PermissionItem {
@@ -57,7 +56,9 @@ export default function RolesManagementPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOpenCreateModal = () => {

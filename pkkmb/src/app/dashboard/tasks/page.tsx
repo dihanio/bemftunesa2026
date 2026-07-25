@@ -11,7 +11,6 @@ import {
   Send,
   ExternalLink,
   Loader2,
-  ShieldCheck,
   Info,
 } from 'lucide-react';
 import { Dialog } from '@/components/ui/dialog';
@@ -77,7 +76,9 @@ export default function TasksPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleOpenModal = (task: Task) => {

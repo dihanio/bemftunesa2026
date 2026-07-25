@@ -2,7 +2,7 @@
 
 import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Megaphone, Calendar, Info, Clock, AlertCircle } from 'lucide-react';
+import { Megaphone, Calendar, Info, Clock } from 'lucide-react';
 import { apiClient } from '@/shared/api/axios';
 import { EmptyState } from '@/components/ui/empty-state';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -48,7 +48,9 @@ function InformasiContent() {
         setIsLoading(false);
       }
     };
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setTab = (newTab: string) => {

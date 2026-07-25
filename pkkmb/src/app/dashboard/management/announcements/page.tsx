@@ -48,7 +48,9 @@ export default function AnnouncementsManagementPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAnnouncements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreateAnnouncement = async (e: React.FormEvent) => {

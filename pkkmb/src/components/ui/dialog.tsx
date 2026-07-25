@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -13,6 +13,8 @@ interface DialogProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
+const emptySubscribe = () => () => {};
+
 export function Dialog({
   isOpen,
   onClose,
@@ -21,11 +23,11 @@ export function Dialog({
   children,
   maxWidth = 'lg',
 }: DialogProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -43,7 +45,7 @@ export function Dialog({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !mounted) return null;
+  if (!isOpen || !isMounted) return null;
 
   const maxWidthClass = {
     sm: 'max-w-sm',

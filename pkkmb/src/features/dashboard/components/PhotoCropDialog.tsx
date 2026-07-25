@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { Dialog } from '@/components/ui/dialog';
-import { ZoomIn, ZoomOut, RotateCw, Check, Loader2, Image as ImageIcon } from 'lucide-react';
+import { ZoomIn, RotateCw, Check, Loader2 } from 'lucide-react';
 import { processAndCompressImage, PixelCrop } from '../utils/imageProcessor';
 
 interface PhotoCropDialogProps {

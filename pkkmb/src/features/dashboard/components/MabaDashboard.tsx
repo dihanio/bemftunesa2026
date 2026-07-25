@@ -13,15 +13,12 @@ import {
   Clock,
   UserCheck,
   Upload,
-  CheckCircle2,
   Shuffle,
   Crop,
-  Trash2,
-  RefreshCw,
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
+
 import { PkkmbProgressCard } from './cards/PkkmbProgressCard';
 import { NextActionCard } from './cards/NextActionCard';
 import { Select } from '@/components/ui/select';
@@ -93,6 +90,7 @@ export function MabaDashboard() {
   }, [maba]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 

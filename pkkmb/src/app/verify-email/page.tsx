@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -24,20 +24,7 @@ function VerifyEmailContent() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const [isResending, setIsResending] = useState(false);
 
-  useEffect(() => {
-    if (urlCode && urlEmail) {
-      handleAutoVerify(urlEmail, urlCode);
-    }
-  }, [urlCode, urlEmail]);
-
-  useEffect(() => {
-    if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [resendCooldown]);
-
-  const handleAutoVerify = async (emailToVerify: string, codeToVerify: string) => {
+  const handleAutoVerify = useCallback(async (emailToVerify: string, codeToVerify: string) => {
     setStatus("verifying");
     setErrorMessage("");
     try {
@@ -52,7 +39,21 @@ function VerifyEmailContent() {
       setStatus("error");
       setErrorMessage(error.response?.data?.message || "Kode verifikasi tidak valid atau telah kedaluwarsa.");
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    if (urlCode && urlEmail) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      handleAutoVerify(urlEmail, urlCode);
+    }
+  }, [urlCode, urlEmail, handleAutoVerify]);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   const handleManualVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,7 +66,7 @@ function VerifyEmailContent() {
 
   const handleResendCode = async () => {
     if (!email) {
-      setErrorMessage("Masukkan alamat email untuk mengiri ulang kode.");
+      setErrorMessage("Masukkan alamat email untuk mengirim ulang kode.");
       return;
     }
     setIsResending(true);
