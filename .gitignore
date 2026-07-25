@@ -52,6 +52,13 @@ yarn-error.log*
 .pnpm-debug.log*
 logs/
 *.log
+*.archive
+*.zip
+*_log.txt
+dry-run.json
+ims_*_login.tsx
+deploy_logs/
+git_log.txt
 
 # env files (NEVER commit secrets)
 .env
