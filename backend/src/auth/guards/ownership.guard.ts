@@ -37,7 +37,8 @@ export class OwnershipGuard implements CanActivate {
       return true; // Bypass ownership check for super admins/admins
     }
 
-    const targetUserId = request.params?.userId || request.params?.id || request.body?.userId;
+    const targetUserId =
+      request.params?.userId || request.params?.id || request.body?.userId;
     const targetGroupId = request.params?.groupId || request.body?.groupId;
 
     // Self profile check

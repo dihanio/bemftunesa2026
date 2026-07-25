@@ -213,7 +213,13 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('profile')
   async updateProfile(
-    @Body() body: { userId?: string; email?: string; studyProgram?: string; avatar?: string }
+    @Body()
+    body: {
+      userId?: string;
+      email?: string;
+      studyProgram?: string;
+      avatar?: string;
+    },
   ) {
     // If email or userId is provided, find and update
     const emailToUse = body.email;
@@ -380,15 +386,26 @@ export class AuthController {
     const profile = await this.authService.getProfile(user.userId.toString());
     if (!profile) return { success: true, data: null };
 
-    const rawObj = profile.toObject ? profile.toObject() : profile;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const roleObj = rawObj.role as any;
+    const rawObj = (profile.toObject ? profile.toObject() : profile) as Record<
+      string,
+      unknown
+    >;
+    const roleObj = rawObj.role as
+      | {
+          name?: string;
+          slug?: string;
+          permissions?: Array<string | { name?: string }>;
+        }
+      | undefined;
     let permissions: string[] = user.permissions || [];
 
-    if (roleObj && typeof roleObj === 'object' && Array.isArray(roleObj.permissions)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      permissions = roleObj.permissions.map((p: any) =>
-        typeof p === 'string' ? p : p.name,
+    if (
+      roleObj &&
+      typeof roleObj === 'object' &&
+      Array.isArray(roleObj.permissions)
+    ) {
+      permissions = roleObj.permissions.map((p) =>
+        typeof p === 'string' ? p : p.name || '',
       );
     }
 

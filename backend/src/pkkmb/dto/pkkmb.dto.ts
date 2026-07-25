@@ -13,8 +13,6 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-
-
 export class MabaCheckinDto {
   @ApiProperty({
     description: 'ID Sesi Presensi',
@@ -72,17 +70,26 @@ export class CreateAttendanceSessionDto {
   @IsNotEmpty()
   date: string;
 
-  @ApiProperty({ description: 'Jam Mulai Sesi', example: '2026-08-15T07:00:00Z' })
+  @ApiProperty({
+    description: 'Jam Mulai Sesi',
+    example: '2026-08-15T07:00:00Z',
+  })
   @IsDateString()
   @IsNotEmpty()
   startTime: string;
 
-  @ApiProperty({ description: 'Jam Selesai Sesi', example: '2026-08-15T09:00:00Z' })
+  @ApiProperty({
+    description: 'Jam Selesai Sesi',
+    example: '2026-08-15T09:00:00Z',
+  })
   @IsDateString()
   @IsNotEmpty()
   endTime: string;
 
-  @ApiProperty({ description: 'Lokasi Sesi Presensi', example: 'Gedung Dekanat FT UNESA' })
+  @ApiProperty({
+    description: 'Lokasi Sesi Presensi',
+    example: 'Gedung Dekanat FT UNESA',
+  })
   @IsString()
   @IsNotEmpty()
   location: string;
@@ -96,12 +103,18 @@ export class CreateAttendanceSessionDto {
   @IsOptional()
   targetParticipantType?: 'ALL' | 'MABA' | 'PANITIA';
 
-  @ApiPropertyOptional({ description: 'Target Divisi Panitia (Opsional)', example: 'Sie Acara' })
+  @ApiPropertyOptional({
+    description: 'Target Divisi Panitia (Opsional)',
+    example: 'Sie Acara',
+  })
   @IsString()
   @IsOptional()
   targetDivision?: string;
 
-  @ApiPropertyOptional({ description: 'Status Sesi', enum: ['DRAFT', 'PUBLISHED', 'CLOSED'] })
+  @ApiPropertyOptional({
+    description: 'Status Sesi',
+    enum: ['DRAFT', 'PUBLISHED', 'CLOSED'],
+  })
   @IsEnum(['DRAFT', 'PUBLISHED', 'CLOSED'])
   @IsOptional()
   status?: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
@@ -182,7 +195,10 @@ export class AttendanceFilterDto extends PaginationDto {
   @IsOptional()
   sessionId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter Jenis Peserta', enum: ['MABA', 'PANITIA'] })
+  @ApiPropertyOptional({
+    description: 'Filter Jenis Peserta',
+    enum: ['MABA', 'PANITIA'],
+  })
   @IsEnum(['MABA', 'PANITIA'])
   @IsOptional()
   participantType?: 'MABA' | 'PANITIA';
@@ -225,7 +241,10 @@ export class CreateTaskDto {
   @IsNotEmpty()
   type: string;
 
-  @ApiPropertyOptional({ description: 'Status Tugas', enum: ['PUBLISHED', 'DRAFT'] })
+  @ApiPropertyOptional({
+    description: 'Status Tugas',
+    enum: ['PUBLISHED', 'DRAFT'],
+  })
   @IsEnum(['PUBLISHED', 'DRAFT'])
   @IsOptional()
   status?: 'PUBLISHED' | 'DRAFT';
@@ -274,8 +293,6 @@ export class AdminManualCheckinDto {
   status: string;
 }
 
-
-
 export class CreateAnnouncementDto {
   @ApiProperty({
     description: 'Judul Pengumuman',
@@ -313,7 +330,10 @@ export class CreateAnnouncementDto {
   @IsOptional()
   isPriority?: boolean;
 
-  @ApiPropertyOptional({ description: 'Status pengumuman', enum: ['PUBLISHED', 'DRAFT', 'SCHEDULED'] })
+  @ApiPropertyOptional({
+    description: 'Status pengumuman',
+    enum: ['PUBLISHED', 'DRAFT', 'SCHEDULED'],
+  })
   @IsEnum(['PUBLISHED', 'DRAFT', 'SCHEDULED'])
   @IsOptional()
   status?: 'PUBLISHED' | 'DRAFT' | 'SCHEDULED';

@@ -29,7 +29,11 @@ export class User {
   @Prop()
   studyProgram: string; // Program Studi (e.g. "S1 Teknik Informatika")
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'StudyProgram', index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'StudyProgram',
+    index: true,
+  })
   studyProgramId?: import('mongoose').Types.ObjectId;
 
   @Prop({ enum: ['L', 'P'], default: 'L' })

@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -136,13 +140,15 @@ export class AuthService {
     return user;
   }
 
-  async registerMaba(dto: import('./dto/register.dto').RegisterDto): Promise<UserDocument> {
+  async registerMaba(
+    dto: import('./dto/register.dto').RegisterDto,
+  ): Promise<UserDocument> {
     const { nim, name, email, phone, password } = dto;
-    
+
     // Check if NIM or Email already exists
-    const orQuery: any[] = [{ email }];
+    const orQuery: Record<string, unknown>[] = [{ email }];
     if (nim) orQuery.push({ nim });
-    
+
     const existingUser = await this.userModel.findOne({ $or: orQuery }).exec();
     if (existingUser) {
       if (nim && existingUser.nim === nim) {
@@ -177,13 +183,20 @@ export class AuthService {
     return await newUser.save();
   }
 
-  async verifyEmailCode(email: string, code: string): Promise<{ success: boolean; message: string }> {
+  async verifyEmailCode(
+    email: string,
+    code: string,
+  ): Promise<{ success: boolean; message: string }> {
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
       throw new UnauthorizedException('Email tidak ditemukan.');
     }
 
-    if (code !== '123456' && user.emailVerificationCode && user.emailVerificationCode !== code) {
+    if (
+      code !== '123456' &&
+      user.emailVerificationCode &&
+      user.emailVerificationCode !== code
+    ) {
       throw new UnauthorizedException('Kode verifikasi tidak valid.');
     }
 
@@ -196,7 +209,9 @@ export class AuthService {
     };
   }
 
-  async resendVerificationCode(email: string): Promise<{ success: boolean; message: string }> {
+  async resendVerificationCode(
+    email: string,
+  ): Promise<{ success: boolean; message: string }> {
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
       throw new UnauthorizedException('Email tidak ditemukan.');
@@ -235,7 +250,7 @@ export class AuthService {
 
     await this.userModel.updateOne(
       { _id: user._id },
-      { $set: { lastLoginAt: new Date() } }
+      { $set: { lastLoginAt: new Date() } },
     );
 
     return user;
@@ -244,8 +259,13 @@ export class AuthService {
   generateTokens(user: UserDocument) {
     const payload = { sub: user._id.toString(), email: user.email };
 
-    const expiresInConfig = this.configService.get<string>('JWT_EXPIRES_IN', '604800');
-    const expiresIn = /^\d+$/.test(expiresInConfig) ? parseInt(expiresInConfig, 10) : expiresInConfig;
+    const expiresInConfig = this.configService.get<string>(
+      'JWT_EXPIRES_IN',
+      '604800',
+    );
+    const expiresIn = /^\d+$/.test(expiresInConfig)
+      ? parseInt(expiresInConfig, 10)
+      : expiresInConfig;
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: expiresIn as import('@nestjs/jwt').JwtSignOptions['expiresIn'],
@@ -278,7 +298,7 @@ export class AuthService {
 
   async updateMabaProfile(
     userId: string,
-    payload: { studyProgram?: string; avatar?: string }
+    payload: { studyProgram?: string; avatar?: string },
   ): Promise<UserDocument> {
     const user = await this.userModel.findById(userId).exec();
     if (!user) {
@@ -293,7 +313,7 @@ export class AuthService {
 
   async updateMabaProfileByEmail(
     email: string,
-    payload: { studyProgram?: string; avatar?: string }
+    payload: { studyProgram?: string; avatar?: string },
   ): Promise<UserDocument> {
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {

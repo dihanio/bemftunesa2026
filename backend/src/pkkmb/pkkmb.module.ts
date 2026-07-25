@@ -35,7 +35,10 @@ import {
 } from '../schemas/pkkmb-gallery.schema';
 
 import { Rumpun, RumpunSchema } from '../schemas/rumpun.schema';
-import { StudyProgram, StudyProgramSchema } from '../schemas/study-program.schema';
+import {
+  StudyProgram,
+  StudyProgramSchema,
+} from '../schemas/study-program.schema';
 
 import { PkkmbController } from './pkkmb.controller';
 import { PkkmbService } from './pkkmb.service';

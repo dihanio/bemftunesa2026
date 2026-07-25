@@ -135,5 +135,12 @@ export const PkkmbAttendanceRecordSchema = SchemaFactory.createForClass(
   PkkmbAttendanceRecord,
 );
 
-PkkmbAttendanceRecordSchema.index({ session: 1, participant: 1 }, { unique: true });
-PkkmbAttendanceRecordSchema.index({ participantType: 1, division: 1, status: 1 });
+PkkmbAttendanceRecordSchema.index(
+  { session: 1, participant: 1 },
+  { unique: true },
+);
+PkkmbAttendanceRecordSchema.index({
+  participantType: 1,
+  division: 1,
+  status: 1,
+});

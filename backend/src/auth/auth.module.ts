@@ -19,13 +19,19 @@ import { AuthorizationService } from '../common/auth/authorization.service';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const expiresInConfig = configService.get<string>('JWT_EXPIRES_IN', '604800');
-        const expiresIn = /^\\d+$/.test(expiresInConfig) ? parseInt(expiresInConfig, 10) : expiresInConfig;
-        
+        const expiresInConfig = configService.get<string>(
+          'JWT_EXPIRES_IN',
+          '604800',
+        );
+        const expiresIn = /^\\d+$/.test(expiresInConfig)
+          ? parseInt(expiresInConfig, 10)
+          : expiresInConfig;
+
         return {
           secret: configService.get<string>('JWT_SECRET'),
           signOptions: {
-            expiresIn: expiresIn as import('@nestjs/jwt').JwtSignOptions['expiresIn'],
+            expiresIn:
+              expiresIn as import('@nestjs/jwt').JwtSignOptions['expiresIn'],
           },
         };
       },

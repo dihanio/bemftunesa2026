@@ -2,7 +2,6 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, Query, FilterQuery } from 'mongoose';
@@ -39,10 +38,12 @@ import {
   PkkmbGalleryDocument,
 } from '../schemas/pkkmb-gallery.schema';
 import { Rumpun, RumpunDocument } from '../schemas/rumpun.schema';
-import { StudyProgram, StudyProgramDocument } from '../schemas/study-program.schema';
+import {
+  StudyProgram,
+  StudyProgramDocument,
+} from '../schemas/study-program.schema';
 
 import {
-  MabaCheckinDto,
   MabaSubmitTaskDto,
   CreateAttendanceSessionDto,
   CheckInDto,
@@ -57,6 +58,7 @@ import {
   UpdateScheduleDto,
 } from './dto/pkkmb.dto';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getDistance(
   lat1: number,
   lon1: number,
@@ -133,7 +135,11 @@ export class PkkmbService {
   }
 
   async getAllStudyPrograms() {
-    return this.studyProgramModel.find().populate('rumpun').sort({ name: 1 }).exec();
+    return this.studyProgramModel
+      .find()
+      .populate('rumpun')
+      .sort({ name: 1 })
+      .exec();
   }
 
   async getAllGugus() {
@@ -150,7 +156,9 @@ export class PkkmbService {
     ]);
 
     const countMap = new Map<string, number>();
-    memberCounts.forEach((m) => countMap.set(m._id.toString(), m.count));
+    (
+      memberCounts as Array<{ _id: Types.ObjectId | string; count: number }>
+    ).forEach((m) => countMap.set(String(m._id), m.count));
 
     return gugusList.map((g) => {
       const obj = g.toObject();
@@ -185,12 +193,17 @@ export class PkkmbService {
 
     // Fetch members of this Gugus
     const members = await this.userModel
-      .find({ pkkmbGroup: gugus._id, deletedAt: null })
+      .find({
+        pkkmbGroup: (gugus as { _id: Types.ObjectId })._id,
+        deletedAt: null,
+      })
       .populate({
         path: 'studyProgramId',
         populate: { path: 'rumpun' },
       })
-      .select('name nim email phone studyProgram studyProgramId gender avatar division position')
+      .select(
+        'name nim email phone studyProgram studyProgramId gender avatar division position',
+      )
       .exec();
 
     const totalAnggota = members.length;
@@ -198,7 +211,10 @@ export class PkkmbService {
     // Breakdown by Study Program
     const prodiMap = new Map<string, number>();
     // Breakdown by Rumpun
-    const rumpunMap = new Map<string, { name: string; color: string; count: number }>();
+    const rumpunMap = new Map<
+      string,
+      { name: string; color: string; count: number }
+    >();
 
     let maleCount = 0;
     let femaleCount = 0;
@@ -225,39 +241,57 @@ export class PkkmbService {
       if (
         m.studyProgramId &&
         typeof m.studyProgramId === 'object' &&
-        (m.studyProgramId as unknown as { rumpun?: { name?: string; color?: string } }).rumpun
+        (
+          m.studyProgramId as unknown as {
+            rumpun?: { name?: string; color?: string };
+          }
+        ).rumpun
       ) {
-        const rObj = (m.studyProgramId as unknown as { rumpun: { name?: string; color?: string } }).rumpun;
+        const rObj = (
+          m.studyProgramId as unknown as {
+            rumpun: { name?: string; color?: string };
+          }
+        ).rumpun;
         if (rObj.name) rumpunName = rObj.name;
         if (rObj.color) rumpunColor = rObj.color;
       }
 
-      const existingR = rumpunMap.get(rumpunName) || { name: rumpunName, color: rumpunColor, count: 0 };
+      const existingR = rumpunMap.get(rumpunName) || {
+        name: rumpunName,
+        color: rumpunColor,
+        count: 0,
+      };
       existingR.count++;
       rumpunMap.set(rumpunName, existingR);
     });
 
-    const distribusiProdi = Array.from(prodiMap.entries()).map(([name, count]) => ({
-      name,
-      count,
-      percentage: totalAnggota > 0 ? Math.round((count / totalAnggota) * 100) : 0,
-    }));
+    const distribusiProdi = Array.from(prodiMap.entries()).map(
+      ([name, count]) => ({
+        name,
+        count,
+        percentage:
+          totalAnggota > 0 ? Math.round((count / totalAnggota) * 100) : 0,
+      }),
+    );
 
     const distribusiRumpun = Array.from(rumpunMap.values()).map((r) => ({
       name: r.name,
       color: r.color,
       count: r.count,
-      percentage: totalAnggota > 0 ? Math.round((r.count / totalAnggota) * 100) : 0,
+      percentage:
+        totalAnggota > 0 ? Math.round((r.count / totalAnggota) * 100) : 0,
     }));
 
     return {
-      gugus,
+      gugus: gugus as Record<string, unknown>,
       totalAnggota,
       distribusiGender: {
         maleCount,
         femaleCount,
-        malePercentage: totalAnggota > 0 ? Math.round((maleCount / totalAnggota) * 100) : 0,
-        femalePercentage: totalAnggota > 0 ? Math.round((femaleCount / totalAnggota) * 100) : 0,
+        malePercentage:
+          totalAnggota > 0 ? Math.round((maleCount / totalAnggota) * 100) : 0,
+        femalePercentage:
+          totalAnggota > 0 ? Math.round((femaleCount / totalAnggota) * 100) : 0,
       },
       distribusiProdi,
       distribusiRumpun,
@@ -340,18 +374,38 @@ export class PkkmbService {
   }
 
   async getAdminGugusAnalytics() {
-    const totalGugus = await this.groupModel.countDocuments({ deletedAt: null });
-    const totalMahasiswa = await this.userModel.countDocuments({ deletedAt: null });
-    const totalStudyPrograms = await this.studyProgramModel.countDocuments({ isActive: true });
+    const totalGugus = await this.groupModel.countDocuments({
+      deletedAt: null,
+    });
+    const totalMahasiswa = await this.userModel.countDocuments({
+      deletedAt: null,
+    });
+    const totalStudyPrograms = await this.studyProgramModel.countDocuments({
+      isActive: true,
+    });
     const totalRumpun = await this.rumpunModel.countDocuments();
 
     // Distribution by Gugus
     const gugusStats = await this.userModel.aggregate([
       { $match: { pkkmbGroup: { $ne: null }, deletedAt: null } },
       { $group: { _id: '$pkkmbGroup', count: { $sum: 1 } } },
-      { $lookup: { from: 'pkkmb_gugus', localField: '_id', foreignField: '_id', as: 'gugus' } },
+      {
+        $lookup: {
+          from: 'pkkmb_gugus',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'gugus',
+        },
+      },
       { $unwind: '$gugus' },
-      { $project: { _id: 0, gugusName: '$gugus.name', nomor: '$gugus.nomor', count: 1 } },
+      {
+        $project: {
+          _id: 0,
+          gugusName: '$gugus.name',
+          nomor: '$gugus.nomor',
+          count: 1,
+        },
+      },
       { $sort: { nomor: 1 } },
     ]);
 
@@ -393,10 +447,7 @@ export class PkkmbService {
     });
   }
 
-  async getAttendanceSessions(
-    participantType?: string,
-    status?: string,
-  ) {
+  async getAttendanceSessions(participantType?: string, status?: string) {
     const filter: FilterQuery<unknown> = { deletedAt: null };
     if (participantType && participantType !== 'ALL') {
       filter.$or = [
@@ -430,26 +481,30 @@ export class PkkmbService {
   ) {
     const session = await this.sessionModel.findById(dto.sessionId);
     if (!session || session.status === 'CLOSED') {
-      throw new BadRequestException('Sesi presensi tidak aktif atau sudah ditutup.');
+      throw new BadRequestException(
+        'Sesi presensi tidak aktif atau sudah ditutup.',
+      );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let participantUser: any = null;
+    let participantUser: UserDocument | null = null;
 
     if (dto.participantId) {
-      participantUser = await this.userModel.findById(dto.participantId).populate('role').exec();
+      participantUser = await this.userModel
+        .findById(dto.participantId)
+        .populate('role')
+        .exec();
     } else if (dto.nim) {
       participantUser = await this.userModel
         .findOne({
-          $or: [
-            { nim: dto.nim },
-            { email: dto.nim.toLowerCase() },
-          ],
+          $or: [{ nim: dto.nim }, { email: dto.nim.toLowerCase() }],
         })
         .populate('role')
         .exec();
     } else if (operatorId) {
-      participantUser = await this.userModel.findById(operatorId).populate('role').exec();
+      participantUser = await this.userModel
+        .findById(operatorId)
+        .populate('role')
+        .exec();
     }
 
     if (!participantUser) {
@@ -467,7 +522,8 @@ export class PkkmbService {
     const participantType: 'MABA' | 'PANITIA' =
       roleSlug === 'user' || roleSlug === 'maba' ? 'MABA' : 'PANITIA';
 
-    const division = participantUser.division || participantUser.position || undefined;
+    const division =
+      participantUser.division || participantUser.position || undefined;
     const roleId =
       typeof participantUser.role === 'object' && participantUser.role
         ? (participantUser.role as RoleDocument)._id
@@ -504,7 +560,10 @@ export class PkkmbService {
         },
         { upsert: true, new: true },
       )
-      .populate('participant', 'name nim email division position studyProgram avatar')
+      .populate(
+        'participant',
+        'name nim email division position studyProgram avatar',
+      )
       .populate('session', 'title location startTime endTime')
       .exec();
   }
@@ -529,15 +588,23 @@ export class PkkmbService {
     const records = await this.logModel
       .find(filter)
       .sort({ checkInTime: -1 })
-      .populate('participant', 'name nim email division position studyProgram avatar')
-      .populate('session', 'title location startTime endTime targetParticipantType')
+      .populate(
+        'participant',
+        'name nim email division position studyProgram avatar',
+      )
+      .populate(
+        'session',
+        'title location startTime endTime targetParticipantType',
+      )
       .populate('operator', 'name email')
       .exec();
 
     // Compute Summary Stats
     const totalHadir = records.filter((r) => r.status === 'Hadir').length;
     const terlambat = records.filter((r) => r.status === 'Telat').length;
-    const sakitIzin = records.filter((r) => r.status === 'Izin' || r.status === 'Sakit').length;
+    const sakitIzin = records.filter(
+      (r) => r.status === 'Izin' || r.status === 'Sakit',
+    ).length;
     const tidakHadir = records.filter((r) => r.status === 'Tidak Hadir').length;
 
     return {
@@ -932,7 +999,8 @@ export class PkkmbService {
       let nextAction = 'Persiapkan diri Anda untuk kegiatan selanjutnya.';
       const activeTasks = allTasks.filter((t) => new Date() <= t.deadline);
       const pendingTasks = activeTasks.filter(
-        (t) => !submissions.find((s) => s.taskId.toString() === t._id.toString()),
+        (t) =>
+          !submissions.find((s) => s.taskId.toString() === t._id.toString()),
       );
 
       if (pendingTasks.length > 0) {
@@ -979,7 +1047,8 @@ export class PkkmbService {
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       throw new BadRequestException(
-        'Gagal memuat dashboard: ' + ((error as Error)?.message || 'Unknown error'),
+        'Gagal memuat dashboard: ' +
+          ((error as Error)?.message || 'Unknown error'),
       );
     }
   }

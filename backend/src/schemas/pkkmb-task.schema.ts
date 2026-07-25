@@ -15,7 +15,10 @@ export class PkkmbTask {
   @Prop({ required: true })
   deadline: Date;
 
-  @Prop({ required: true, enum: ['individu', 'kelompok', 'INDIVIDU', 'KELOMPOK'] })
+  @Prop({
+    required: true,
+    enum: ['individu', 'kelompok', 'INDIVIDU', 'KELOMPOK'],
+  })
   type: string;
 
   @Prop({

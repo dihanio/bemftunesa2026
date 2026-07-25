@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsArray, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  IsMongoId,
+} from 'class-validator';
 
 export class CreateRoleDto {
   @ApiProperty({ description: 'Nama Role', example: 'Panitia Khusus' })
@@ -12,7 +18,10 @@ export class CreateRoleDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ description: 'Daftar ID Permission', example: ['60d5ec49f1a2c8a1b4e12345'] })
+  @ApiProperty({
+    description: 'Daftar ID Permission',
+    example: ['60d5ec49f1a2c8a1b4e12345'],
+  })
   @IsArray()
   @IsMongoId({ each: true })
   @IsOptional()

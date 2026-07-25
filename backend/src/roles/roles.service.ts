@@ -107,7 +107,8 @@ export class RolesService {
 
     if (dto.permissions) {
       role.permissions = dto.permissions.map(
-        (pId) => new Types.ObjectId(pId) as unknown as MongooseSchema.Types.ObjectId,
+        (pId) =>
+          new Types.ObjectId(pId) as unknown as MongooseSchema.Types.ObjectId,
       );
     }
 
@@ -139,9 +140,7 @@ export class RolesService {
     }
 
     if (role.isSystem) {
-      throw new BadRequestException(
-        'Role sistem bawaan tidak dapat dihapus.',
-      );
+      throw new BadRequestException('Role sistem bawaan tidak dapat dihapus.');
     }
 
     const assignedUsersCount = await this.userModel.countDocuments({

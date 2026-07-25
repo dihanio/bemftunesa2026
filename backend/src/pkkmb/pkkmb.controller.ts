@@ -6,7 +6,6 @@ import {
   Param,
   Body,
   UseGuards,
-  Res,
   Req,
   BadRequestException,
   Query,
@@ -67,7 +66,9 @@ export class PkkmbController {
   // ─── GUGUS & MASTER DATA ENDPOINTS ───────────────────────────────────────
 
   @Get('master/rumpun')
-  @ApiOperation({ summary: 'Mendapatkan daftar Master Rumpun Akademik FT UNESA' })
+  @ApiOperation({
+    summary: 'Mendapatkan daftar Master Rumpun Akademik FT UNESA',
+  })
   async getAllRumpun() {
     const data = await this.pkkmbService.getAllRumpun();
     return { success: true, data };
@@ -89,14 +90,18 @@ export class PkkmbController {
 
   @Get('gugus/analytics')
   @RequiredPermissions(PkkmbPermission.MONITORING_READ)
-  @ApiOperation({ summary: 'Mendapatkan analitik distribusi Gugus, Prodi, dan Rumpun' })
+  @ApiOperation({
+    summary: 'Mendapatkan analitik distribusi Gugus, Prodi, dan Rumpun',
+  })
   async getAdminGugusAnalytics() {
     const data = await this.pkkmbService.getAdminGugusAnalytics();
     return { success: true, data };
   }
 
   @Get('gugus/:id')
-  @ApiOperation({ summary: 'Mendapatkan detail Gugus & statistik distribusi lintas prodi' })
+  @ApiOperation({
+    summary: 'Mendapatkan detail Gugus & statistik distribusi lintas prodi',
+  })
   async getGugusDetail(@Param('id') id: string) {
     const data = await this.pkkmbService.getGugusDetail(id);
     return { success: true, data };
@@ -104,7 +109,10 @@ export class PkkmbController {
 
   @Post('gugus/auto-distribute')
   @RequiredPermissions(PkkmbPermission.GROUP_CREATE)
-  @ApiOperation({ summary: 'Menjalankan Algoritma Pembagian Gugus Otomatis Lintas Program Studi (Round-Robin)' })
+  @ApiOperation({
+    summary:
+      'Menjalankan Algoritma Pembagian Gugus Otomatis Lintas Program Studi (Round-Robin)',
+  })
   async autoDistributeGugus() {
     const data = await this.pkkmbService.autoDistributeGugus();
     return { success: true, ...data };
@@ -136,29 +144,46 @@ export class PkkmbController {
       user.userId,
       dto,
     );
-    return { success: true, message: 'Sesi presensi baru berhasil dibuat', data };
+    return {
+      success: true,
+      message: 'Sesi presensi baru berhasil dibuat',
+      data,
+    };
   }
 
   @Patch('attendance/sessions/:id/status')
   @RequiredPermissions(PkkmbPermission.ATTENDANCE_SESSION_CREATE)
-  @ApiOperation({ summary: 'Memperbarui status sesi presensi (DRAFT, PUBLISHED, CLOSED)' })
+  @ApiOperation({
+    summary: 'Memperbarui status sesi presensi (DRAFT, PUBLISHED, CLOSED)',
+  })
   async updateAttendanceSessionStatus(
     @Param('id') id: string,
     @Body('status') status: 'DRAFT' | 'PUBLISHED' | 'CLOSED',
   ) {
-    const data = await this.pkkmbService.updateAttendanceSessionStatus(id, status);
-    return { success: true, message: 'Status sesi presensi berhasil diperbarui', data };
+    const data = await this.pkkmbService.updateAttendanceSessionStatus(
+      id,
+      status,
+    );
+    return {
+      success: true,
+      message: 'Status sesi presensi berhasil diperbarui',
+      data,
+    };
   }
 
   @Post('attendance/checkin')
   @RequiredPermissions(PkkmbPermission.ATTENDANCE_CHECKIN)
-  @ApiOperation({ summary: 'Melakukan check-in presensi universal (QR, Manual Operator, Search NIM)' })
+  @ApiOperation({
+    summary:
+      'Melakukan check-in presensi universal (QR, Manual Operator, Search NIM)',
+  })
   async checkIn(
     @CurrentUser() user: { userId: string },
     @Body() dto: CheckInDto,
     @Req() req: Request,
   ) {
-    const ipAddress = req.ip || (req.headers['x-forwarded-for'] as string) || undefined;
+    const ipAddress =
+      req.ip || (req.headers['x-forwarded-for'] as string) || undefined;
     const userAgent = req.headers['user-agent'];
 
     const data = await this.pkkmbService.checkIn(
@@ -172,7 +197,9 @@ export class PkkmbController {
 
   @Get('attendance/monitoring')
   @RequiredPermissions(PkkmbPermission.MONITORING_READ)
-  @ApiOperation({ summary: 'Monitoring dashboard & laporan presensi real-time' })
+  @ApiOperation({
+    summary: 'Monitoring dashboard & laporan presensi real-time',
+  })
   async getAttendanceMonitoring(@Query() query: AttendanceFilterDto) {
     const data = await this.pkkmbService.getAttendanceMonitoring(query);
     return { success: true, data };
@@ -201,7 +228,9 @@ export class PkkmbController {
 
   @Post('maba/tasks/:id/submit')
   @RequiredPermissions(PkkmbPermission.TASK_SUBMIT)
-  @ApiOperation({ summary: 'Pengumpulan Tugas (Metode Google Drive / Cloud Link)' })
+  @ApiOperation({
+    summary: 'Pengumpulan Tugas (Metode Google Drive / Cloud Link)',
+  })
   @ApiParam({ name: 'id', description: 'ID Tugas' })
   async submitTask(
     @CurrentUser() user: UserDocument,
@@ -248,7 +277,9 @@ export class PkkmbController {
 
   @Get('dashboard/panitia')
   @RequiredPermissions(PkkmbPermission.MONITORING_READ)
-  @ApiOperation({ summary: 'Mendapatkan data agregasi untuk Dashboard Panitia' })
+  @ApiOperation({
+    summary: 'Mendapatkan data agregasi untuk Dashboard Panitia',
+  })
   async getPanitiaDashboard() {
     const data = await this.pkkmbService.getPanitiaDashboard();
     return { success: true, data };

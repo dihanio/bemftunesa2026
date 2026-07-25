@@ -43,13 +43,13 @@ export class RolesGuard implements CanActivate {
 
     const normRequired = requiredRoles.map((r) => r.toLowerCase());
 
-    const userAliases = [
-      roleName.toLowerCase(),
-      roleSlug.toLowerCase(),
-    ];
+    const userAliases = [roleName.toLowerCase(), roleSlug.toLowerCase()];
 
     // If user's role slug/name is 'user', treat as 'maba'
-    if (roleSlug.toLowerCase() === 'user' || roleName.toLowerCase() === 'user') {
+    if (
+      roleSlug.toLowerCase() === 'user' ||
+      roleName.toLowerCase() === 'user'
+    ) {
       userAliases.push('maba');
     }
 

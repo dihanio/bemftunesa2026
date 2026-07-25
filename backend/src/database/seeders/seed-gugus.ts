@@ -3,47 +3,141 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bemft_db';
+const MONGODB_URI =
+  process.env.MONGODB_URI || 'mongodb://localhost:27017/bemft_db';
 
 const RUMPUN_DATA = [
   { name: 'Rumpun Teknik Mesin', color: '#EF4444', icon: 'Cog', order: 1 },
   { name: 'Rumpun Teknik Elektro', color: '#F59E0B', icon: 'Zap', order: 2 },
-  { name: 'Rumpun Teknik Informatika', color: '#3B82F6', icon: 'Code', order: 3 },
+  {
+    name: 'Rumpun Teknik Informatika',
+    color: '#3B82F6',
+    icon: 'Code',
+    order: 3,
+  },
   { name: 'Rumpun Teknik Sipil', color: '#10B981', icon: 'Building', order: 4 },
   { name: 'Rumpun PKK', color: '#EC4899', icon: 'Heart', order: 5 },
 ];
 
 const STUDY_PROGRAMS_DATA = [
   // Rumpun Teknik Mesin
-  { code: 'S1-PTM', name: 'S1 Pendidikan Teknik Mesin', rumpunName: 'Rumpun Teknik Mesin', degree: 'S1' },
-  { code: 'S1-PVTO', name: 'S1 Pendidikan Vokasional Teknologi Otomotif', rumpunName: 'Rumpun Teknik Mesin', degree: 'S1' },
-  { code: 'S1-TM', name: 'S1 Teknik Mesin', rumpunName: 'Rumpun Teknik Mesin', degree: 'S1' },
-  { code: 'S1-TMT', name: 'S1 Teknik Metalurgi', rumpunName: 'Rumpun Teknik Mesin', degree: 'S1' },
-  { code: 'S1-TP', name: 'S1 Teknik Pertambangan', rumpunName: 'Rumpun Teknik Mesin', degree: 'S1' },
+  {
+    code: 'S1-PTM',
+    name: 'S1 Pendidikan Teknik Mesin',
+    rumpunName: 'Rumpun Teknik Mesin',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-PVTO',
+    name: 'S1 Pendidikan Vokasional Teknologi Otomotif',
+    rumpunName: 'Rumpun Teknik Mesin',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-TM',
+    name: 'S1 Teknik Mesin',
+    rumpunName: 'Rumpun Teknik Mesin',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-TMT',
+    name: 'S1 Teknik Metalurgi',
+    rumpunName: 'Rumpun Teknik Mesin',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-TP',
+    name: 'S1 Teknik Pertambangan',
+    rumpunName: 'Rumpun Teknik Mesin',
+    degree: 'S1',
+  },
 
   // Rumpun Teknik Elektro
-  { code: 'S1-PTE', name: 'S1 Pendidikan Teknik Elektro', rumpunName: 'Rumpun Teknik Elektro', degree: 'S1' },
-  { code: 'S1-TE', name: 'S1 Teknik Elektro', rumpunName: 'Rumpun Teknik Elektro', degree: 'S1' },
+  {
+    code: 'S1-PTE',
+    name: 'S1 Pendidikan Teknik Elektro',
+    rumpunName: 'Rumpun Teknik Elektro',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-TE',
+    name: 'S1 Teknik Elektro',
+    rumpunName: 'Rumpun Teknik Elektro',
+    degree: 'S1',
+  },
 
   // Rumpun Teknik Informatika
-  { code: 'S1-PTI', name: 'S1 Pendidikan Teknologi Informasi', rumpunName: 'Rumpun Teknik Informatika', degree: 'S1' },
-  { code: 'S1-TI', name: 'S1 Teknik Informatika', rumpunName: 'Rumpun Teknik Informatika', degree: 'S1' },
-  { code: 'S1-SI', name: 'S1 Sistem Informasi', rumpunName: 'Rumpun Teknik Informatika', degree: 'S1' },
+  {
+    code: 'S1-PTI',
+    name: 'S1 Pendidikan Teknologi Informasi',
+    rumpunName: 'Rumpun Teknik Informatika',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-TI',
+    name: 'S1 Teknik Informatika',
+    rumpunName: 'Rumpun Teknik Informatika',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-SI',
+    name: 'S1 Sistem Informasi',
+    rumpunName: 'Rumpun Teknik Informatika',
+    degree: 'S1',
+  },
 
   // Rumpun Teknik Sipil
-  { code: 'S1-PTB', name: 'S1 Pendidikan Teknik Bangunan', rumpunName: 'Rumpun Teknik Sipil', degree: 'S1' },
-  { code: 'S1-TS', name: 'S1 Teknik Sipil', rumpunName: 'Rumpun Teknik Sipil', degree: 'S1' },
-  { code: 'S1-PWK', name: 'S1 Perencanaan Wilayah dan Kota', rumpunName: 'Rumpun Teknik Sipil', degree: 'S1' },
+  {
+    code: 'S1-PTB',
+    name: 'S1 Pendidikan Teknik Bangunan',
+    rumpunName: 'Rumpun Teknik Sipil',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-TS',
+    name: 'S1 Teknik Sipil',
+    rumpunName: 'Rumpun Teknik Sipil',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-PWK',
+    name: 'S1 Perencanaan Wilayah dan Kota',
+    rumpunName: 'Rumpun Teknik Sipil',
+    degree: 'S1',
+  },
 
   // Rumpun PKK
-  { code: 'S1-PTBG', name: 'S1 Pendidikan Tata Boga', rumpunName: 'Rumpun PKK', degree: 'S1' },
-  { code: 'S1-PTBS', name: 'S1 Pendidikan Tata Busana', rumpunName: 'Rumpun PKK', degree: 'S1' },
-  { code: 'S1-PTR', name: 'S1 Pendidikan Tata Rias', rumpunName: 'Rumpun PKK', degree: 'S1' },
-  { code: 'S1-PAR', name: 'S1 Pariwisata', rumpunName: 'Rumpun PKK', degree: 'S1' },
+  {
+    code: 'S1-PTBG',
+    name: 'S1 Pendidikan Tata Boga',
+    rumpunName: 'Rumpun PKK',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-PTBS',
+    name: 'S1 Pendidikan Tata Busana',
+    rumpunName: 'Rumpun PKK',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-PTR',
+    name: 'S1 Pendidikan Tata Rias',
+    rumpunName: 'Rumpun PKK',
+    degree: 'S1',
+  },
+  {
+    code: 'S1-PAR',
+    name: 'S1 Pariwisata',
+    rumpunName: 'Rumpun PKK',
+    degree: 'S1',
+  },
 ];
 
 async function seed() {
-  console.log('🚀 Connecting to MongoDB for Gugus & Master Data Seeding:', MONGODB_URI);
+  console.log(
+    '🚀 Connecting to MongoDB for Gugus & Master Data Seeding:',
+    MONGODB_URI,
+  );
   const conn = await connect(MONGODB_URI);
   const db = conn.connection.db;
 
@@ -55,11 +149,13 @@ async function seed() {
   console.log('📦 Seeding Rumpun Master Data...');
   const rumpunMap = new Map<string, string>();
   for (const r of RUMPUN_DATA) {
-    const res = await db.collection('pkkmb_rumpun').findOneAndUpdate(
-      { name: r.name },
-      { $set: r },
-      { upsert: true, returnDocument: 'after' }
-    );
+    const res = await db
+      .collection('pkkmb_rumpun')
+      .findOneAndUpdate(
+        { name: r.name },
+        { $set: r },
+        { upsert: true, returnDocument: 'after' },
+      );
     if (res?._id) {
       rumpunMap.set(r.name, res._id.toString());
     }
@@ -85,7 +181,7 @@ async function seed() {
           isActive: true,
         },
       },
-      { upsert: true, returnDocument: 'after' }
+      { upsert: true, returnDocument: 'after' },
     );
     if (res?._id) {
       studyProgramMap.set(sp.code, res._id.toString());
@@ -113,7 +209,7 @@ async function seed() {
           totalPoints: 0,
         },
       },
-      { upsert: true }
+      { upsert: true },
     );
     gugusCount++;
   }

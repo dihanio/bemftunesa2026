@@ -4,73 +4,299 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bemft_db';
+const MONGODB_URI =
+  process.env.MONGODB_URI || 'mongodb://localhost:27017/bemft_db';
 
 const PERMISSIONS_DATA = [
-  { name: 'manage:all', resource: 'system', action: 'manage', description: 'Akses penuh seluruh sistem (Super Admin)' },
+  {
+    name: 'manage:all',
+    resource: 'system',
+    action: 'manage',
+    description: 'Akses penuh seluruh sistem (Super Admin)',
+  },
 
   // System & Monitoring
-  { name: 'pkkmb.monitoring.read', resource: 'monitoring', action: 'read', description: 'Melihat dashboard & statistik monitoring' },
-  { name: 'pkkmb.audit.read', resource: 'audit', action: 'read', description: 'Melihat audit log sistem' },
-  { name: 'pkkmb.settings.manage', resource: 'settings', action: 'manage', description: 'Mengelola pengaturan portal PKKMB' },
+  {
+    name: 'pkkmb.monitoring.read',
+    resource: 'monitoring',
+    action: 'read',
+    description: 'Melihat dashboard & statistik monitoring',
+  },
+  {
+    name: 'pkkmb.audit.read',
+    resource: 'audit',
+    action: 'read',
+    description: 'Melihat audit log sistem',
+  },
+  {
+    name: 'pkkmb.settings.manage',
+    resource: 'settings',
+    action: 'manage',
+    description: 'Mengelola pengaturan portal PKKMB',
+  },
 
   // Role & Permission Management
-  { name: 'pkkmb.roles.read', resource: 'roles', action: 'read', description: 'Melihat daftar role' },
-  { name: 'pkkmb.roles.manage', resource: 'roles', action: 'manage', description: 'Membuat, mengubah, dan menghapus role' },
-  { name: 'pkkmb.permissions.read', resource: 'permissions', action: 'read', description: 'Melihat daftar permission' },
-  { name: 'pkkmb.users.manage', resource: 'users', action: 'manage', description: 'Mengelola data akun pengguna' },
+  {
+    name: 'pkkmb.roles.read',
+    resource: 'roles',
+    action: 'read',
+    description: 'Melihat daftar role',
+  },
+  {
+    name: 'pkkmb.roles.manage',
+    resource: 'roles',
+    action: 'manage',
+    description: 'Membuat, mengubah, dan menghapus role',
+  },
+  {
+    name: 'pkkmb.permissions.read',
+    resource: 'permissions',
+    action: 'read',
+    description: 'Melihat daftar permission',
+  },
+  {
+    name: 'pkkmb.users.manage',
+    resource: 'users',
+    action: 'manage',
+    description: 'Mengelola data akun pengguna',
+  },
 
   // Announcements
-  { name: 'pkkmb.announcement.read', resource: 'announcement', action: 'read', description: 'Melihat pengumuman' },
-  { name: 'pkkmb.announcement.create', resource: 'announcement', action: 'create', description: 'Membuat draf pengumuman' },
-  { name: 'pkkmb.announcement.update', resource: 'announcement', action: 'update', description: 'Mengubah pengumuman' },
-  { name: 'pkkmb.announcement.delete', resource: 'announcement', action: 'delete', description: 'Menghapus pengumuman' },
-  { name: 'pkkmb.announcement.publish', resource: 'announcement', action: 'publish', description: 'Memublikasikan pengumuman' },
-  { name: 'pkkmb.announcement.broadcast', resource: 'announcement', action: 'broadcast', description: 'Penyiaran pengumuman penting' },
+  {
+    name: 'pkkmb.announcement.read',
+    resource: 'announcement',
+    action: 'read',
+    description: 'Melihat pengumuman',
+  },
+  {
+    name: 'pkkmb.announcement.create',
+    resource: 'announcement',
+    action: 'create',
+    description: 'Membuat draf pengumuman',
+  },
+  {
+    name: 'pkkmb.announcement.update',
+    resource: 'announcement',
+    action: 'update',
+    description: 'Mengubah pengumuman',
+  },
+  {
+    name: 'pkkmb.announcement.delete',
+    resource: 'announcement',
+    action: 'delete',
+    description: 'Menghapus pengumuman',
+  },
+  {
+    name: 'pkkmb.announcement.publish',
+    resource: 'announcement',
+    action: 'publish',
+    description: 'Memublikasikan pengumuman',
+  },
+  {
+    name: 'pkkmb.announcement.broadcast',
+    resource: 'announcement',
+    action: 'broadcast',
+    description: 'Penyiaran pengumuman penting',
+  },
 
   // Schedules
-  { name: 'pkkmb.schedule.read', resource: 'schedule', action: 'read', description: 'Melihat linimasa & jadwal kegiatan' },
-  { name: 'pkkmb.schedule.create', resource: 'schedule', action: 'create', description: 'Membuat jadwal kegiatan baru' },
-  { name: 'pkkmb.schedule.update', resource: 'schedule', action: 'update', description: 'Mengubah jadwal kegiatan' },
-  { name: 'pkkmb.schedule.delete', resource: 'schedule', action: 'delete', description: 'Menghapus jadwal kegiatan' },
-  { name: 'pkkmb.schedule.publish', resource: 'schedule', action: 'publish', description: 'Memublikasikan jadwal kegiatan' },
+  {
+    name: 'pkkmb.schedule.read',
+    resource: 'schedule',
+    action: 'read',
+    description: 'Melihat linimasa & jadwal kegiatan',
+  },
+  {
+    name: 'pkkmb.schedule.create',
+    resource: 'schedule',
+    action: 'create',
+    description: 'Membuat jadwal kegiatan baru',
+  },
+  {
+    name: 'pkkmb.schedule.update',
+    resource: 'schedule',
+    action: 'update',
+    description: 'Mengubah jadwal kegiatan',
+  },
+  {
+    name: 'pkkmb.schedule.delete',
+    resource: 'schedule',
+    action: 'delete',
+    description: 'Menghapus jadwal kegiatan',
+  },
+  {
+    name: 'pkkmb.schedule.publish',
+    resource: 'schedule',
+    action: 'publish',
+    description: 'Memublikasikan jadwal kegiatan',
+  },
 
   // Grading & Tasks
-  { name: 'pkkmb.grading.read_all', resource: 'grading', action: 'read_all', description: 'Melihat seluruh nilai peserta' },
-  { name: 'pkkmb.grading.read_own', resource: 'grading', action: 'read_own', description: 'Melihat nilai kelompok/sendiri' },
-  { name: 'pkkmb.grading.create', resource: 'grading', action: 'create', description: 'Input nilai penugasan' },
-  { name: 'pkkmb.grading.update', resource: 'grading', action: 'update', description: 'Mengubah nilai penugasan' },
-  { name: 'pkkmb.grading.export', resource: 'grading', action: 'export', description: 'Ekspor rekapitulasi nilai' },
-  { name: 'pkkmb.grading.statistics', resource: 'grading', action: 'statistics', description: 'Melihat statistik nilai & grafik' },
+  {
+    name: 'pkkmb.grading.read_all',
+    resource: 'grading',
+    action: 'read_all',
+    description: 'Melihat seluruh nilai peserta',
+  },
+  {
+    name: 'pkkmb.grading.read_own',
+    resource: 'grading',
+    action: 'read_own',
+    description: 'Melihat nilai kelompok/sendiri',
+  },
+  {
+    name: 'pkkmb.grading.create',
+    resource: 'grading',
+    action: 'create',
+    description: 'Input nilai penugasan',
+  },
+  {
+    name: 'pkkmb.grading.update',
+    resource: 'grading',
+    action: 'update',
+    description: 'Mengubah nilai penugasan',
+  },
+  {
+    name: 'pkkmb.grading.export',
+    resource: 'grading',
+    action: 'export',
+    description: 'Ekspor rekapitulasi nilai',
+  },
+  {
+    name: 'pkkmb.grading.statistics',
+    resource: 'grading',
+    action: 'statistics',
+    description: 'Melihat statistik nilai & grafik',
+  },
 
-  { name: 'pkkmb.task.read', resource: 'task', action: 'read', description: 'Melihat daftar penugasan' },
-  { name: 'pkkmb.task.create', resource: 'task', action: 'create', description: 'Membuat tugas baru' },
-  { name: 'pkkmb.task.update', resource: 'task', action: 'update', description: 'Mengubah tugas' },
-  { name: 'pkkmb.task.delete', resource: 'task', action: 'delete', description: 'Menghapus tugas' },
-  { name: 'pkkmb.task.submit', resource: 'task', action: 'submit', description: 'Mengumpulkan tugas' },
+  {
+    name: 'pkkmb.task.read',
+    resource: 'task',
+    action: 'read',
+    description: 'Melihat daftar penugasan',
+  },
+  {
+    name: 'pkkmb.task.create',
+    resource: 'task',
+    action: 'create',
+    description: 'Membuat tugas baru',
+  },
+  {
+    name: 'pkkmb.task.update',
+    resource: 'task',
+    action: 'update',
+    description: 'Mengubah tugas',
+  },
+  {
+    name: 'pkkmb.task.delete',
+    resource: 'task',
+    action: 'delete',
+    description: 'Menghapus tugas',
+  },
+  {
+    name: 'pkkmb.task.submit',
+    resource: 'task',
+    action: 'submit',
+    description: 'Mengumpulkan tugas',
+  },
 
   // Groups & Pendampingan
-  { name: 'pkkmb.group.read_all', resource: 'group', action: 'read_all', description: 'Melihat seluruh kelompok PKKMB' },
-  { name: 'pkkmb.group.read_own', resource: 'group', action: 'read_own', description: 'Melihat kelompok binaan sendiri' },
-  { name: 'pkkmb.group.create', resource: 'group', action: 'create', description: 'Membuat kelompok baru' },
-  { name: 'pkkmb.group.update', resource: 'group', action: 'update', description: 'Mengubah data kelompok' },
-  { name: 'pkkmb.group.assign_mentor', resource: 'group', action: 'assign_mentor', description: 'Penetapan pendamping kelompok' },
+  {
+    name: 'pkkmb.group.read_all',
+    resource: 'group',
+    action: 'read_all',
+    description: 'Melihat seluruh kelompok PKKMB',
+  },
+  {
+    name: 'pkkmb.group.read_own',
+    resource: 'group',
+    action: 'read_own',
+    description: 'Melihat kelompok binaan sendiri',
+  },
+  {
+    name: 'pkkmb.group.create',
+    resource: 'group',
+    action: 'create',
+    description: 'Membuat kelompok baru',
+  },
+  {
+    name: 'pkkmb.group.update',
+    resource: 'group',
+    action: 'update',
+    description: 'Mengubah data kelompok',
+  },
+  {
+    name: 'pkkmb.group.assign_mentor',
+    resource: 'group',
+    action: 'assign_mentor',
+    description: 'Penetapan pendamping kelompok',
+  },
 
   // Universal Attendance
-  { name: 'pkkmb.attendance.read', resource: 'attendance', action: 'read', description: 'Melihat laporan presensi' },
-  { name: 'pkkmb.attendance.session_create', resource: 'attendance', action: 'session_create', description: 'Membuat sesi presensi universal' },
-  { name: 'pkkmb.attendance.checkin', resource: 'attendance', action: 'checkin', description: 'Melakukan check-in presensi' },
+  {
+    name: 'pkkmb.attendance.read',
+    resource: 'attendance',
+    action: 'read',
+    description: 'Melihat laporan presensi',
+  },
+  {
+    name: 'pkkmb.attendance.session_create',
+    resource: 'attendance',
+    action: 'session_create',
+    description: 'Membuat sesi presensi universal',
+  },
+  {
+    name: 'pkkmb.attendance.checkin',
+    resource: 'attendance',
+    action: 'checkin',
+    description: 'Melakukan check-in presensi',
+  },
 
   // Registration & Operator
-  { name: 'pkkmb.registration.verify', resource: 'registration', action: 'verify', description: 'Verifikasi berkas pendaftaran Maba' },
-  { name: 'pkkmb.registration.checkin', resource: 'registration', action: 'checkin', description: 'Presensi check-in lokasi Hari-H' },
-  { name: 'pkkmb.registration.edit_biodata', resource: 'registration', action: 'edit_biodata', description: 'Edit biodata Maba di lokasi' },
-  { name: 'pkkmb.registration.upload_document', resource: 'registration', action: 'upload_document', description: 'Bantu upload berkas Maba' },
+  {
+    name: 'pkkmb.registration.verify',
+    resource: 'registration',
+    action: 'verify',
+    description: 'Verifikasi berkas pendaftaran Maba',
+  },
+  {
+    name: 'pkkmb.registration.checkin',
+    resource: 'registration',
+    action: 'checkin',
+    description: 'Presensi check-in lokasi Hari-H',
+  },
+  {
+    name: 'pkkmb.registration.edit_biodata',
+    resource: 'registration',
+    action: 'edit_biodata',
+    description: 'Edit biodata Maba di lokasi',
+  },
+  {
+    name: 'pkkmb.registration.upload_document',
+    resource: 'registration',
+    action: 'upload_document',
+    description: 'Bantu upload berkas Maba',
+  },
 
   // Profile
-  { name: 'pkkmb.profile.read_own', resource: 'profile', action: 'read_own', description: 'Melihat profil sendiri' },
-  { name: 'pkkmb.profile.update_own', resource: 'profile', action: 'update_own', description: 'Mengubah password/profil sendiri' },
-  { name: 'pkkmb.profile.read_all', resource: 'profile', action: 'read_all', description: 'Melihat seluruh data profil' },
+  {
+    name: 'pkkmb.profile.read_own',
+    resource: 'profile',
+    action: 'read_own',
+    description: 'Melihat profil sendiri',
+  },
+  {
+    name: 'pkkmb.profile.update_own',
+    resource: 'profile',
+    action: 'update_own',
+    description: 'Mengubah password/profil sendiri',
+  },
+  {
+    name: 'pkkmb.profile.read_all',
+    resource: 'profile',
+    action: 'read_all',
+    description: 'Melihat seluruh data profil',
+  },
 ];
 
 async function seed() {
@@ -86,11 +312,13 @@ async function seed() {
   const permissionMap = new Map<string, string>();
 
   for (const perm of PERMISSIONS_DATA) {
-    const res = await db.collection('permissions').findOneAndUpdate(
-      { name: perm.name },
-      { $set: perm },
-      { upsert: true, returnDocument: 'after' }
-    );
+    const res = await db
+      .collection('permissions')
+      .findOneAndUpdate(
+        { name: perm.name },
+        { $set: perm },
+        { upsert: true, returnDocument: 'after' },
+      );
     if (res?._id) {
       permissionMap.set(perm.name, res._id.toString());
     }
@@ -145,7 +373,8 @@ async function seed() {
     {
       name: 'Sekretaris Pelaksana',
       slug: 'sekretaris',
-      description: 'Pengelola administrasi pengumuman, jadwal, presensi & berkas',
+      description:
+        'Pengelola administrasi pengumuman, jadwal, presensi & berkas',
       isSystem: true,
       permissions: getPermIds([
         'pkkmb.monitoring.read',
@@ -212,11 +441,13 @@ async function seed() {
   const roleMap = new Map<string, string>();
 
   for (const r of ROLES_DEFINITIONS) {
-    const res = await db.collection('roles').findOneAndUpdate(
-      { $or: [{ slug: r.slug }, { name: r.name }] },
-      { $set: r },
-      { upsert: true, returnDocument: 'after' }
-    );
+    const res = await db
+      .collection('roles')
+      .findOneAndUpdate(
+        { $or: [{ slug: r.slug }, { name: r.name }] },
+        { $set: r },
+        { upsert: true, returnDocument: 'after' },
+      );
     if (res?._id) {
       roleMap.set(r.slug, res._id.toString());
     }
@@ -335,7 +566,7 @@ async function seed() {
           createdAt: new Date(),
         },
       },
-      { upsert: true }
+      { upsert: true },
     );
   }
   console.log('✅ Seeded All Default Demo Accounts Successfully!');
