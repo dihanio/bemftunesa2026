@@ -6,14 +6,13 @@ import React, { useState, useEffect, Suspense, useCallback } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService, { ApplicantData, ApplicantStats, API_BASE_URL } from "@/lib/api";
-import { useSearchParams, useRouter } from "next/navigation";
-import { Users, Search, Download, Eye, Calendar, UserCheck, UserX, FileText, X, Check, Activity, Clock, FileBadge, Info, ChevronLeft, CalendarPlus, ClipboardCheck } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Search, Download, Eye, UserCheck, UserX, FileText, X, Check, Activity, Clock, FileBadge, Info, ChevronLeft, CalendarPlus, ClipboardCheck } from "lucide-react";
 import Link from "next/link";
 
 function ApplicantsPageContent() {
   const searchParams = useSearchParams();
   const recruitmentId = searchParams.get("id");
-  const router = useRouter();
 
   const [stats, setStats] = useState<ApplicantStats | null>(null);
   const [applicants, setApplicants] = useState<ApplicantData[]>([]);

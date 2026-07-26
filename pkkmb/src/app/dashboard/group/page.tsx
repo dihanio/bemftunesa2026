@@ -103,7 +103,7 @@ export default function GugusPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

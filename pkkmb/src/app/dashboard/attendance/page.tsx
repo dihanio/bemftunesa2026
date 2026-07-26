@@ -12,7 +12,6 @@ import {
   RefreshCw,
   UserCheck,
 } from 'lucide-react';
-import { useAuthStore } from '@/features/auth/store/useAuthStore';
 import { usePermission } from '@/features/auth/hooks/usePermission';
 import { apiClient } from '@/shared/api/axios';
 import { useToast } from '@/components/ui/toast';
@@ -73,7 +72,6 @@ const PANITIA_DIVISIONS = [
 ];
 
 export default function AttendancePage() {
-  const { user } = useAuthStore();
   const { hasPermission } = usePermission();
   const toast = useToast();
 
