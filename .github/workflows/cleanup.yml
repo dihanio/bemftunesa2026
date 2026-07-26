@@ -19,9 +19,9 @@ jobs:
         uses: vlaurin/action-ghcr-prune@v0.6.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          organization: dihanio # Assuming dihanio is a user/org. Update if different.
+          user: ${{ github.repository_owner }}
           container: bemftunesa2026-${{ matrix.service }}
           dry-run: false
           keep-younger-than: 14 # days
           keep-last: 5 # keep at least 5 versions
-          untagged: true
+          prune-untagged: true
