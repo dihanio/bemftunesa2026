@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService from "@/lib/api";
@@ -12,10 +12,7 @@ import {
   Trash2,
   Search,
   Calendar,
-  ChevronDown,
-  ExternalLink,
   CheckCircle,
-  FileText,
   UploadCloud,
   Newspaper,
   User,
@@ -23,7 +20,6 @@ import {
   Globe,
   Archive,
   Send,
-  Eye,
 } from "lucide-react";
 import { useConfirm } from "@/components/ui/CustomConfirm";
 
