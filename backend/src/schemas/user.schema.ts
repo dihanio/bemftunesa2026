@@ -78,6 +78,18 @@ export class User {
   @Prop()
   emailVerificationExpiry?: Date;
 
+  @Prop({ default: 0 })
+  emailVerifyAttempts: number;
+
+  @Prop({ default: 0 })
+  emailResendCount: number;
+
+  @Prop()
+  emailLastResendAt?: Date;
+
+  @Prop()
+  emailLockedUntil?: Date;
+
   @Prop()
   deletedAt?: Date;
 }

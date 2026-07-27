@@ -30,7 +30,7 @@ export interface GoogleProfile {
 
 @Controller('auth')
 export class AuthController {
-  private readonly logger = new StructuredLogger('AuthController');
+  private readonly logger = new StructuredLogger();
 
   constructor(
     private authService: AuthService,
@@ -190,14 +190,45 @@ export class AuthController {
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('verify-email')
-  async verifyEmailCode(@Body() body: { email: string; code: string }) {
-    return await this.authService.verifyEmailCode(body.email, body.code);
+  async verifyEmailCode(
+    @Body() body: { email: string; code: string },
+    @Req() req: Request,
+  ) {
+    return await this.authService.verifyEmailCode(
+      body.email,
+      body.code,
+      (req.headers['x-forwarded-for'] as string) || req.ip,
+      req.headers['user-agent'],
+    );
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('resend-verification')
-  async resendVerificationCode(@Body() body: { email: string }) {
+  async resendVerificationCode(
+    @Body() body: { email: string },
+    @Req() req: Request,
+  ) {
+    return await this.authService.resendVerificationCode(
+      body.email,
+      (req.headers['x-forwarded-for'] as string) || req.ip,
+      req.headers['user-agent'],
+    );
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('send-verification')
+  async sendVerification(@Body() body: { email: string }) {
     return await this.authService.resendVerificationCode(body.email);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Get('verification-status')
+  async getVerificationStatus(@Req() req: Request) {
+    const email = req.query.email as string;
+    if (!email) {
+      throw new ForbiddenException('Email query parameter is required.');
+    }
+    return await this.authService.getVerificationStatus(email);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })

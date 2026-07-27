@@ -12,6 +12,7 @@ import { Role, RoleSchema } from '../schemas/role.schema';
 import { Permission, PermissionSchema } from '../schemas/permission.schema';
 
 import { AuthorizationService } from '../common/auth/authorization.service';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AuthorizationService } from '../common/auth/authorization.service';
       { name: Role.name, schema: RoleSchema },
       { name: Permission.name, schema: PermissionSchema },
     ]),
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, GoogleStrategy, JwtStrategy, AuthorizationService],

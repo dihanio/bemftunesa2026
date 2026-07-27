@@ -1,6 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { MailService } from './mail.service';
 import { MailListener } from './mail.listener';
+import { PostalSmtpAdapter } from './providers/postal-smtp.adapter';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -17,16 +18,21 @@ import { join } from 'path';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         transport: {
-          host: configService.get<string>('SMTP_HOST'),
-          port: Number(configService.get('SMTP_PORT')) || 587,
+          host: configService.get<string>('SMTP_HOST', 'postal'),
+          port: Number(configService.get('SMTP_PORT')) || 25,
           secure: Number(configService.get('SMTP_PORT')) === 465,
-          auth: {
-            user: configService.get<string>('SMTP_USER'),
-            pass: configService.get<string>('SMTP_PASS'),
+          auth: configService.get<string>('SMTP_USER')
+            ? {
+                user: configService.get<string>('SMTP_USER'),
+                pass: configService.get<string>('SMTP_PASS'),
+              }
+            : undefined,
+          tls: {
+            rejectUnauthorized: false,
           },
         },
         defaults: {
-          from: `"${configService.get<string>('SMTP_FROM_NAME')}" <${configService.get<string>('SMTP_FROM_EMAIL')}>`,
+          from: `"${configService.get<string>('SMTP_FROM_NAME', 'BEM FT UNESA 2026')}" <${configService.get<string>('SMTP_FROM_EMAIL', 'noreply@bemftunesa.org')}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),
@@ -38,7 +44,7 @@ import { join } from 'path';
       }),
     }),
   ],
-  providers: [MailService, MailListener],
-  exports: [MailService],
+  providers: [MailService, MailListener, PostalSmtpAdapter],
+  exports: [MailService, PostalSmtpAdapter],
 })
 export class MailModule {}
