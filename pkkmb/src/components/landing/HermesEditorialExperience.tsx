@@ -65,30 +65,30 @@ export default function HermesEditorialExperience() {
         />
       </div>
 
-      {/* Floating Centered Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-6 sm:p-8 flex items-center justify-between pointer-events-auto">
-        {/* Left Slot (Spacer for Centering Alignment) */}
+      {/* Floating Centered Header - Fully Responsive Across Mobile, Tablet & Desktop */}
+      <header className="fixed top-0 left-0 right-0 z-50 p-3 sm:p-6 md:p-8 flex items-center justify-between pointer-events-auto gap-2">
+        {/* Left Slot (Spacer for Centering Alignment on Desktop) */}
         <div className="flex-1 hidden md:block" />
 
-        {/* Center Slot: Centered & Enlarged Logo Trio */}
+        {/* Center/Left Slot: Centered & Responsive Logo Trio */}
         <div className="flex-1 flex justify-start md:justify-center items-center">
-          <Link href="/" className="flex items-center gap-4 sm:gap-6 bg-[#040507]/60 px-5 sm:px-6 py-2 rounded-full border border-[#D4AF37]/20 backdrop-blur-md shadow-lg shadow-[#D4AF37]/5 hover:border-[#D4AF37]/40 transition-all">
-            <Image src="/logobemft.png" alt="BEM FT" width={48} height={48} className="object-contain h-9 sm:h-12 w-auto drop-shadow-[0_0_12px_rgba(212,175,55,0.2)]" style={{ width: "auto" }} />
-            <Image src="/logo_kabinet.png" alt="Kabinet BEM FT" width={48} height={48} className="object-contain h-9 sm:h-12 w-auto drop-shadow-[0_0_12px_rgba(212,175,55,0.2)]" style={{ width: "auto" }} />
-            <Image src="/logo_adrata.png" alt="PKKMB Adrata" width={52} height={52} className="object-contain h-10 sm:h-13 w-auto drop-shadow-[0_0_12px_rgba(212,175,55,0.2)]" style={{ width: "auto" }} />
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-5 bg-[#040507]/75 px-3 sm:px-6 py-1.5 sm:py-2 rounded-full border border-[#D4AF37]/20 backdrop-blur-md shadow-lg shadow-[#D4AF37]/5 hover:border-[#D4AF37]/40 transition-all">
+            <Image src="/logobemft.png" alt="BEM FT" width={48} height={48} className="object-contain h-6 sm:h-10 w-auto drop-shadow-[0_0_12px_rgba(212,175,55,0.2)]" style={{ width: "auto" }} />
+            <Image src="/logo_kabinet.png" alt="Kabinet BEM FT" width={48} height={48} className="object-contain h-6 sm:h-10 w-auto drop-shadow-[0_0_12px_rgba(212,175,55,0.2)]" style={{ width: "auto" }} />
+            <Image src="/logo_adrata.png" alt="PKKMB Adrata" width={52} height={52} className="object-contain h-7 sm:h-11 w-auto drop-shadow-[0_0_12px_rgba(212,175,55,0.2)]" style={{ width: "auto" }} />
           </Link>
         </div>
         
         {/* Right Slot: Ambience + Portal */}
-        <div className="flex-1 flex items-center justify-end gap-3 sm:gap-4">
+        <div className="flex-1 flex items-center justify-end gap-2 sm:gap-4 shrink-0">
           <AmbiencePlayer />
           <Link
             href="/login"
             onClick={handlePortalClick}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 h-10 text-xs font-mono tracking-[0.15em] text-[#D4AF37] border border-[#D4AF37]/35 bg-[#040507]/40 hover:bg-[#D4AF37]/15 hover:border-[#D4AF37] transition-all uppercase rounded-sm shadow-md cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-5 py-2 sm:py-2.5 h-9 sm:h-10 text-[10px] sm:text-xs font-mono tracking-[0.1em] sm:tracking-[0.15em] text-[#D4AF37] border border-[#D4AF37]/35 bg-[#040507]/60 hover:bg-[#D4AF37]/15 hover:border-[#D4AF37] transition-all uppercase rounded-sm shadow-md cursor-pointer shrink-0"
           >
             <span>PORTAL</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
           </Link>
         </div>
       </header>
