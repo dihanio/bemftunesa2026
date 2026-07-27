@@ -23,9 +23,9 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <Image src="/logobemft.png" alt="BEM FT" width={28} height={28} className="object-contain h-6 sm:h-7 w-auto" />
-          <Image src="/logo_kabinet.png" alt="Kabinet" width={28} height={28} className="object-contain h-6 sm:h-7 w-auto" />
-          <Image src="/logo_adrata.png" alt="Adrata" width={36} height={36} className="object-contain h-8 sm:h-9 w-auto" />
+          <Image src="/logobemft.png" alt="BEM FT" width={28} height={28} className="object-contain h-6 sm:h-7 w-auto" style={{ width: "auto" }} />
+          <Image src="/logo_kabinet.png" alt="Kabinet" width={28} height={28} className="object-contain h-6 sm:h-7 w-auto" style={{ width: "auto" }} />
+          <Image src="/logo_adrata.png" alt="Adrata" width={36} height={36} className="object-contain h-8 sm:h-9 w-auto" style={{ width: "auto" }} />
         </Link>
 
         <div className="flex items-center gap-3">

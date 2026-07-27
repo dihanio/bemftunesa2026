@@ -173,6 +173,7 @@ function BackgroundTexture({ progress, enabled = true }: { progress: MotionValue
             src="/gedung_ft_new.jpeg"
             alt="Gedung FT UNESA Background"
             fill
+            sizes="100vw"
             className="object-cover grayscale opacity-60 filter contrast-125"
             priority
           />
@@ -191,6 +192,7 @@ function BackgroundTexture({ progress, enabled = true }: { progress: MotionValue
           src="/gedung_ft_new.jpeg"
           alt="Gedung FT UNESA Background"
           fill
+          sizes="100vw"
           className="object-cover grayscale filter contrast-125"
           priority
         />
@@ -359,6 +361,7 @@ function Viewport2Manifesto({ progress, enabled = true }: { progress: MotionValu
               src="/gedung_ft_new.jpeg"
               alt="Gedung FT UNESA"
               fill
+              sizes="(max-width: 1024px) 100vw, 40vw"
               className="object-cover grayscale opacity-50"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#040507] via-transparent to-transparent" />
@@ -405,6 +408,7 @@ function Viewport2Manifesto({ progress, enabled = true }: { progress: MotionValu
             src="/gedung_ft_new.jpeg"
             alt="Gedung FT UNESA"
             fill
+            sizes="(max-width: 1024px) 100vw, 40vw"
             className="object-cover grayscale opacity-50"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#040507] via-transparent to-transparent" />
