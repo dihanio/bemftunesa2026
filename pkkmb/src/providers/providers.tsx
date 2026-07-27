@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { ThemeProvider } from "./ThemeProvider";
 import { useState } from "react";
 import { AmbienceProvider } from "@/context/AmbienceContext";
 import { LenisProvider } from "./LenisProvider";
@@ -17,7 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }));
 
   return (
-    <NextThemesProvider
+    <ThemeProvider
       attribute="class"
       defaultTheme="system"
       enableSystem
@@ -30,6 +30,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </LenisProvider>
         </AmbienceProvider>
       </QueryClientProvider>
-    </NextThemesProvider>
+    </ThemeProvider>
   );
 }
