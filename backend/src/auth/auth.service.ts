@@ -220,7 +220,9 @@ export class AuthService {
       details: { type: 'registration_verification', nip: nim },
     });
 
-    this.logger.log(`Registration successful for ${email}, verification email queued`);
+    this.logger.log(
+      `Registration successful for ${email}, verification email queued`,
+    );
 
     return savedUser;
   }
@@ -237,13 +239,13 @@ export class AuthService {
     }
 
     if (user.isEmailVerified) {
-      return { success: true, message: 'Email sudah terverifikasi sebelumnya.' };
+      return {
+        success: true,
+        message: 'Email sudah terverifikasi sebelumnya.',
+      };
     }
 
-    if (
-      user.emailLockedUntil &&
-      new Date() < user.emailLockedUntil
-    ) {
+    if (user.emailLockedUntil && new Date() < user.emailLockedUntil) {
       const remaining = Math.ceil(
         (user.emailLockedUntil.getTime() - Date.now()) / 60000,
       );
@@ -268,8 +270,8 @@ export class AuthService {
     }
 
     if (user.emailVerifyAttempts >= MAX_VERIFY_ATTEMPTS) {
-      user.emailVerificationCode = undefined as never;
-      user.emailVerificationExpiry = undefined as never;
+      user.emailVerificationCode = undefined;
+      user.emailVerificationExpiry = undefined;
       user.emailVerifyAttempts = 0;
       user.emailResendCount = 0;
       user.emailLockedUntil = new Date(
@@ -324,12 +326,12 @@ export class AuthService {
     }
 
     user.isEmailVerified = true;
-    user.emailVerificationCode = undefined as never;
-    user.emailVerificationExpiry = undefined as never;
+    user.emailVerificationCode = undefined;
+    user.emailVerificationExpiry = undefined;
     user.emailVerifyAttempts = 0;
     user.emailResendCount = 0;
-    user.emailLastResendAt = undefined as never;
-    user.emailLockedUntil = undefined as never;
+    user.emailLastResendAt = undefined;
+    user.emailLockedUntil = undefined;
     await user.save();
 
     this.eventEmitter.emit('audit.log', {
@@ -365,10 +367,7 @@ export class AuthService {
       return { success: true, message: 'Email sudah terverifikasi.' };
     }
 
-    if (
-      user.emailLockedUntil &&
-      new Date() < user.emailLockedUntil
-    ) {
+    if (user.emailLockedUntil && new Date() < user.emailLockedUntil) {
       const remaining = Math.ceil(
         (user.emailLockedUntil.getTime() - Date.now()) / 60000,
       );
@@ -456,9 +455,7 @@ export class AuthService {
     };
   }
 
-  async getVerificationStatus(
-    email: string,
-  ): Promise<{
+  async getVerificationStatus(email: string): Promise<{
     isVerified: boolean;
     resendCount: number;
     maxResends: number;

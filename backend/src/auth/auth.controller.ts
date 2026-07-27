@@ -59,7 +59,9 @@ export class AuthController {
 
     try {
       const user = await this.authService.validateGoogleUser(profile);
-      this.logger.log(`User validated successfully: ${user.email} | Position: ${user.position}`);
+      this.logger.log(
+        `User validated successfully: ${user.email} | Position: ${user.position}`,
+      );
 
       const tokens = await this.authService.generateTokensWithPermissions(user);
 
@@ -424,10 +426,7 @@ export class AuthController {
       );
     }
 
-    if (
-      roleObj?.slug === 'super_admin' ||
-      roleObj?.name === 'Super Admin'
-    ) {
+    if (roleObj?.slug === 'super_admin' || roleObj?.name === 'Super Admin') {
       permissions = ['manage:all', ...permissions];
     }
 

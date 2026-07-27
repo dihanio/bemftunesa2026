@@ -8,5 +8,10 @@ export interface SendVerificationEmailPayload {
 export interface EmailProvider {
   readonly name: string;
   sendVerificationEmail(payload: SendVerificationEmailPayload): Promise<void>;
-  sendMail(to: string, subject: string, template: string, context: Record<string, unknown>): Promise<void>;
+  sendMail(
+    to: string,
+    subject: string,
+    template: string,
+    context: Record<string, unknown>,
+  ): Promise<void>;
 }

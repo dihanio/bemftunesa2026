@@ -104,7 +104,7 @@ export class PkkmbService {
     private rumpunModel: Model<RumpunDocument>,
     @InjectModel(StudyProgram.name)
     private studyProgramModel: Model<StudyProgramDocument>,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
     @Inject('REDIS_CLIENT') private redis: Redis,
   ) {}
 
@@ -148,7 +148,9 @@ export class PkkmbService {
   async getUserProfile(userId: string) {
     return this.userModel
       .findById(userId)
-      .select('name nim email phone studyProgram studyProgramId gender avatar pkkmbGroup role division position')
+      .select(
+        'name nim email phone studyProgram studyProgramId gender avatar pkkmbGroup role division position',
+      )
       .populate('pkkmbGroup', '_id nomor name')
       .populate('role', 'name slug')
       .lean()
@@ -341,7 +343,9 @@ export class PkkmbService {
     const lockKey = 'pkkmb:auto-distribute:lock';
     const lockSet = await this.redis.set(lockKey, '1', 'EX', 120, 'NX');
     if (!lockSet) {
-      throw new BadRequestException('Distribusi gugus sedang berjalan. Silakan tunggu sebentar.');
+      throw new BadRequestException(
+        'Distribusi gugus sedang berjalan. Silakan tunggu sebentar.',
+      );
     }
 
     try {
@@ -563,15 +567,24 @@ export class PkkmbService {
     }
 
     // Validate QR token if method is QR_CODE
-    if (dto.method === 'QR_CODE' || (!dto.method && !dto.nim && !dto.participantId)) {
+    if (
+      dto.method === 'QR_CODE' ||
+      (!dto.method && !dto.nim && !dto.participantId)
+    ) {
       if (!dto.qrToken) {
-        throw new BadRequestException('QR Token wajib diisi untuk check-in via QR Code.');
+        throw new BadRequestException(
+          'QR Token wajib diisi untuk check-in via QR Code.',
+        );
       }
       if (dto.qrToken !== session.qrCode) {
-        throw new BadRequestException('QR Token tidak valid. Silakan scan ulang.');
+        throw new BadRequestException(
+          'QR Token tidak valid. Silakan scan ulang.',
+        );
       }
       if (session.qrExpiry && new Date() > session.qrExpiry) {
-        throw new BadRequestException('QR Code telah kedaluwarsa. Silakan minta QR baru.');
+        throw new BadRequestException(
+          'QR Code telah kedaluwarsa. Silakan minta QR baru.',
+        );
       }
     }
 
@@ -712,7 +725,9 @@ export class PkkmbService {
     ]);
 
     const statsMap = new Map<string, number>();
-    statsResult.forEach((s) => statsMap.set(s._id, s.count));
+    statsResult.forEach((s: { _id: string; count: number }) =>
+      statsMap.set(s._id, s.count),
+    );
 
     return {
       records,
@@ -854,8 +869,7 @@ export class PkkmbService {
       _id: sessionId,
       deletedAt: null,
     });
-    if (!session)
-      throw new NotFoundException('Sesi presensi tidak ditemukan');
+    if (!session) throw new NotFoundException('Sesi presensi tidak ditemukan');
 
     // Verify the target user belongs to the mentor's group
     const targetUser = await this.userModel
@@ -863,10 +877,7 @@ export class PkkmbService {
       .select('_id pkkmbGroup')
       .lean();
     if (!targetUser) throw new NotFoundException('Peserta tidak ditemukan');
-    if (
-      targetUser.pkkmbGroup &&
-      targetUser.pkkmbGroup.toString() !== groupId
-    ) {
+    if (targetUser.pkkmbGroup && targetUser.pkkmbGroup.toString() !== groupId) {
       throw new BadRequestException('Peserta bukan anggota kelompok Anda');
     }
 
@@ -1151,7 +1162,10 @@ export class PkkmbService {
 
     const activeTasks = allTasks;
     const pendingTasks = activeTasks
-      .filter((t) => !submissions.find((s) => s.taskId.toString() === t._id.toString()))
+      .filter(
+        (t) =>
+          !submissions.find((s) => s.taskId.toString() === t._id.toString()),
+      )
       .slice(0, 5); // Top 5 nearest deadline
 
     return {
