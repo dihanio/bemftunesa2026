@@ -489,7 +489,7 @@ const MobileEditorialLayout = memo(function MobileEditorialLayout({ handlePortal
   }, []);
 
   return (
-    <div className="relative z-10 pt-24 pb-16 px-4 space-y-16 max-w-lg mx-auto">
+    <div className="relative z-10 pt-16 pb-16 px-4 space-y-8 max-w-lg mx-auto snap-y snap-mandatory scroll-smooth">
       
       {/* Optimized Static Ambient Background Texture */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -505,13 +505,13 @@ const MobileEditorialLayout = memo(function MobileEditorialLayout({ handlePortal
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.12),transparent_70%)]" />
       </div>
 
-      {/* MOBILE SECTION 1: Monumental Entry */}
+      {/* MOBILE SECTION 1: Monumental Entry (Magnetic Snap) */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-10 text-center space-y-6 pt-4 transform-gpu"
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={{ once: true, margin: "-20px" }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 text-center space-y-6 pt-12 pb-6 snap-center min-h-[85vh] flex flex-col justify-center transform-gpu"
       >
         <div className="flex justify-between items-end px-2 mb-2 pointer-events-none">
           <div className="w-24 h-auto">
@@ -554,13 +554,13 @@ const MobileEditorialLayout = memo(function MobileEditorialLayout({ handlePortal
         </div>
       </motion.section>
 
-      {/* MOBILE SECTION 2: Narrative Manifesto */}
+      {/* MOBILE SECTION 2: Narrative Manifesto (Magnetic Snap) */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-10 space-y-4 transform-gpu"
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={{ once: true, margin: "-20px" }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 space-y-4 pt-12 pb-6 snap-center min-h-[85vh] flex flex-col justify-center transform-gpu"
       >
         <div className="bg-[#040507]/80 p-5 rounded-xl border border-[#D4AF37]/20 backdrop-blur-sm space-y-4">
           <span className="text-[#D4AF37]/80 font-mono text-[10px] tracking-[0.2em] uppercase block">
@@ -592,13 +592,13 @@ const MobileEditorialLayout = memo(function MobileEditorialLayout({ handlePortal
         </div>
       </motion.section>
 
-      {/* MOBILE SECTION 3: Official Mascot Unveiling */}
+      {/* MOBILE SECTION 3: Official Mascot Unveiling (Magnetic Snap) */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-10 space-y-6 text-center transform-gpu"
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={{ once: true, margin: "-20px" }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 space-y-6 text-center pt-12 pb-6 snap-center min-h-[85vh] flex flex-col justify-center transform-gpu"
       >
         <div className="bg-[#040507]/80 p-5 rounded-xl border border-[#D4AF37]/20 backdrop-blur-sm space-y-4">
           <span className="text-[#D4AF37]/80 font-mono text-[10px] tracking-[0.2em] uppercase block">
@@ -643,13 +643,13 @@ const MobileEditorialLayout = memo(function MobileEditorialLayout({ handlePortal
         </div>
       </motion.section>
 
-      {/* MOBILE SECTION 4: Three Editorial Pillars */}
+      {/* MOBILE SECTION 4: Three Editorial Pillars (Magnetic Snap) */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-10 space-y-4 transform-gpu"
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={{ once: true, margin: "-20px" }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 space-y-4 pt-12 pb-6 snap-center min-h-[85vh] flex flex-col justify-center transform-gpu"
       >
         <div className="bg-[#040507]/80 p-5 rounded-xl border border-[#D4AF37]/20 backdrop-blur-sm space-y-4">
           <span className="text-[#D4AF37]/80 font-mono text-[10px] tracking-[0.2em] uppercase block">
@@ -687,13 +687,13 @@ const MobileEditorialLayout = memo(function MobileEditorialLayout({ handlePortal
         </div>
       </motion.section>
 
-      {/* MOBILE SECTION 5: Activation Finale */}
+      {/* MOBILE SECTION 5: Activation Finale (Magnetic Snap) */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative z-10 text-center space-y-4 transform-gpu"
+        initial={{ opacity: 0, y: 30, scale: 0.97 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={{ once: true, margin: "-20px" }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 text-center space-y-4 pt-12 pb-6 snap-center min-h-[85vh] flex flex-col justify-center transform-gpu"
       >
         <div className="bg-[#040507]/90 p-5 rounded-xl border border-[#D4AF37]/25 backdrop-blur-sm space-y-4 shadow-xl">
           <span className="text-[#D4AF37]/90 font-mono text-[10px] tracking-[0.25em] uppercase block">
