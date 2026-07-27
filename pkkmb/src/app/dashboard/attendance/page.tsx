@@ -176,6 +176,7 @@ export default function AttendancePage() {
 
   useEffect(() => {
     if (activeTab === 'MONITORING') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchMonitoringData();
     }
   }, [activeTab, fetchMonitoringData]);
