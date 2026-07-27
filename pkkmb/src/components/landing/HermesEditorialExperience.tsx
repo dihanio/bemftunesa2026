@@ -42,7 +42,7 @@ export default function HermesEditorialExperience() {
   const isMobileLayout = isMobile === true || prefersReducedMotion === true;
 
   return (
-    <main className="bg-[#040507] text-[#FAFAFA] font-sans selection:bg-[#D4AF37]/30 min-h-screen relative overflow-x-hidden">
+    <main className="bg-[#040507] text-[#FAFAFA] font-sans selection:bg-[#D4AF37]/30 min-h-screen relative overflow-x-clip">
       
       {/* Floating Centered Responsive Header (Universal) */}
       <header className="fixed top-0 left-0 right-0 z-50 p-3 sm:p-6 md:p-8 flex items-center justify-between pointer-events-auto gap-2">
@@ -138,7 +138,7 @@ function DesktopStickyExperience() {
       </div>
 
       {/* Sticky Fullscreen Viewport Canvas */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center contain-paint">
+      <div className="sticky top-0 h-screen w-full overflow-hidden relative">
         <DesktopBackgroundTexture progress={smoothProgress} />
         <DesktopViewport1 progress={smoothProgress} />
         <DesktopViewport2 progress={smoothProgress} />
