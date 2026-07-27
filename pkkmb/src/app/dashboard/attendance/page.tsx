@@ -171,17 +171,13 @@ export default function AttendancePage() {
       await Promise.all([fetchSessions(), fetchMyHistory()]);
       setIsLoading(false);
     };
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchSessions, fetchMyHistory]);
 
   useEffect(() => {
     if (activeTab === 'MONITORING') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchMonitoringData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, fetchMonitoringData]);
 
   // Handle Self Check-in

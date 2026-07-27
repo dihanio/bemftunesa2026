@@ -108,7 +108,6 @@ export default function GugusPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchGugusList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchGugusList]);
 
   // Fetch Gugus Detail
