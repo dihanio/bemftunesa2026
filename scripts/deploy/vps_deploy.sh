@@ -104,16 +104,16 @@ fi
 
 # Ensure backing services are running before restarting apps
 log "Starting backing services (db, redis)..."
-docker compose up -d db redis
+docker compose -f docker-compose.yml up -d db redis
 
 # restart services via docker-compose
 for svc in "${SERVICES_TO_RESTART[@]}"; do
   log "Rebuilding and restarting service: $svc"
-  docker compose pull $svc || log "Failed to pull latest image for $svc"
+  docker compose -f docker-compose.yml pull $svc || log "Failed to pull latest image for $svc"
   docker compose -f docker-compose.yml up -d --no-deps --force-recreate $svc || { log "Failed to restart $svc"; ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"; exit 1; }
   # wait for health
   for i in $(seq 1 30); do
-    STATUS=$(docker inspect --format='{{json .State.Health}}' $(docker compose ps -q $svc) 2>/dev/null || echo "{}")
+    STATUS=$(docker inspect --format='{{json .State.Health}}' $(docker compose -f docker-compose.yml ps -q $svc) 2>/dev/null || echo "{}")
     if echo "$STATUS" | grep -q '"Status":"healthy"'; then
       log "$svc healthy"
       break

@@ -59,6 +59,7 @@ dry-run.json
 ims_*_login.tsx
 deploy_logs/
 git_log.txt
+docker-compose.override.yml
 
 # env files (NEVER commit secrets)
 .env
