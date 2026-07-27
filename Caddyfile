@@ -13,3 +13,7 @@ ims.bemftunesa.org {
 pkkmb.bemftunesa.org {
     reverse_proxy pkkmb_web:3000
 }
+
+mail.bemftunesa.org {
+    reverse_proxy postal-web:5000
+}

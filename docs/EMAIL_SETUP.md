@@ -3,158 +3,63 @@
 ## Architecture
 
 ```
-┌─────────────┐     SMTP (25)     ┌──────────────┐
-│  NestJS API │ ─────────────────→ │ Postal Server │ ──→ Internet
-│  (Docker)   │                    │  (Docker)     │
-└─────────────┘                    └──────┬───────┘
-                                          │
-                              ┌───────────┼───────────┐
-                              │           │           │
-                         ┌────┴───┐  ┌────┴───┐  ┌───┴────┐
-                         │ MariaDB│  │ RabbitMQ│  │ Caddy  │
-                         └────────┘  └─────────┘  └────────┘
+┌─────────────┐     SMTP (25)     ┌──────────────────────────────────────┐
+│  NestJS API │ ─────────────────→ │ Postal v3.3.7 (Self-hosted)         │
+│  (Docker)   │   with auth       │  ┌──────────┐  ┌────────┐  ┌──────┐│──→ Internet
+└─────────────┘                    │  │ web-server│  │smtp-srv│  │worker││
+                                   │  └──────────┘  └────────┘  └──────┘│
+                                   │         └──────────────────┘       │
+                                   │              MariaDB               │
+                                   └──────────────────────────────────────┘
 ```
 
-## Quick Start
+## Current Setup (Production)
 
-### 1. Configure DNS Records
+| Component | Details |
+|---|---|
+| Postal Version | 3.3.7 (Docker: `ghcr.io/postalserver/postal`) |
+| VPS | `43.133.158.83` |
+| Web UI | `http://mail.bemftunesa.org:5000` |
+| SMTP | `mail.bemftunesa.org:25` |
+| Domain | `bemftunesa.org` (all DNS checks: ✅ Good) |
+| Admin | `admin@bemftunesa.org` |
+| Mail Server | `mail bemft unesa` (server ID: 1) |
+| SMTP Credentials | Server UUID: `d6155653-03cf-4ba8-8710-ef5f7f026589` |
 
-Add these records to your DNS provider for `bemftunesa.org`:
+## DNS Records (Cloudflare)
+
+All records configured and verified:
 
 ```
-# MX Record (required — tells mail servers where to deliver email)
-Type: MX
-Host: @ (or bemftunesa.org)
-Value: mail.bemftunesa.org
-Priority: 10
-TTL: 3600
-
-# A Record (required — points mail subdomain to your VPS)
-Type: A
-Host: mail
-Value: 43.133.158.83
-TTL: 3600
-
-# SPF Record (required — authorizes your server to send email)
-Type: TXT
-Host: @ (or bemftunesa.org)
-Value: v=spf1 mx a ip4:43.133.158.83 ~all
-TTL: 3600
-
-# DKIM Record (required — cryptographic signature for email authentication)
-# Get the DKIM key from Postal UI after setup: http://<VPS_IP>:5000
-Type: TXT
-Host: postal._domainkey
-Value: (obtained from Postal UI after setup)
-TTL: 3600
-
-# DMARC Record (required — tells receivers what to do with failed checks)
-Type: TXT
-Host: _dmarc
-Value: v=DMARC1; p=quarantine; rua=mailto:dmarc@bemftunesa.org; pct=100
-TTL: 3600
-
-# Reverse DNS / PTR Record (required — verify with your VPS provider)
-# Contact Tencent Cloud support to set PTR for 43.133.158.83 → mail.bemftunesa.org
+MX      @                    → mail.bemftunesa.org (priority 10)       ✅
+A       mail                 → 43.133.158.83                           ✅
+TXT     @                    → v=spf1 a mx include:bemftunesa.org ~all ✅
+TXT     postal-ONZ0Pr._domainkey → (DKIM key)                         ✅
+CNAME   psrp                 → mail.bemftunesa.org (Return Path)       ✅
+TXT     _dmarc               → v=DMARC1; p=quarantine; ...             ✅
 ```
 
-### 2. Start Postal Server
+## Postal v3 Container Architecture
+
+Three services from the same image, no RabbitMQ needed:
+
+```yaml
+postal-web:     postal web-server  (port 5000) — Admin UI
+postal-smtp:    postal smtp-server (port 25)   — Receives mail
+postal-worker:  postal worker               — Processes & delivers mail
+postal-db:      MariaDB 10.11              — Database
+```
+
+## Backend SMTP Configuration (.env)
 
 ```bash
-cd ~/bemftunesa2026
-docker compose up -d postal postal-db postal-rabbitmq
-```
-
-### 3. Initial Postal Setup
-
-```bash
-# Wait for services to be healthy (~30 seconds)
-docker compose ps
-
-# Create initial admin user
-docker compose exec postal postal make-user
-# Follow the prompts:
-#   Email: admin@bemftunesa.org
-#   Password: (choose a strong password)
-#   Name: Postal Admin
-```
-
-### 4. Configure Postal via Web UI
-
-1. Open `http://43.133.158.83:5000` in your browser
-2. Login with the admin credentials
-3. Go to **Organization Settings** → **Add Organization**
-4. Create organization: `BEM FT UNESA`
-5. Go to **Servers** → **Add Server**
-   - Name: `bemftunesa`
-   - Mode: `Transactional`
-6. After server is created, go to **Credentials** tab
-7. Note down:
-   - **SMTP Host**: `postal` (Docker internal) or `43.133.158.83` (external)
-   - **SMTP Port**: `25`
-   - **API Key** (for future HTTP API use)
-8. Go to **DKIM Keys** tab → **Generate Key**
-9. Copy the DKIM TXT record value and add it to your DNS
-
-### 5. Verify DNS Setup
-
-```bash
-# Check MX record
-dig MX bemftunesa.org +short
-
-# Check SPF
-dig TXT bemftunesa.org +short
-
-# Check DKIM (after adding the record)
-dig TXT postal._domainkey.bemftunesa.org +short
-
-# Check DMARC
-dig TXT _dmarc.bemftunesa.org +short
-
-# Check reverse DNS (PTR)
-dig -x 43.133.158.83 +short
-```
-
-### 6. Test Email Delivery
-
-From the Postal UI, go to **Servers** → **bemftunesa** → **Send Test Email**:
-
-```
-To: test@gmail.com
-From: noreply@bemftunesa.org
-Subject: Test Email from BEM FT UNESA
-Body: This is a test email.
-```
-
-Check:
-- [ ] Email arrives in inbox (not spam)
-- [ ] SPF passes (check email headers)
-- [ ] DKIM passes
-- [ ] DMARC passes
-
-### 7. Start Full Stack
-
-```bash
-cd ~/bemftunesa2026
-docker compose up -d --build
-```
-
-## Environment Variables
-
-Add to `.env`:
-
-```bash
-# SMTP (Postal)
-SMTP_HOST=postal
+SMTP_HOST=postal-smtp
 SMTP_PORT=25
-SMTP_USER=
-SMTP_PASS=
+SMTP_USER=d6155653-03cf-4ba8-8710-ef5f7f026589   # Server UUID
+SMTP_PASS=6928527591c00236e6a9fc73baa59ca7        # Credential key
 SMTP_FROM_NAME=BEM FT UNESA 2026
 SMTP_FROM_EMAIL=noreply@bemftunesa.org
 ```
-
-> When running inside Docker, `SMTP_HOST=postal` resolves to the Postal container.
-> For external access (from host), use `SMTP_HOST=43.133.158.83`.
 
 ## Email Verification Flow
 
@@ -162,7 +67,9 @@ SMTP_FROM_EMAIL=noreply@bemftunesa.org
 1. User registers (POST /auth/register)
    → OTP generated (6 digits, crypto.randomInt)
    → OTP hashed with bcrypt, stored in user document
-   → Email verification sent via Postal SMTP
+   → EventEmitter emits 'email.verification.send'
+   → MailListener handles event
+   → PostalSmtpAdapter sends OTP via SMTP with auth
 
 2. User receives email with 6-digit OTP
    → Dark theme + orange accent email template
@@ -191,34 +98,59 @@ SMTP_FROM_EMAIL=noreply@bemftunesa.org
 | Max Verify Attempts | 5 (then 15-min lockout) |
 | Max Resend Count | 5 (then 15-min lockout) |
 | Resend Cooldown | 60 seconds between resends |
-| Audit Logging | All attempts logged with IP + User Agent |
-| Brute Force Protection | Progressive lockout on failed attempts |
+| SMTP Auth | Server UUID + credential key (not plaintext) |
+| DKIM Signing | Automatic via Postal |
+| SPF/DKIM/DMARC | All configured and passing |
+
+## Management Commands
+
+```bash
+# Check Postal services
+docker compose ps postal-web postal-smtp postal-worker postal-db
+
+# View Postal logs
+docker compose logs postal-smtp --tail 20
+docker compose logs postal-worker --tail 20
+docker compose logs postal-web --tail 20
+
+# Access Postal Rails console
+docker compose exec postal-web postal console
+
+# Create additional admin
+docker compose run --rm postal-web postal make-user
+
+# Check DNS records from VPS
+dig +short TXT bemftunesa.org           # SPF
+dig +short TXT postal-ONZ0Pr._domainkey.bemftunesa.org  # DKIM
+dig +short MX bemftunesa.org            # MX
+dig +short CNAME psrp.bemftunesa.org    # Return Path
+```
 
 ## Troubleshooting
 
 ### Email goes to spam
-1. Verify all DNS records are correct: `dig MX/TXT bemftunesa.org`
+1. Verify DNS: all records must be Green in Postal web UI
 2. Check PTR record (reverse DNS): `dig -x 43.133.158.83`
 3. Warm up the IP — start with small volumes
-4. Check Postal logs: `docker compose logs postal`
+4. Check Postal logs: `docker compose logs postal-worker`
 
 ### Postal won't start
 ```bash
-docker compose logs postal postal-db postal-rabbitmq
+docker compose logs postal-web postal-smtp postal-worker postal-db
 ```
 
 Common issues:
 - MariaDB not ready: increase `start_period` in healthcheck
 - Port 25 blocked: check VPS firewall / cloud provider restrictions
-- RabbitMQ connection refused: check `postal-rabbitmq` health
+- GHCR.io blocked from VPS: use `docker.io/ghcr.io/postalserver/postal:3.3.7`
 
 ### API can't connect to Postal
 - Ensure API container is on the `postal` network
-- Use `SMTP_HOST=postal` (not localhost)
-- Check: `docker compose exec api nc -zv postal 25`
+- Use `SMTP_HOST=postal-smtp` (the compose service name)
+- Check: `docker compose exec api nc -zv postal-smtp 25`
 
 ### Port 25 blocked by cloud provider
-Some cloud providers (AWS, GCP) block port 25 by default. Tencent Cloud (your VPS) typically allows it, but check:
+Some cloud providers (AWS, GCP) block port 25 by default. Tencent Cloud typically allows it:
 ```bash
 # From VPS
 telnet localhost 25
@@ -226,7 +158,3 @@ telnet localhost 25
 # From external
 telnet 43.133.158.83 25
 ```
-
-If blocked, you may need to:
-1. Request unblock from Tencent Cloud support
-2. Or use port 587 with TLS (requires SSL certificate for mail.bemftunesa.org)

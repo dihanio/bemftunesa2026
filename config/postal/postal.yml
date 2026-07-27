@@ -17,6 +17,9 @@ message_db:
   password: postal_root_2026
   prefix: postal
 
+web_server:
+  default_bind_address: "0.0.0.0"
+
 smtp_server:
   default_bind_address: "::"
 
