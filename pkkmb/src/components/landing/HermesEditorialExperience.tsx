@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion, type MotionValue } from "framer-motion";
-import { useRef, useState, useEffect, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -114,15 +114,10 @@ export default function HermesEditorialExperience() {
    Full cinematic 900vh spring physics, progress bar, & 5 viewports
    ═══════════════════════════════════════════════════ */
 function DesktopStickyExperience() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
+  const { scrollYProgress } = useScroll();
 
   return (
-    <div ref={containerRef} className="relative h-[900vh] bg-[#040507] text-[#FAFAFA] font-sans">
+    <div className="relative h-[900vh] bg-[#040507] text-[#FAFAFA] font-sans">
       {/* Top Fixed Scroll Progress Bar (Warm Gold Glow Indicator) */}
       <div className="fixed top-0 left-0 right-0 h-[3.5px] bg-[#040507]/80 z-[60] pointer-events-none">
         <motion.div
