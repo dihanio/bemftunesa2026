@@ -220,7 +220,7 @@ services:
       - "25:25"
       - "5000:5000"
     volumes:
-      - postal_config:/config
+      - ./config/postal:/config
       - postal_data:/app/data
     networks:
       - postal
@@ -233,7 +233,6 @@ volumes:
   uploads_data:
   postal_db_data:
   postal_rabbitmq_data:
-  postal_config:
   postal_data:
 
 networks:
