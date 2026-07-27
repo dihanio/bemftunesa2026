@@ -136,6 +136,14 @@ function AuthContent() {
   const handleRegChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setRegData((prev) => ({ ...prev, [id]: value }));
+
+    // Auto-extract NIM from email if @mhs.unesa.ac.id
+    if (id === "email" && value.includes("@mhs.unesa.ac.id")) {
+      const nim = value.split("@")[0];
+      if (/^\d{8,12}$/.test(nim)) {
+        setRegData((prev) => ({ ...prev, nim }));
+      }
+    }
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
@@ -587,7 +595,12 @@ function AuthContent() {
                               value={regData.nim}
                               onChange={handleRegChange}
                               placeholder="Jika ada"
+                              readOnly={regData.email.includes("@mhs.unesa.ac.id") && /^\d{8,12}@mhs\.unesa\.ac\.id$/.test(regData.email)}
+                              style={{ opacity: regData.email.includes("@mhs.unesa.ac.id") && /^\d{8,12}@mhs\.unesa\.ac\.id$/.test(regData.email) ? 0.6 : 1 }}
                             />
+                            {regData.email.includes("@mhs.unesa.ac.id") && /^\d{8,12}@mhs\.unesa\.ac\.id$/.test(regData.email) && (
+                              <p className="text-[9px] text-[#D4AF37]/70 font-mono mt-0.5">NIM otomatis dari email</p>
+                            )}
                           </div>
 
                           <div className="space-y-1">
