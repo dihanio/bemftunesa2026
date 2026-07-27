@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence, useScroll, useTransform, useSpring, type MotionValue } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useSpring, useReducedMotion, type MotionValue } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,28 +24,33 @@ export default function HermesEditorialExperience() {
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [isNavigatingToLogin, setIsNavigatingToLogin] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
-  const handlePortalClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsNavigatingToLogin(true);
-    setTimeout(() => {
-      router.push('/login');
-    }, 650);
-  };
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Disable heavy animations on mobile or reduced motion preference
+  const enableAnimations = !isMobile && !prefersReducedMotion;
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
+    enabled: enableAnimations,
   });
 
-  const smoothProgress = useSpring(scrollYProgress, {
+  const smoothProgress = useSpring(enableAnimations ? scrollYProgress : 0, {
     stiffness: 90,
     damping: 30,
     restDelta: 0.001,
   });
 
   return (
-    <div ref={containerRef} className="relative h-[900vh] bg-[#040507] text-[#FAFAFA] font-sans">
+    <div ref={containerRef} className={`relative ${enableAnimations ? "h-[900vh]" : "h-auto min-h-screen"} bg-[#040507] text-[#FAFAFA] font-sans`}>
       
       {/* Top Fixed Scroll Progress Bar (Warm Gold Glow Indicator - Guaranteed z-[60] Above Navbar) */}
       <div className="fixed top-0 left-0 right-0 h-[3.5px] bg-[#040507]/80 z-[60] pointer-events-none">
@@ -59,22 +64,22 @@ export default function HermesEditorialExperience() {
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
         
         {/* Ambient Background Image & Texture */}
-        <BackgroundTexture progress={smoothProgress} />
+        <BackgroundTexture progress={smoothProgress} enabled={enableAnimations} />
 
         {/* VIEWPORT 1: The Monumental Entry featuring Mascot Pose 2 (0.00 - 0.20) */}
-        <Viewport1Monument progress={smoothProgress} />
+        <Viewport1Monument progress={smoothProgress} enabled={enableAnimations} />
 
         {/* VIEWPORT 2: The Transformation Manifesto (0.20 - 0.45) */}
-        <Viewport2Manifesto progress={smoothProgress} />
+        <Viewport2Manifesto progress={smoothProgress} enabled={enableAnimations} />
 
         {/* VIEWPORT 3: The Mascot Companions featuring Mascot Pose 1 (0.45 - 0.70) */}
-        <Viewport3Companions progress={smoothProgress} />
+        <Viewport3Companions progress={smoothProgress} enabled={enableAnimations} />
 
         {/* VIEWPORT 4: The Three Editorial Pillars (0.70 - 0.88) */}
-        <Viewport4Pillars progress={smoothProgress} />
+        <Viewport4Pillars progress={smoothProgress} enabled={enableAnimations} />
 
         {/* VIEWPORT 5: The Activation Finale (0.88 - 1.00) */}
-        <Viewport5Finale progress={smoothProgress} />
+        <Viewport5Finale progress={smoothProgress} enabled={enableAnimations} />
 
         {/* Floating Centered Header */}
         <header className="absolute top-0 left-0 right-0 z-50 p-6 sm:p-8 flex items-center justify-between pointer-events-auto">
@@ -139,46 +144,38 @@ export default function HermesEditorialExperience() {
 /* ═══════════════════════════════════════════════════
    BACKGROUND TEXTURE (Gedung FT Image, Grid & Gold Glow)
    ═══════════════════════════════════════════════════ */
-function BackgroundTexture({ progress }: { progress: MotionValue<number> }) {
+function BackgroundTexture({ progress, enabled = true }: { progress: MotionValue<number>; enabled?: boolean }) {
   const bgOpacity = useTransform(progress, [0, 0.5, 1], [0.15, 0.28, 0.18]);
   const glowOpacity = useTransform(progress, [0, 0.5, 1], [0.15, 0.30, 0.20]);
   const glowY = useTransform(progress, [0, 1], [-100, 100]);
   const bgScale = useTransform(progress, [0, 1], [1, 1.15]);
 
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {/* Full-bleed Campus Photo Background Image */}
-      <motion.div
-        style={{ opacity: bgOpacity, scale: bgScale }}
-        className="absolute inset-0"
-      >
-        <Image
-          src="/gedung_ft_new.jpeg"
-          alt="Gedung FT UNESA Background"
-          fill
-          className="object-cover grayscale opacity-60 filter contrast-125"
-          priority
-        />
-        {/* Dark Vignette Overlay for Crisp Readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#040507] via-[#040507]/80 to-[#040507]" />
-      </motion.div>
-
-      {/* Editorial Grid Texture */}
-      <div className="absolute inset-0 opacity-40 bg-[linear-gradient(rgba(212,175,55,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(212,175,55,0.04)_1px,transparent_1px)] bg-[size:64px_64px]" />
-
-      {/* Soft Ambient Radial Glow */}
-      <motion.div
-        style={{ opacity: glowOpacity, y: glowY }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[850px] bg-[#D4AF37]/20 rounded-full blur-[180px]"
-      />
-
-      {/* Aksara Jawa Watermark */}
-      <div className="absolute bottom-12 right-12 text-[18rem] font-serif text-[#D4AF37]/[0.03] select-none pointer-events-none leading-none hidden lg:block">
-        ꦥꦏꦏꦩꦧ
+  if (!enabled) {
+    return (
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute inset-0">
+          <Image
+            src="/gedung_ft_new.jpeg"
+            alt="Gedung FT UNESA Background"
+            fill
+            className="object-cover grayscale opacity-60 filter contrast-125"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#040507] via-[#040507]/80 to-[#040507]" />
+        </div>
+        <div className="absolute inset-0 opacity-40 bg-[linear-gradient(rgba(212,175,55,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(212,175,55,0.04)_1px,transparent_1px)] bg-[size:64px_64px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[850px] bg-[#D4AF37]/20 rounded-full blur-[180px]" />
+        <div className="absolute bottom-12 right-12 text-[18rem] font-serif text-[#D4AF37]/[0.03] select-none pointer-events-none leading-none hidden lg:block">
+          ꦥꦏꦏꦩꦧ
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+
+  const bgOpacity = useTransform(progress, [0, 0.5, 1], [0.15, 0.28, 0.18]);
+  const glowOpacity = useTransform(progress, [0, 0.5, 1], [0.15, 0.30, 0.20]);
+  const glowY = useTransform(progress, [0, 1], [-100, 100]);
+  const bgScale = useTransform(progress, [0, 1], [1, 1.15]);
 
 /* ═══════════════════════════════════════════════════
    VIEWPORT 1: THE MONUMENTAL ENTRY (0.00 - 0.20)

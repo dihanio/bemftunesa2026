@@ -43,21 +43,21 @@ export async function SambutanSection() {
         {/* Left Side: Large Photos popping out */}
         <div className="w-full lg:w-1/2 flex gap-4 lg:gap-6 relative z-20 items-start pb-12 lg:pb-0">
           {/* Ketua Photo */}
-          <div className="relative w-1/2 aspect-[3/4] rounded-2xl overflow-visible transition-all duration-500 mt-8 lg:mt-0 group/ketua">
-            <div className="absolute inset-0 top-12 rounded-2xl bg-slate-200/50 dark:bg-slate-800/20 border-4 border-background/50 shadow-2xl group-hover/ketua:shadow-accent-gold/20 transition-all duration-500" />
+          <div className="relative w-1/2 aspect-[3/4] rounded-2xl overflow-visible transition-all duration-500 mt-8 lg:mt-0">
+            <div className="absolute inset-0 top-12 rounded-2xl bg-slate-200/50 dark:bg-slate-800/20 border-4 border-background/50 shadow-2xl" />
             
             {ketua && getAvatarUrl(ketua.name, ketua.avatar) ? (
-              <div className="absolute inset-0 z-10 transition-transform duration-700 group-hover/ketua:-translate-y-4">
+              <div className="absolute inset-0 z-10">
                 <Image 
                   src={getAvatarUrl(ketua.name, ketua.avatar)!} 
                   alt={ketua.name} 
                   fill
                   sizes="(max-width: 768px) 50vw, 25vw"
-                  className="object-contain object-bottom filter contrast-110 drop-shadow-2xl rounded-b-xl scale-[1.25] origin-bottom transition-transform duration-700 group-hover/ketua:scale-[1.30]" 
+                  className="object-contain object-bottom filter contrast-110 drop-shadow-2xl rounded-b-xl scale-[1.25] origin-bottom" 
                 />
               </div>
             ) : (
-              <div className="absolute inset-0 top-12 flex items-center justify-center bg-slate-900/50 rounded-2xl z-10 transition-transform duration-700 group-hover/ketua:-translate-y-2">
+              <div className="absolute inset-0 top-12 flex items-center justify-center bg-slate-900/50 rounded-2xl z-10">
                 <User className="w-16 h-16 text-accent-blue/40" />
               </div>
             )}
