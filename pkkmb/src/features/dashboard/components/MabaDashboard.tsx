@@ -32,13 +32,16 @@ import { LoadingState } from '@/components/ui/loading-state';
 interface DashboardData {
   progress: {
     percent: number;
+    completedSteps: number;
+    totalSteps: number;
     hasGroup: boolean;
     hasAttendedAny: boolean;
     hasSubmittedTask: boolean;
   };
   announcements: { _id: string; title: string; content: string; isPriority: boolean }[];
-  upcomingSchedules: { _id: string; name: string; startTime: string; endTime: string }[];
-  tasks: { graded: number; total: number };
+  upcomingSchedules: { _id: string; name: string; startTime: string; endTime: string; location?: string }[];
+  tasks: { total: number; submitted: number; pending: number; graded: number };
+  attendance: { todayCount: number };
   nextAction: string | null;
 }
 
@@ -68,6 +71,7 @@ export function MabaDashboard() {
   const [isFetchingData, setIsFetchingData] = useState(true);
   const [prodiError, setProdiError] = useState<string | undefined>(undefined);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [prodiOptions, setProdiOptions] = useState<string[]>([]);
 
   const toast = useToast();
 
@@ -93,6 +97,24 @@ export function MabaDashboard() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
+
+  // Fetch study programs from API
+  useEffect(() => {
+    const fetchProdi = async () => {
+      try {
+        const res = await apiClient.get('/pkkmb/master/study-programs');
+        const programs = (res.data?.data || [])
+          .map((p: { name: string }) => p.name)
+          .filter(Boolean)
+          .sort();
+        if (programs.length > 0) setProdiOptions(programs);
+      } catch {
+        // Fallback to hardcoded if API fails
+        setProdiOptions(PRODI_OPTIONS);
+      }
+    };
+    void fetchProdi();
+  }, []);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,7 +273,7 @@ export function MabaDashboard() {
               <Select
                 label="PROGRAM STUDI FAKULTAS TEKNIK *"
                 placeholder="-- Pilih Program Studi --"
-                options={PRODI_OPTIONS}
+                options={prodiOptions.length > 0 ? prodiOptions : PRODI_OPTIONS}
                 value={selectedProdi}
                 onChange={(val) => setSelectedProdi(val)}
                 error={prodiError}

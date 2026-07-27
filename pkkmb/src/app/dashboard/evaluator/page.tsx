@@ -14,7 +14,7 @@ interface Task {
   title: string;
   description: string;
   deadline: string;
-  type: 'INDIVIDU' | 'KELOMPOK';
+  type: 'individu' | 'kelompok' | 'INDIVIDU' | 'KELOMPOK';
   status: 'PUBLISHED' | 'DRAFT';
 }
 
@@ -29,7 +29,7 @@ export default function EvaluatorPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState('');
-  const [type, setType] = useState<'INDIVIDU' | 'KELOMPOK'>('INDIVIDU');
+  const [type, setType] = useState<'individu' | 'kelompok'>('individu');
   const [publishMode, setPublishMode] = useState<'PUBLISHED' | 'DRAFT'>('PUBLISHED');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -198,7 +198,7 @@ export default function EvaluatorPage() {
                   )}
 
                   <span className="px-2 py-0.5 text-[9px] font-mono font-bold text-[var(--accent)] bg-[var(--accent-muted)] border border-[var(--accent-glow)] rounded uppercase tracking-wider">
-                    TUGAS {task.type}
+                    TUGAS {task.type.toUpperCase()}
                   </span>
                 </div>
 
@@ -252,11 +252,11 @@ export default function EvaluatorPage() {
             </label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as 'INDIVIDU' | 'KELOMPOK')}
+              onChange={(e) => setType(e.target.value as 'individu' | 'kelompok')}
               className="w-full bg-[var(--bg-surface)] border border-[var(--border-default)] px-3.5 py-2.5 text-xs font-mono text-[var(--text-primary)] rounded outline-none focus:border-[var(--accent)] cursor-pointer"
             >
-              <option value="INDIVIDU">INDIVIDU</option>
-              <option value="KELOMPOK">KELOMPOK</option>
+              <option value="individu">INDIVIDU</option>
+              <option value="kelompok">KELOMPOK</option>
             </select>
           </div>
 

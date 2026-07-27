@@ -30,3 +30,6 @@ export class StudyProgram {
 }
 
 export const StudyProgramSchema = SchemaFactory.createForClass(StudyProgram);
+
+StudyProgramSchema.index({ code: 1 });
+StudyProgramSchema.index({ rumpun: 1, isActive: 1 });

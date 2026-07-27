@@ -37,6 +37,9 @@ export class PkkmbTask {
 
 export const PkkmbTaskSchema = SchemaFactory.createForClass(PkkmbTask);
 
+PkkmbTaskSchema.index({ status: 1, deadline: 1 });
+PkkmbTaskSchema.index({ deletedAt: 1 });
+
 // --- Task Submission ---
 export type PkkmbSubmissionDocument = HydratedDocument<PkkmbSubmission>;
 
@@ -61,7 +64,7 @@ export class PkkmbSubmission {
 
   @Prop({
     required: true,
-    enum: ['Belum Submit', 'Sudah Submit', 'Terlambat'],
+    enum: ['Belum Submit', 'Sudah Submit', 'Terlambat', 'GRADED'],
     default: 'Belum Submit',
   })
   status: string;
@@ -87,3 +90,5 @@ export const PkkmbSubmissionSchema =
 
 PkkmbSubmissionSchema.index({ taskId: 1, userId: 1 });
 PkkmbSubmissionSchema.index({ taskId: 1, groupId: 1 });
+PkkmbSubmissionSchema.index({ userId: 1, taskId: 1 });
+PkkmbSubmissionSchema.index({ deletedAt: 1 });

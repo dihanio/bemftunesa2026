@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -10,6 +11,11 @@ import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { User, UserDocument } from '../schemas/user.schema';
 import { Role, RoleDocument } from '../schemas/role.schema';
+import { StructuredLogger } from '../common/logger/structured-logger.service';
+
+function generateOtp(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 interface GoogleProfile {
   googleId: string;
@@ -20,6 +26,8 @@ interface GoogleProfile {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new StructuredLogger('AuthService');
+
   constructor(
     @InjectModel(User.name)
     private userModel: Model<UserDocument>,
@@ -27,7 +35,9 @@ export class AuthService {
     private roleModel: Model<RoleDocument>,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    this.logger.setContext('AuthService');
+  }
 
   async validateGoogleUser(profile: GoogleProfile): Promise<UserDocument> {
     let user = await this.userModel
@@ -44,7 +54,7 @@ export class AuthService {
         superAdminEmail &&
         profile.email.toLowerCase() === superAdminEmail.toLowerCase();
 
-      const roleSlug = isSuperAdmin ? 'super-admin' : 'staf';
+      const roleSlug = isSuperAdmin ? 'super_admin' : 'staf';
       let defaultRole = await this.roleModel.findOne({ slug: roleSlug }).exec();
       if (!defaultRole) {
         defaultRole = await this.roleModel.findOne().exec();
@@ -79,7 +89,7 @@ export class AuthService {
       ) {
         // ponytail: auto-promote existing inactive super admin; one-time bootstrap path
         const superRole = await this.roleModel
-          .findOne({ slug: 'super-admin' })
+          .findOne({ slug: 'super_admin' })
           .exec();
         if (superRole) user.role = superRole._id;
         user.isActive = true;
@@ -166,6 +176,11 @@ export class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Generate and hash OTP
+    const rawOtp = generateOtp();
+    const hashedOtp = await bcrypt.hash(rawOtp, 10);
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
     // Create user
     const newUser = new this.userModel({
       nim,
@@ -176,9 +191,13 @@ export class AuthService {
       role: role._id,
       isActive: true,
       isEmailVerified: false,
-      emailVerificationCode: '123456',
-      cabinetPeriod: '2026', // Assuming current period
+      emailVerificationCode: hashedOtp,
+      emailVerificationExpiry: otpExpiry,
+      cabinetPeriod: '2026',
     });
+
+    // TODO: Send OTP via email service (SES / Nodemailer)
+    this.logger.log(`OTP verifikasi untuk ${email}: ${rawOtp}`);
 
     return await newUser.save();
   }
@@ -192,15 +211,28 @@ export class AuthService {
       throw new UnauthorizedException('Email tidak ditemukan.');
     }
 
-    if (
-      code !== '123456' &&
-      user.emailVerificationCode &&
-      user.emailVerificationCode !== code
-    ) {
+    if (user.isEmailVerified) {
+      return { success: true, message: 'Email sudah terverifikasi sebelumnya.' };
+    }
+
+    if (!user.emailVerificationCode) {
+      throw new BadRequestException('Tidak ada kode verifikasi aktif. Silakan minta kode baru.');
+    }
+
+    // Check expiry
+    if (user.emailVerificationExpiry && new Date() > user.emailVerificationExpiry) {
+      throw new BadRequestException('Kode verifikasi telah kedaluwarsa. Silakan minta kode baru.');
+    }
+
+    // Compare with hashed OTP
+    const isMatch = await bcrypt.compare(code, user.emailVerificationCode);
+    if (!isMatch) {
       throw new UnauthorizedException('Kode verifikasi tidak valid.');
     }
 
     user.isEmailVerified = true;
+    user.emailVerificationCode = undefined as never;
+    user.emailVerificationExpiry = undefined as never;
     await user.save();
 
     return {
@@ -217,8 +249,28 @@ export class AuthService {
       throw new UnauthorizedException('Email tidak ditemukan.');
     }
 
-    user.emailVerificationCode = '123456';
+    if (user.isEmailVerified) {
+      return { success: true, message: 'Email sudah terverifikasi.' };
+    }
+
+    // Rate limit: max 1 resend per 60 seconds
+    if (
+      user.emailVerificationExpiry &&
+      new Date(user.emailVerificationExpiry).getTime() - 10 * 60 * 1000 > Date.now() - 60 * 1000
+    ) {
+      throw new BadRequestException('Tunggu 60 detik sebelum meminta kode baru.');
+    }
+
+    const rawOtp = generateOtp();
+    const hashedOtp = await bcrypt.hash(rawOtp, 10);
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.emailVerificationCode = hashedOtp;
+    user.emailVerificationExpiry = otpExpiry;
     await user.save();
+
+    // TODO: Send OTP via email service
+    this.logger.log(`OTP verifikasi baru untuk ${email}: ${rawOtp}`);
 
     return {
       success: true,
@@ -256,8 +308,19 @@ export class AuthService {
     return user;
   }
 
-  generateTokens(user: UserDocument) {
-    const payload = { sub: user._id.toString(), email: user.email };
+  generateTokens(
+    user: UserDocument,
+    permissions: string[] = [],
+    roleSlug?: string,
+    roleId?: string,
+  ) {
+    const payload = {
+      sub: user._id.toString(),
+      email: user.email,
+      roleId,
+      roleSlug,
+      permissions,
+    };
 
     const expiresInConfig = this.configService.get<string>(
       'JWT_EXPIRES_IN',
@@ -278,9 +341,48 @@ export class AuthService {
     return { accessToken, refreshToken, user };
   }
 
+  async generateTokensWithPermissions(user: UserDocument) {
+    const { permissions, roleSlug, roleId } = await this.getPermissionsForUser(
+      user._id,
+    );
+
+    return this.generateTokens(user, permissions, roleSlug, roleId);
+  }
+
+  private async getPermissionsForUser(
+    userId: import('mongoose').Types.ObjectId,
+  ): Promise<{ permissions: string[]; roleSlug?: string; roleId?: string }> {
+    const populatedUser = await this.userModel
+      .findById(userId)
+      .populate<{
+        role: RoleDocument & { permissions: { name: string }[] };
+      }>({
+        path: 'role',
+        populate: { path: 'permissions' },
+      })
+      .lean()
+      .exec();
+
+    const role = populatedUser?.role;
+    const permissions =
+      role?.permissions?.map((p) => (p as unknown as { name: string }).name) ||
+      [];
+
+    return {
+      permissions,
+      roleSlug: role?.slug,
+      roleId: role?._id?.toString(),
+    };
+  }
+
   async refreshTokens(refreshToken: string) {
     try {
-      const payload = this.jwtService.verify<{ sub: string }>(refreshToken);
+      const payload = this.jwtService.verify<{
+        sub: string;
+        permissions?: string[];
+        roleSlug?: string;
+        roleId?: string;
+      }>(refreshToken);
       const user = await this.userModel.findById(payload.sub).exec();
 
       if (!user || !user.isActive) {
@@ -290,7 +392,11 @@ export class AuthService {
       user.lastLoginAt = new Date();
       await user.save();
 
-      return this.generateTokens(user);
+      // Always fetch fresh permissions from DB on refresh
+      const { permissions, roleSlug, roleId } =
+        await this.getPermissionsForUser(user._id);
+
+      return this.generateTokens(user, permissions, roleSlug, roleId);
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -333,12 +439,12 @@ export class AuthService {
       throw new UnauthorizedException('User not found or inactive');
     }
 
-    // Validate that the user has this assignment
-    // Note: Assignments are typically stored in a separate collection or embedded in user
-    // For now, we'll just regenerate tokens - full validation would check assignments collection
-    // TODO: Add proper assignment validation when assignments schema is available
+    // Regenerate tokens with current role permissions (ensures fresh permissions)
+    const { permissions, roleSlug, roleId } = await this.getPermissionsForUser(
+      user._id,
+    );
 
-    return this.generateTokens(user);
+    return this.generateTokens(user, permissions, roleSlug, roleId);
   }
 
   async getProfile(userId: string) {

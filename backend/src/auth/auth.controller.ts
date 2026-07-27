@@ -19,6 +19,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedRequest } from '../common/interfaces/authenticated-request.interface';
 import { ConfigService } from '@nestjs/config';
 import { GoogleOauthGuard } from './guards/google-oauth.guard';
+import { StructuredLogger } from '../common/logger/structured-logger.service';
 
 export interface GoogleProfile {
   googleId: string;
@@ -29,10 +30,14 @@ export interface GoogleProfile {
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new StructuredLogger('AuthController');
+
   constructor(
     private authService: AuthService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    this.logger.setContext('AuthController');
+  }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Get('google')
@@ -50,18 +55,13 @@ export class AuthController {
   ) {
     const profile = req.user!;
 
-    console.log('🔐 [AUTH] Google callback received for:', profile.email);
+    this.logger.log(`Google callback received for: ${profile.email}`);
 
     try {
       const user = await this.authService.validateGoogleUser(profile);
-      console.log(
-        '✅ [AUTH] User validated successfully:',
-        user.email,
-        '| Position:',
-        user.position,
-      );
+      this.logger.log(`User validated successfully: ${user.email} | Position: ${user.position}`);
 
-      const tokens = this.authService.generateTokens(user);
+      const tokens = await this.authService.generateTokensWithPermissions(user);
 
       const isProduction =
         this.configService.get<string>('NODE_ENV') === 'production';
@@ -90,15 +90,14 @@ export class AuthController {
           ? this.configService.get<string>('PKKMB_URL')
           : this.configService.get<string>('IMS_URL');
       const successUrl = `${baseUrl}/login?authenticated=true`;
-      console.log('🍪 [AUTH] Cookies set successfully');
-      console.log('🔄 [AUTH] Redirecting to:', successUrl);
+      this.logger.log(`Cookies set, redirecting to: ${successUrl}`);
 
       res.redirect(successUrl);
-      console.log('✓ [AUTH] Redirect response sent successfully');
+      this.logger.log('Redirect response sent');
       return;
     } catch (error: unknown) {
       const err = error as Error;
-      console.log('❌ [AUTH] Validation error:', err.message);
+      this.logger.warn(`Google auth validation error: ${err.message}`);
 
       const state = req.query.state as string;
       const baseUrl =
@@ -109,29 +108,20 @@ export class AuthController {
       // Handle specific authentication errors by redirecting
       if (err.message === 'PENDING_APPROVAL') {
         const pendingUrl = `${baseUrl}/pending`;
-        console.log(
-          '⏳ [AUTH] User pending approval, redirecting DIRECTLY to:',
-          pendingUrl,
-        );
+        this.logger.log(`User pending approval, redirecting to: ${pendingUrl}`);
         res.redirect(pendingUrl);
-        console.log('✓ [AUTH] Direct redirect to /pending sent');
         return;
       } else if (err.message === 'DEACTIVATED_ACCOUNT') {
         const deactivatedUrl = `${baseUrl}/login?error=deactivated`;
-        console.log(
-          '🚫 [AUTH] User deactivated, redirecting to:',
-          deactivatedUrl,
-        );
+        this.logger.warn(`User deactivated, redirecting to: ${deactivatedUrl}`);
 
         res.redirect(deactivatedUrl);
-        console.log('✓ [AUTH] Redirect to login (deactivated) sent');
         return;
       } else {
         const failedUrl = `${baseUrl}/login?error=auth_failed`;
-        console.log('⚠️ [AUTH] Auth failed, redirecting to:', failedUrl);
+        this.logger.warn(`Auth failed, redirecting to: ${failedUrl}`);
 
         res.redirect(failedUrl);
-        console.log('✓ [AUTH] Redirect to login (auth_failed) sent');
         return;
       }
     }
@@ -153,7 +143,7 @@ export class AuthController {
 
     try {
       const user = await this.authService.validateBypassUser(email);
-      const tokens = this.authService.generateTokens(user);
+      const tokens = await this.authService.generateTokensWithPermissions(user);
 
       const isProduction =
         this.configService.get<string>('NODE_ENV') === 'production';
@@ -212,29 +202,24 @@ export class AuthController {
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Patch('profile')
+  @UseGuards(JwtAuthGuard)
   async updateProfile(
+    @CurrentUser() user: AuthenticatedRequest['user'],
     @Body()
     body: {
-      userId?: string;
-      email?: string;
       studyProgram?: string;
       avatar?: string;
     },
   ) {
-    // If email or userId is provided, find and update
-    const emailToUse = body.email;
-    if (!emailToUse && !body.userId) {
-      throw new ForbiddenException('User ID atau Email wajib diisi.');
-    }
-
-    const user = emailToUse
-      ? await this.authService.updateMabaProfileByEmail(emailToUse, body)
-      : await this.authService.updateMabaProfile(body.userId!, body);
+    const updated = await this.authService.updateMabaProfile(
+      user.userId.toString(),
+      body,
+    );
 
     return {
       success: true,
       message: 'Profil berhasil diperbarui.',
-      data: user,
+      data: updated,
     };
   }
 
@@ -250,7 +235,7 @@ export class AuthController {
     }
 
     const user = await this.authService.validateMabaLogin(email, password);
-    const tokens = this.authService.generateTokens(user);
+    const tokens = await this.authService.generateTokensWithPermissions(user);
 
     const isProduction =
       this.configService.get<string>('NODE_ENV') === 'production';
@@ -410,7 +395,6 @@ export class AuthController {
 
     if (
       roleObj?.slug === 'super_admin' ||
-      roleObj?.slug === 'super-admin' ||
       roleObj?.name === 'Super Admin'
     ) {
       permissions = ['manage:all', ...permissions];

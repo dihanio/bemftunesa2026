@@ -1,26 +1,20 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User, UserDocument } from '../../schemas/user.schema';
-import { AppPermission } from '../../common/auth/permissions';
-import { RoleDocument } from '../../schemas/role.schema';
 import { Request } from 'express';
 
 interface JwtPayload {
   sub: string;
   email: string;
+  roleId?: string;
+  roleSlug?: string;
+  permissions?: string[];
 }
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(
-    configService: ConfigService,
-    @InjectModel(User.name)
-    private userModel: Model<UserDocument>,
-  ) {
+  constructor(configService: ConfigService) {
     const secret = configService.get<string>('JWT_SECRET');
     if (!secret)
       throw new Error('JWT_SECRET is not defined. Aborting startup.');
@@ -49,55 +43,18 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: JwtPayload) {
-    const user = await this.userModel
-      .findById(payload.sub)
-      .populate<{ role: RoleDocument & { permissions: { name: string }[] } }>({
-        path: 'role',
-        populate: { path: 'permissions' },
-      })
-      .exec();
-
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('User not found or inactive');
-    }
-
-    console.log('=== JWT STRATEGY DEBUG ===');
-    console.log('User email:', user.email);
-    console.log('User.role (raw):', user.role);
-
-    // user.populated('role') returns undefined even though role IS populated
-    // So we use user.role directly and check if it's an object (populated) vs ObjectId (not populated)
-    const role =
-      user.role && typeof user.role === 'object' && '_id' in user.role
-        ? (user.role as Omit<RoleDocument, 'permissions'> & {
-            permissions: { name: string }[];
-          })
-        : undefined;
-
-    console.log('Role after extraction:', role);
-    console.log('Role slug:', role?.slug);
-    console.log('=========================');
-
-    const permissions =
-      role?.permissions?.map((p) => p.name as AppPermission) || [];
-
+  validate(payload: JwtPayload) {
     return {
-      userId: user._id.toString(),
-      activeRoleId:
-        role?._id?.toString() ||
-        (user.role as { toString(): string })?.toString(),
-      role: role
+      userId: payload.sub,
+      activeRoleId: payload.roleId,
+      role: payload.roleSlug
         ? {
-            _id: role._id,
-            slug: role.slug,
-            name: role.name,
-            scope: role.scope,
+            _id: payload.roleId,
+            slug: payload.roleSlug,
+            name: payload.roleSlug,
           }
         : undefined,
-      organizationId: user.department?.toString(),
-      cabinetPeriod: user.cabinetPeriod,
-      permissions,
+      permissions: payload.permissions || [],
       session: null,
     };
   }

@@ -11,6 +11,7 @@ import {
   Query,
   Delete,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -52,14 +53,60 @@ export class PkkmbController {
   @Get('me')
   @ApiOperation({ summary: 'Mendapatkan profil Maba/Pendamping saat ini' })
   @ApiResponse({ status: 200, description: 'Berhasil' })
-  getMe(@CurrentUser() user: UserDocument) {
-    return { success: true, data: user };
+  async getMe(@CurrentUser() user: { userId: string }) {
+    const userData = await this.pkkmbService.getUserProfile(user.userId);
+    return { success: true, data: userData };
   }
 
   @Get('dashboard/maba')
   @ApiOperation({ summary: 'Mendapatkan data agregasi untuk Dashboard Maba' })
   async getMabaDashboard(@CurrentUser() user: { userId: string }) {
     const data = await this.pkkmbService.getMabaDashboard(user.userId);
+    return { success: true, data };
+  }
+
+  @Get('dashboard/maba/announcements')
+  @ApiOperation({ summary: 'Pengumuman prioritas untuk Dashboard Maba' })
+  async getMabaDashboardAnnouncements(@CurrentUser() user: UserDocument) {
+    const data = await this.pkkmbService.getMabaDashboardAnnouncements(
+      user.pkkmbGroup?.toString(),
+    );
+    return { success: true, data };
+  }
+
+  @Get('dashboard/maba/schedules')
+  @ApiOperation({ summary: 'Jadwal mendatang untuk Dashboard Maba' })
+  async getMabaDashboardSchedules() {
+    const data = await this.pkkmbService.getMabaDashboardSchedules();
+    return { success: true, data };
+  }
+
+  @Get('dashboard/maba/tasks')
+  @ApiOperation({ summary: 'Status tugas untuk Dashboard Maba' })
+  async getMabaDashboardTasks(@CurrentUser() user: UserDocument) {
+    const data = await this.pkkmbService.getMabaDashboardTasks(
+      user._id.toString(),
+      user.pkkmbGroup?.toString(),
+    );
+    return { success: true, data };
+  }
+
+  @Get('dashboard/maba/attendance')
+  @ApiOperation({ summary: 'Ringkasan kehadiran hari ini' })
+  async getMabaDashboardAttendance(@CurrentUser() user: { userId: string }) {
+    const data = await this.pkkmbService.getMabaDashboardAttendance(
+      user.userId,
+    );
+    return { success: true, data };
+  }
+
+  @Get('dashboard/maba/progress')
+  @ApiOperation({ summary: 'Progress PKKMB mahasiswa' })
+  async getMabaDashboardProgress(@CurrentUser() user: UserDocument) {
+    const data = await this.pkkmbService.getMabaDashboardProgress(
+      user._id.toString(),
+      user.pkkmbGroup?.toString(),
+    );
     return { success: true, data };
   }
 
@@ -83,7 +130,7 @@ export class PkkmbController {
 
   @Get('gugus')
   @ApiOperation({ summary: 'Mendapatkan daftar 50 Gugus PKKMB FT UNESA 2026' })
-  async getAllGugus() {
+  async getAllGugus(): Promise<{ success: boolean; data: unknown }> {
     const data = await this.pkkmbService.getAllGugus();
     return { success: true, data };
   }
@@ -109,6 +156,7 @@ export class PkkmbController {
 
   @Post('gugus/auto-distribute')
   @RequiredPermissions(PkkmbPermission.GROUP_CREATE)
+  @Throttle({ default: { limit: 2, ttl: 60000 } })
   @ApiOperation({
     summary:
       'Menjalankan Algoritma Pembagian Gugus Otomatis Lintas Program Studi (Round-Robin)',
@@ -121,6 +169,7 @@ export class PkkmbController {
   // ─── UNIVERSAL ATTENDANCE MODULE ──────────────────────────────────────────
 
   @Get('attendance/sessions')
+  @RequiredPermissions(PkkmbPermission.ATTENDANCE_CHECKIN)
   @ApiOperation({ summary: 'Melihat sesi presensi universal (MABA & Panitia)' })
   async getAttendanceSessions(
     @Query('participantType') participantType?: string,
@@ -173,6 +222,7 @@ export class PkkmbController {
 
   @Post('attendance/checkin')
   @RequiredPermissions(PkkmbPermission.ATTENDANCE_CHECKIN)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     summary:
       'Melakukan check-in presensi universal (QR, Manual Operator, Search NIM)',
@@ -216,18 +266,21 @@ export class PkkmbController {
   // ─── TASKS & SUBMISSIONS ──────────────────────────────────────────────────
 
   @Get('tasks')
+  @RequiredPermissions(PkkmbPermission.TASK_READ)
   @ApiOperation({ summary: 'Melihat daftar tugas' })
   async getTasks(
-    @CurrentUser() user: { role?: string },
+    @CurrentUser() user: { userId: string; role?: { slug?: string } },
     @Query() query: PaginationDto,
   ) {
-    const isPanitia = user?.role !== 'user' && user?.role !== 'maba';
+    const roleSlug = user?.role?.slug;
+    const isPanitia = roleSlug !== 'user' && roleSlug !== 'maba';
     const data = await this.pkkmbService.getTasks(query, isPanitia);
     return { success: true, data };
   }
 
   @Post('maba/tasks/:id/submit')
   @RequiredPermissions(PkkmbPermission.TASK_SUBMIT)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({
     summary: 'Pengumpulan Tugas (Metode Google Drive / Cloud Link)',
   })
@@ -260,6 +313,7 @@ export class PkkmbController {
 
   @Patch('pemateri/submissions/:id/grade')
   @RequiredPermissions(PkkmbPermission.GRADING_UPDATE)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Menilai dan memberi feedback pada tugas' })
   @ApiParam({ name: 'id', description: 'ID Pengumpulan Tugas (Submission)' })
   async gradeSubmission(
@@ -285,16 +339,50 @@ export class PkkmbController {
     return { success: true, data };
   }
 
+  @Get('dashboard/panitia/stats')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Statistik peserta & kehadiran' })
+  async getPanitiaStats() {
+    const data = await this.pkkmbService.getPanitiaStats();
+    return { success: true, data };
+  }
+
+  @Get('dashboard/panitia/activities')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Aktivitas terbaru' })
+  async getPanitiaRecentActivities() {
+    const data = await this.pkkmbService.getPanitiaRecentActivities();
+    return { success: true, data };
+  }
+
+  @Get('dashboard/panitia/announcements')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Pengumuman terbaru' })
+  async getPanitiaAnnouncements() {
+    const data = await this.pkkmbService.getPanitiaAnnouncements();
+    return { success: true, data };
+  }
+
+  @Get('dashboard/panitia/schedules')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Jadwal mendatang' })
+  async getPanitiaSchedules() {
+    const data = await this.pkkmbService.getPanitiaSchedules();
+    return { success: true, data };
+  }
+
   // ─── ANNOUNCEMENTS & SCHEDULES ──────────────────────────────────────────────
 
   @Get('announcements')
+  @RequiredPermissions(PkkmbPermission.ANNOUNCEMENT_READ)
   @ApiOperation({ summary: 'Melihat pengumuman PKKMB' })
   async getAnnouncements(
-    @CurrentUser() user: UserDocument & { role?: string },
+    @CurrentUser() user: UserDocument & { role?: { slug?: string } },
     @Query() query: PaginationDto,
   ) {
     const groupId = user.pkkmbGroup?.toString();
-    const isPanitia = user.role !== 'user' && user.role !== 'maba';
+    const roleSlug = user.role?.slug;
+    const isPanitia = roleSlug !== 'user' && roleSlug !== 'maba';
     const data = await this.pkkmbService.getAnnouncements(
       query,
       groupId,
@@ -331,6 +419,7 @@ export class PkkmbController {
   }
 
   @Get('schedules')
+  @RequiredPermissions(PkkmbPermission.SCHEDULE_READ)
   @ApiOperation({ summary: 'Melihat Jadwal PKKMB' })
   async getSchedules(@Query() query: PaginationDto) {
     const data = await this.pkkmbService.getSchedules(query);

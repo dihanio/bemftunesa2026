@@ -190,6 +190,7 @@ export default function AttendancePage() {
       await apiClient.post('/pkkmb/attendance/checkin', {
         sessionId: session._id,
         method: 'QR_CODE',
+        qrToken: session.qrCode,
       });
       toast.success('Presensi Anda berhasil dicatat!', 'BERHASIL');
       fetchMyHistory();

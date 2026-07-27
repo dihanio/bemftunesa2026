@@ -17,19 +17,31 @@ interface PanitiaData {
   attendance?: {
     today: number;
   };
-  monitoringStats?: { totalMaba: number; present: number; late: number; absent: number };
+  activities?: Array<{
+    type: 'task' | 'attendance';
+    message: string;
+    time: string;
+  }>;
+  announcements?: Array<{
+    _id: string;
+    title: string;
+    content: string;
+    isPriority: boolean;
+    createdAt: string;
+  }>;
   schedules?: {
     _id?: string;
     name: string;
     startTime: string;
+    endTime?: string;
     location?: string;
+    pic?: string;
   }[];
-  upcomingSchedules?: {
-    _id?: string;
-    name: string;
-    startTime: string;
-    location?: string;
-  }[];
+  tasks?: {
+    totalSubmissions: number;
+    pendingGrading: number;
+    graded: number;
+  };
 }
 
 export function PanitiaDashboard() {
@@ -79,18 +91,18 @@ export function PanitiaDashboard() {
   }
 
   // Calculate monitoring stats dynamically from backend response
-  const totalMaba = data.statistics?.totalPeserta ?? data.monitoringStats?.totalMaba ?? 0;
-  const present = data.attendance?.today ?? data.monitoringStats?.present ?? 0;
+  const totalMaba = data.statistics?.totalPeserta ?? 0;
+  const present = data.attendance?.today ?? 0;
   const absent = Math.max(0, totalMaba - present);
 
   const stats = {
     totalMaba,
     present,
-    late: data.monitoringStats?.late ?? 0,
+    late: 0,
     absent,
   };
 
-  const schedules = data.schedules || data.upcomingSchedules || [];
+  const schedules = data.schedules || [];
 
   return (
     <div className="space-y-6 animate-fade-in">

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigService } from '@nestjs/config';
+import Redis from 'ioredis';
 import { AuthModule } from '../auth/auth.module';
 
 import { User, UserSchema } from '../schemas/user.schema';
@@ -66,7 +68,27 @@ import { PkkmbService } from './pkkmb.service';
     ]),
   ],
   controllers: [PkkmbController],
-  providers: [PkkmbService],
+  providers: [
+    PkkmbService,
+    {
+      provide: 'REDIS_CLIENT',
+      useFactory: (configService: ConfigService) => {
+        const host = configService.get<string>('REDIS_HOST', 'localhost');
+        const port = configService.get<number>('REDIS_PORT', 6379);
+        return new Redis({
+          host,
+          port,
+          maxRetriesPerRequest: 3,
+          retryStrategy(times: number) {
+            if (times > 3) return null;
+            return Math.min(times * 200, 2000);
+          },
+          lazyConnect: false,
+        });
+      },
+      inject: [ConfigService],
+    },
+  ],
   exports: [PkkmbService],
 })
 export class PkkmbModule {}

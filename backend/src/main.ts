@@ -9,6 +9,7 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { PerformanceInterceptor } from './common/interceptors/performance.interceptor';
 import { StructuredLogger } from './common/logger/structured-logger.service';
 
 async function bootstrap() {
@@ -68,7 +69,10 @@ async function bootstrap() {
 
   // Global filters & interceptors
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalInterceptors(
+    new TransformInterceptor(),
+    new PerformanceInterceptor(),
+  );
 
   // Swagger / OpenAPI (only in non-production)
   if (process.env.NODE_ENV !== 'production') {

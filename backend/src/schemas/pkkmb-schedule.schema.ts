@@ -25,3 +25,6 @@ export class PkkmbSchedule {
 }
 
 export const PkkmbScheduleSchema = SchemaFactory.createForClass(PkkmbSchedule);
+
+PkkmbScheduleSchema.index({ startTime: 1, deletedAt: 1 });
+PkkmbScheduleSchema.index({ deletedAt: 1 });

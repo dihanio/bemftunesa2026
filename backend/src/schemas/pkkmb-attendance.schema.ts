@@ -58,6 +58,8 @@ export const PkkmbAttendanceSessionSchema = SchemaFactory.createForClass(
 
 PkkmbAttendanceSessionSchema.index({ date: 1, status: 1 });
 PkkmbAttendanceSessionSchema.index({ targetParticipantType: 1 });
+PkkmbAttendanceSessionSchema.index({ status: 1 });
+PkkmbAttendanceSessionSchema.index({ createdBy: 1 });
 
 // --- Attendance Record (Universal Single Log for MABA & PANITIA) ---
 export type PkkmbAttendanceRecordDocument =
@@ -144,3 +146,5 @@ PkkmbAttendanceRecordSchema.index({
   division: 1,
   status: 1,
 });
+PkkmbAttendanceRecordSchema.index({ checkInTime: 1 });
+PkkmbAttendanceRecordSchema.index({ participantType: 1, status: 1 });

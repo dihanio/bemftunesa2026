@@ -28,3 +28,6 @@ export class PkkmbGroup {
 }
 
 export const PkkmbGroupSchema = SchemaFactory.createForClass(PkkmbGroup);
+
+PkkmbGroupSchema.index({ status: 1, deletedAt: 1 });
+PkkmbGroupSchema.index({ nomor: 1, deletedAt: 1 });

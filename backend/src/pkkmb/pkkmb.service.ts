@@ -1,10 +1,12 @@
 import {
   Injectable,
+  Inject,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, Query, FilterQuery } from 'mongoose';
+import Redis from 'ioredis';
 
 import { User, UserDocument } from '../schemas/user.schema';
 import { Role, RoleDocument } from '../schemas/role.schema';
@@ -58,30 +60,6 @@ import {
   UpdateScheduleDto,
 } from './dto/pkkmb.dto';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getDistance(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
-  const R = 6371e3; // Earth radius in meters
-  const phi1 = (lat1 * Math.PI) / 180;
-  const phi2 = (lat2 * Math.PI) / 180;
-  const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
-  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-    Math.cos(phi1) *
-      Math.cos(phi2) *
-      Math.sin(deltaLambda / 2) *
-      Math.sin(deltaLambda / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // distance in meters
-}
-
 function applyPagination<T>(
   queryObj: Query<T[], T>,
   paginationDto: PaginationDto,
@@ -94,7 +72,7 @@ function applyPagination<T>(
   if (paginationDto.sortBy) {
     sort[paginationDto.sortBy] = paginationDto.sortOrder === 'asc' ? 1 : -1;
   } else {
-    sort = { createdAt: -1 }; // Default sort
+    sort = { createdAt: -1 };
   }
 
   queryObj.sort(sort).skip(skip).limit(limit);
@@ -126,63 +104,126 @@ export class PkkmbService {
     private rumpunModel: Model<RumpunDocument>,
     @InjectModel(StudyProgram.name)
     private studyProgramModel: Model<StudyProgramDocument>,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    @Inject('REDIS_CLIENT') private redis: Redis,
   ) {}
+
+  // ─── CACHE HELPER ─────────────────────────────────────────────────────────
+
+  private async cachedQuery<T>(
+    key: string,
+    ttl: number,
+    fetcher: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      const cached = await this.redis.get(key);
+      if (cached) return JSON.parse(cached) as T;
+    } catch {
+      /* ignore cache errors */
+    }
+    const data = await fetcher();
+    try {
+      await this.redis.setex(key, ttl, JSON.stringify(data));
+    } catch {
+      /* ignore cache errors */
+    }
+    return data;
+  }
+
+  private async invalidateCachePatterns(...patterns: string[]): Promise<void> {
+    for (const pattern of patterns) {
+      try {
+        const keys = await this.redis.keys(pattern);
+        if (keys.length > 0) {
+          await this.redis.del(...keys);
+        }
+      } catch {
+        /* ignore cache errors */
+      }
+    }
+  }
+
+  // ─── USER PROFILE ──────────────────────────────────────────────────────────
+
+  async getUserProfile(userId: string) {
+    return this.userModel
+      .findById(userId)
+      .select('name nim email phone studyProgram studyProgramId gender avatar pkkmbGroup role division position')
+      .populate('pkkmbGroup', '_id nomor name')
+      .populate('role', 'name slug')
+      .lean()
+      .exec();
+  }
 
   // ─── GUGUS & MASTER DATA ARCHITECTURE ──────────────────────────────────────
 
   async getAllRumpun() {
-    return this.rumpunModel.find().sort({ order: 1 }).exec();
+    return this.cachedQuery('pkkmb:rumpun:all', 3600, () =>
+      this.rumpunModel
+        .find()
+        .select('_id name color icon order')
+        .sort({ order: 1 })
+        .lean()
+        .exec(),
+    );
   }
 
   async getAllStudyPrograms() {
-    return this.studyProgramModel
-      .find()
-      .populate('rumpun')
-      .sort({ name: 1 })
-      .exec();
+    return this.cachedQuery('pkkmb:study-programs:all', 3600, () =>
+      this.studyProgramModel
+        .find()
+        .select('_id code name rumpun faculty degree isActive')
+        .populate('rumpun', '_id name color icon order')
+        .sort({ name: 1 })
+        .lean()
+        .exec(),
+    );
   }
 
-  async getAllGugus() {
-    const gugusList = await this.groupModel
-      .find({ deletedAt: null })
-      .populate('pendampingId', 'name email division position phone avatar')
-      .sort({ nomor: 1 })
-      .exec();
+  async getAllGugus(): Promise<Record<string, unknown>[]> {
+    return this.cachedQuery('pkkmb:gugus:all', 300, async () => {
+      const gugusList = await this.groupModel
+        .find({ deletedAt: null })
+        .select('_id nomor name kapasitas pendampingId totalPoints status')
+        .populate('pendampingId', 'name email division position phone avatar')
+        .sort({ nomor: 1 })
+        .lean()
+        .exec();
 
-    // Aggregate member counts
-    const memberCounts = await this.userModel.aggregate([
-      { $match: { pkkmbGroup: { $ne: null }, deletedAt: null } },
-      { $group: { _id: '$pkkmbGroup', count: { $sum: 1 } } },
-    ]);
+      const memberCounts = await this.userModel.aggregate([
+        { $match: { pkkmbGroup: { $ne: null }, deletedAt: null } },
+        { $group: { _id: '$pkkmbGroup', count: { $sum: 1 } } },
+      ]);
 
-    const countMap = new Map<string, number>();
-    (
-      memberCounts as Array<{ _id: Types.ObjectId | string; count: number }>
-    ).forEach((m) => countMap.set(String(m._id), m.count));
+      const countMap = new Map<string, number>();
+      (
+        memberCounts as Array<{ _id: Types.ObjectId | string; count: number }>
+      ).forEach((m) => countMap.set(String(m._id), m.count));
 
-    return gugusList.map((g) => {
-      const obj = g.toObject();
-      return {
-        ...obj,
-        totalAnggota: countMap.get(g._id.toString()) || 0,
-      };
+      return gugusList.map((g) => ({
+        ...g,
+        totalAnggota: countMap.get(String(g._id)) || 0,
+      }));
     });
   }
 
   async getGugusDetail(gugusIdentifier: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let gugus: any = null;
+    let gugus: Record<string, unknown> | null = null;
     if (Types.ObjectId.isValid(gugusIdentifier)) {
       gugus = await this.groupModel
         .findById(gugusIdentifier)
+        .select('_id nomor name kapasitas pendampingId totalPoints status')
         .populate('pendampingId', 'name email division position phone avatar')
+        .lean()
         .exec();
     } else {
       const nomor = parseInt(gugusIdentifier, 10);
       if (!isNaN(nomor)) {
         gugus = await this.groupModel
           .findOne({ nomor, deletedAt: null })
+          .select('_id nomor name kapasitas pendampingId totalPoints status')
           .populate('pendampingId', 'name email division position phone avatar')
+          .lean()
           .exec();
       }
     }
@@ -191,26 +232,25 @@ export class PkkmbService {
       throw new NotFoundException('Data Gugus tidak ditemukan.');
     }
 
-    // Fetch members of this Gugus
     const members = await this.userModel
       .find({
-        pkkmbGroup: (gugus as { _id: Types.ObjectId })._id,
+        pkkmbGroup: gugus._id as Types.ObjectId,
         deletedAt: null,
-      })
-      .populate({
-        path: 'studyProgramId',
-        populate: { path: 'rumpun' },
       })
       .select(
         'name nim email phone studyProgram studyProgramId gender avatar division position',
       )
+      .populate({
+        path: 'studyProgramId',
+        select: '_id code name rumpun',
+        populate: { path: 'rumpun', select: '_id name color' },
+      })
+      .lean()
       .exec();
 
     const totalAnggota = members.length;
 
-    // Breakdown by Study Program
     const prodiMap = new Map<string, number>();
-    // Breakdown by Rumpun
     const rumpunMap = new Map<
       string,
       { name: string; color: string; count: number }
@@ -220,14 +260,12 @@ export class PkkmbService {
     let femaleCount = 0;
 
     members.forEach((m) => {
-      // Gender stats
       if (m.gender === 'P') {
         femaleCount++;
       } else {
         maleCount++;
       }
 
-      // Study program stats
       const prodiName =
         m.studyProgram ||
         (m.studyProgramId && typeof m.studyProgramId === 'object'
@@ -235,7 +273,6 @@ export class PkkmbService {
           : 'Belum Terdata');
       prodiMap.set(prodiName, (prodiMap.get(prodiName) || 0) + 1);
 
-      // Rumpun stats
       let rumpunName = 'Umum';
       let rumpunColor = '#3B82F6';
       if (
@@ -283,7 +320,7 @@ export class PkkmbService {
     }));
 
     return {
-      gugus: gugus as Record<string, unknown>,
+      gugus,
       totalAnggota,
       distribusiGender: {
         maleCount,
@@ -300,121 +337,133 @@ export class PkkmbService {
   }
 
   async autoDistributeGugus() {
-    // 1. Fetch 50 Active Gugus
-    const activeGugus = await this.groupModel
-      .find({ status: 'ACTIVE', deletedAt: null })
-      .sort({ nomor: 1 })
-      .exec();
-
-    if (activeGugus.length === 0) {
-      throw new BadRequestException('Tidak ada Gugus aktif yang tersedia.');
+    // Distributed lock to prevent race condition
+    const lockKey = 'pkkmb:auto-distribute:lock';
+    const lockSet = await this.redis.set(lockKey, '1', 'EX', 120, 'NX');
+    if (!lockSet) {
+      throw new BadRequestException('Distribusi gugus sedang berjalan. Silakan tunggu sebentar.');
     }
 
-    // 2. Fetch unassigned Mahasiswa Baru (role maba/user)
-    const mabaRole = await this.roleModel.findOne({
-      $or: [{ slug: 'user' }, { slug: 'maba' }, { name: 'Mahasiswa Baru' }],
-    });
+    try {
+      const activeGugus = await this.groupModel
+        .find({ status: 'ACTIVE', deletedAt: null })
+        .select('_id nomor')
+        .sort({ nomor: 1 })
+        .lean()
+        .exec();
 
-    const query: FilterQuery<UserDocument> = {
-      deletedAt: null,
-      $or: [{ pkkmbGroup: null }, { pkkmbGroup: { $exists: false } }],
-    };
-
-    if (mabaRole) {
-      query.role = mabaRole._id;
-    }
-
-    const unassignedMaba = await this.userModel.find(query).exec();
-    if (unassignedMaba.length === 0) {
-      return {
-        message: 'Semua mahasiswa baru sudah terdistribusi ke Gugus.',
-        distributedCount: 0,
-      };
-    }
-
-    // 3. Group by Study Program
-    const majorGroups = new Map<string, UserDocument[]>();
-    unassignedMaba.forEach((m) => {
-      const key = m.studyProgram || 'Umum';
-      if (!majorGroups.has(key)) {
-        majorGroups.set(key, []);
+      if (activeGugus.length === 0) {
+        throw new BadRequestException('Tidak ada Gugus aktif yang tersedia.');
       }
-      majorGroups.get(key)!.push(m);
-    });
 
-    // 4. Round-Robin Distribution across 50 Gugus
-    let gugusCursor = 0;
-    const updates: Promise<unknown>[] = [];
-    let totalDistributed = 0;
+      const mabaRole = await this.roleModel
+        .findOne({
+          $or: [{ slug: 'user' }, { slug: 'maba' }, { name: 'Mahasiswa Baru' }],
+        })
+        .select('_id')
+        .lean();
 
-    majorGroups.forEach((students) => {
-      // Shuffle students within major for randomness
-      const shuffled = [...students].sort(() => Math.random() - 0.5);
+      const query: FilterQuery<UserDocument> = {
+        deletedAt: null,
+        $or: [{ pkkmbGroup: null }, { pkkmbGroup: { $exists: false } }],
+      };
 
-      shuffled.forEach((student) => {
-        const targetGugus = activeGugus[gugusCursor];
-        updates.push(
-          this.userModel.updateOne(
-            { _id: student._id },
-            { $set: { pkkmbGroup: targetGugus._id } },
-          ),
-        );
-        gugusCursor = (gugusCursor + 1) % activeGugus.length;
-        totalDistributed++;
+      if (mabaRole) {
+        query.role = mabaRole._id;
+      }
+
+      const unassignedMaba = await this.userModel
+        .find(query)
+        .select('_id studyProgram')
+        .lean()
+        .exec();
+
+      if (unassignedMaba.length === 0) {
+        return {
+          message: 'Semua mahasiswa baru sudah terdistribusi ke Gugus.',
+          distributedCount: 0,
+        };
+      }
+
+      const majorGroups = new Map<string, Array<{ _id: Types.ObjectId }>>();
+      unassignedMaba.forEach((m) => {
+        const key = m.studyProgram || 'Umum';
+        if (!majorGroups.has(key)) {
+          majorGroups.set(key, []);
+        }
+        majorGroups.get(key)!.push({ _id: m._id });
       });
-    });
 
-    await Promise.all(updates);
+      let gugusCursor = 0;
+      const updates: Promise<unknown>[] = [];
+      let totalDistributed = 0;
 
-    return {
-      message: `Berhasil mendistribusikan ${totalDistributed} Mahasiswa Baru secara seimbang ke ${activeGugus.length} Gugus PKKMB FT UNESA!`,
-      distributedCount: totalDistributed,
-      totalGugusUsed: activeGugus.length,
-    };
+      majorGroups.forEach((students) => {
+        const shuffled = [...students].sort(() => Math.random() - 0.5);
+
+        shuffled.forEach((student) => {
+          const targetGugus = activeGugus[gugusCursor];
+          updates.push(
+            this.userModel.updateOne(
+              { _id: student._id },
+              { $set: { pkkmbGroup: targetGugus._id } },
+            ),
+          );
+          gugusCursor = (gugusCursor + 1) % activeGugus.length;
+          totalDistributed++;
+        });
+      });
+
+      await Promise.all(updates);
+
+      return {
+        message: `Berhasil mendistribusikan ${totalDistributed} Mahasiswa Baru secara seimbang ke ${activeGugus.length} Gugus PKKMB FT UNESA!`,
+        distributedCount: totalDistributed,
+        totalGugusUsed: activeGugus.length,
+      };
+    } finally {
+      await this.redis.del(lockKey).catch(() => {});
+    }
   }
 
   async getAdminGugusAnalytics() {
-    const totalGugus = await this.groupModel.countDocuments({
-      deletedAt: null,
-    });
-    const totalMahasiswa = await this.userModel.countDocuments({
-      deletedAt: null,
-    });
-    const totalStudyPrograms = await this.studyProgramModel.countDocuments({
-      isActive: true,
-    });
-    const totalRumpun = await this.rumpunModel.countDocuments();
+    const [totalGugus, totalMahasiswa, totalStudyPrograms, totalRumpun] =
+      await Promise.all([
+        this.groupModel.countDocuments({ deletedAt: null }),
+        this.userModel.countDocuments({ deletedAt: null }),
+        this.studyProgramModel.countDocuments({ isActive: true }),
+        this.rumpunModel.countDocuments(),
+      ]);
 
-    // Distribution by Gugus
-    const gugusStats = await this.userModel.aggregate([
-      { $match: { pkkmbGroup: { $ne: null }, deletedAt: null } },
-      { $group: { _id: '$pkkmbGroup', count: { $sum: 1 } } },
-      {
-        $lookup: {
-          from: 'pkkmb_gugus',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'gugus',
+    const [gugusStats, prodiStats] = await Promise.all([
+      this.userModel.aggregate([
+        { $match: { pkkmbGroup: { $ne: null }, deletedAt: null } },
+        { $group: { _id: '$pkkmbGroup', count: { $sum: 1 } } },
+        {
+          $lookup: {
+            from: 'pkkmb_gugus',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'gugus',
+          },
         },
-      },
-      { $unwind: '$gugus' },
-      {
-        $project: {
-          _id: 0,
-          gugusName: '$gugus.name',
-          nomor: '$gugus.nomor',
-          count: 1,
+        { $unwind: '$gugus' },
+        {
+          $project: {
+            _id: 0,
+            gugusName: '$gugus.name',
+            nomor: '$gugus.nomor',
+            count: 1,
+          },
         },
-      },
-      { $sort: { nomor: 1 } },
-    ]);
-
-    // Distribution by Study Program
-    const prodiStats = await this.userModel.aggregate([
-      { $match: { deletedAt: null } },
-      { $group: { _id: '$studyProgram', count: { $sum: 1 } } },
-      { $project: { _id: 0, prodiName: '$_id', count: 1 } },
-      { $sort: { count: -1 } },
+        { $sort: { nomor: 1 } },
+      ]),
+      this.userModel.aggregate([
+        { $match: { deletedAt: null } },
+        { $group: { _id: '$studyProgram', count: { $sum: 1 } } },
+        { $project: { _id: 0, prodiName: '$_id', count: 1 } },
+        { $sort: { count: -1 } },
+      ]),
     ]);
 
     return {
@@ -427,38 +476,57 @@ export class PkkmbService {
     };
   }
 
+  // ─── ATTENDANCE SESSIONS ──────────────────────────────────────────────────
+
   async createAttendanceSession(
     userId: string,
     dto: CreateAttendanceSessionDto,
   ) {
     const qrCode = `PKKMB2026_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+    const endTime = new Date(dto.endTime);
+    // QR expires 1 hour after session ends
+    const qrExpiry = new Date(endTime.getTime() + 60 * 60 * 1000);
 
-    return this.sessionModel.create({
+    const result = await this.sessionModel.create({
       title: dto.title,
       date: new Date(dto.date),
       startTime: new Date(dto.startTime),
-      endTime: new Date(dto.endTime),
+      endTime,
       location: dto.location,
       targetParticipantType: dto.targetParticipantType || 'ALL',
       targetDivision: dto.targetDivision,
       qrCode,
+      qrExpiry,
       status: dto.status || 'PUBLISHED',
       createdBy: new Types.ObjectId(userId),
     });
+
+    await this.invalidateCachePatterns('pkkmb:sessions:*');
+    return result;
   }
 
   async getAttendanceSessions(participantType?: string, status?: string) {
-    const filter: FilterQuery<unknown> = { deletedAt: null };
-    if (participantType && participantType !== 'ALL') {
-      filter.$or = [
-        { targetParticipantType: 'ALL' },
-        { targetParticipantType: participantType },
-      ];
-    }
-    if (status) {
-      filter.status = status;
-    }
-    return this.sessionModel.find(filter).sort({ startTime: -1 }).exec();
+    const cacheKey = `pkkmb:sessions:${participantType || 'ALL'}:${status || 'ALL'}`;
+    return this.cachedQuery(cacheKey, 30, async () => {
+      const filter: FilterQuery<unknown> = { deletedAt: null };
+      if (participantType && participantType !== 'ALL') {
+        filter.$or = [
+          { targetParticipantType: 'ALL' },
+          { targetParticipantType: participantType },
+        ];
+      }
+      if (status) {
+        filter.status = status;
+      }
+      return this.sessionModel
+        .find(filter)
+        .select(
+          '_id title date startTime endTime location targetParticipantType targetDivision qrCode status',
+        )
+        .sort({ startTime: -1 })
+        .lean()
+        .exec();
+    });
   }
 
   async updateAttendanceSessionStatus(
@@ -470,8 +538,12 @@ export class PkkmbService {
       throw new NotFoundException('Sesi presensi tidak ditemukan.');
     }
     session.status = status;
-    return session.save();
+    const result = await session.save();
+    await this.invalidateCachePatterns('pkkmb:sessions:*');
+    return result;
   }
+
+  // ─── CHECK-IN ─────────────────────────────────────────────────────────────
 
   async checkIn(
     dto: CheckInDto,
@@ -479,11 +551,28 @@ export class PkkmbService {
     ipAddress?: string,
     userAgent?: string,
   ) {
-    const session = await this.sessionModel.findById(dto.sessionId);
+    const session = await this.sessionModel
+      .findById(dto.sessionId)
+      .select('_id status endTime qrCode qrExpiry')
+      .lean();
+
     if (!session || session.status === 'CLOSED') {
       throw new BadRequestException(
         'Sesi presensi tidak aktif atau sudah ditutup.',
       );
+    }
+
+    // Validate QR token if method is QR_CODE
+    if (dto.method === 'QR_CODE' || (!dto.method && !dto.nim && !dto.participantId)) {
+      if (!dto.qrToken) {
+        throw new BadRequestException('QR Token wajib diisi untuk check-in via QR Code.');
+      }
+      if (dto.qrToken !== session.qrCode) {
+        throw new BadRequestException('QR Token tidak valid. Silakan scan ulang.');
+      }
+      if (session.qrExpiry && new Date() > session.qrExpiry) {
+        throw new BadRequestException('QR Code telah kedaluwarsa. Silakan minta QR baru.');
+      }
     }
 
     let participantUser: UserDocument | null = null;
@@ -513,7 +602,6 @@ export class PkkmbService {
       );
     }
 
-    // Determine Participant Type & Division
     const roleSlug =
       typeof participantUser.role === 'object' && participantUser.role
         ? (participantUser.role as unknown as RoleDocument).slug
@@ -529,7 +617,6 @@ export class PkkmbService {
         ? (participantUser.role as unknown as RoleDocument)._id
         : undefined;
 
-    // Determine status (Hadir vs Telat)
     const now = new Date();
     let finalStatus = dto.status || 'Hadir';
     if (!dto.status && now > session.endTime) {
@@ -541,11 +628,11 @@ export class PkkmbService {
     return this.logModel
       .findOneAndUpdate(
         {
-          session: session._id,
+          session: new Types.ObjectId(dto.sessionId),
           participant: participantUser._id,
         },
         {
-          session: session._id,
+          session: new Types.ObjectId(dto.sessionId),
           participant: participantUser._id,
           participantType,
           role: roleId,
@@ -568,6 +655,8 @@ export class PkkmbService {
       .exec();
   }
 
+  // ─── ATTENDANCE MONITORING ────────────────────────────────────────────────
+
   async getAttendanceMonitoring(filterDto: AttendanceFilterDto) {
     const filter: FilterQuery<unknown> = { deletedAt: null };
 
@@ -584,10 +673,21 @@ export class PkkmbService {
       filter.status = filterDto.status;
     }
 
-    // Execute queries
+    const page = parseInt(filterDto.page || '1', 10);
+    const limit = parseInt(filterDto.limit || '50', 10);
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const totalRecords = await this.logModel.countDocuments(filter).exec();
+
     const records = await this.logModel
       .find(filter)
+      .select(
+        'session participant participantType checkInTime status attendanceMethod operator division notes',
+      )
       .sort({ checkInTime: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate(
         'participant',
         'name nim email division position studyProgram avatar',
@@ -597,24 +697,37 @@ export class PkkmbService {
         'title location startTime endTime targetParticipantType',
       )
       .populate('operator', 'name email')
+      .lean()
       .exec();
 
-    // Compute Summary Stats
-    const totalHadir = records.filter((r) => r.status === 'Hadir').length;
-    const terlambat = records.filter((r) => r.status === 'Telat').length;
-    const sakitIzin = records.filter(
-      (r) => r.status === 'Izin' || r.status === 'Sakit',
-    ).length;
-    const tidakHadir = records.filter((r) => r.status === 'Tidak Hadir').length;
+    // Get statistics using aggregation for the filtered set (all records, not paginated)
+    const statsResult = await this.logModel.aggregate([
+      { $match: filter },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const statsMap = new Map<string, number>();
+    statsResult.forEach((s) => statsMap.set(s._id, s.count));
 
     return {
       records,
       statistics: {
-        totalRecords: records.length,
-        totalHadir,
-        terlambat,
-        sakitIzin,
-        tidakHadir,
+        totalRecords,
+        totalHadir: statsMap.get('Hadir') || 0,
+        terlambat: statsMap.get('Telat') || 0,
+        sakitIzin: (statsMap.get('Izin') || 0) + (statsMap.get('Sakit') || 0),
+        tidakHadir: statsMap.get('Tidak Hadir') || 0,
+      },
+      pagination: {
+        page,
+        limit,
+        total: totalRecords,
+        totalPages: Math.ceil(totalRecords / limit),
       },
     };
   }
@@ -622,10 +735,16 @@ export class PkkmbService {
   async getMyAttendanceHistory(userId: string) {
     return this.logModel
       .find({ participant: new Types.ObjectId(userId), deletedAt: null })
+      .select(
+        'session participant participantType checkInTime status attendanceMethod notes',
+      )
       .sort({ checkInTime: -1 })
-      .populate('session')
+      .populate('session', 'title date startTime endTime location')
+      .lean()
       .exec();
   }
+
+  // ─── TASKS & SUBMISSIONS ──────────────────────────────────────────────────
 
   async getTasks(paginationDto: PaginationDto, isPanitia?: boolean) {
     const filter: FilterQuery<unknown> = { deletedAt: null };
@@ -639,8 +758,10 @@ export class PkkmbService {
     if (paginationDto.search) {
       filter.title = { $regex: paginationDto.search, $options: 'i' };
     }
-    const query = this.taskModel.find(filter);
-    return applyPagination(query, paginationDto).exec();
+    const query = this.taskModel
+      .find(filter)
+      .select('_id title description deadline type status allowedFormats');
+    return applyPagination(query, paginationDto).lean().exec();
   }
 
   async getMySubmissions(
@@ -656,9 +777,10 @@ export class PkkmbService {
     }
     const query = this.submissionModel
       .find({ $or: queryConds, deletedAt: null })
-      .populate('taskId');
+      .select('taskId userId groupId fileUrl status score feedback submittedAt')
+      .populate('taskId', '_id title deadline type status');
 
-    return applyPagination(query, paginationDto).exec();
+    return applyPagination(query, paginationDto).lean().exec();
   }
 
   async submitTask(
@@ -706,15 +828,21 @@ export class PkkmbService {
     groupId: string,
     paginationDto: PaginationDto,
   ) {
+    // Sessions are universal - mentors see all published sessions
+    // They can then manually check-in their group members
     const filter: FilterQuery<unknown> = {
-      groupId: new Types.ObjectId(groupId),
+      status: 'PUBLISHED',
       deletedAt: null,
     };
     if (paginationDto.search) {
       filter.title = { $regex: paginationDto.search, $options: 'i' };
     }
-    const query = this.sessionModel.find(filter);
-    return applyPagination(query, paginationDto).exec();
+    const query = this.sessionModel
+      .find(filter)
+      .select(
+        '_id title date startTime endTime location targetParticipantType targetDivision qrCode status',
+      );
+    return applyPagination(query, paginationDto).lean().exec();
   }
 
   async mentorManualCheckin(
@@ -724,19 +852,37 @@ export class PkkmbService {
   ) {
     const session = await this.sessionModel.findOne({
       _id: sessionId,
-      groupId: new Types.ObjectId(groupId),
+      deletedAt: null,
     });
     if (!session)
-      throw new NotFoundException('Sesi tidak ditemukan untuk kelompok ini');
+      throw new NotFoundException('Sesi presensi tidak ditemukan');
+
+    // Verify the target user belongs to the mentor's group
+    const targetUser = await this.userModel
+      .findById(dto.userId)
+      .select('_id pkkmbGroup')
+      .lean();
+    if (!targetUser) throw new NotFoundException('Peserta tidak ditemukan');
+    if (
+      targetUser.pkkmbGroup &&
+      targetUser.pkkmbGroup.toString() !== groupId
+    ) {
+      throw new BadRequestException('Peserta bukan anggota kelompok Anda');
+    }
 
     return this.logModel
       .findOneAndUpdate(
         {
-          sessionId: new Types.ObjectId(sessionId),
-          userId: new Types.ObjectId(dto.userId),
+          session: new Types.ObjectId(sessionId),
+          participant: new Types.ObjectId(dto.userId),
         },
         {
+          session: new Types.ObjectId(sessionId),
+          participant: new Types.ObjectId(dto.userId),
+          participantType: 'MABA',
           status: dto.status,
+          checkInTime: new Date(),
+          attendanceMethod: 'MANUAL_OPERATOR',
           notes: 'Manual check-in by mentor',
         },
         { upsert: true, new: true },
@@ -745,6 +891,7 @@ export class PkkmbService {
   }
 
   // ─── PEMATERI SERVICES ──────────────────────────────────────────────
+
   async createTask(dto: CreateTaskDto) {
     return this.taskModel.create({
       title: dto.title,
@@ -768,6 +915,7 @@ export class PkkmbService {
     submission.score = dto.score;
     submission.feedback = dto.feedback;
     submission.gradedBy = new Types.ObjectId(graderId);
+    submission.status = 'GRADED';
 
     return submission.save();
   }
@@ -776,8 +924,10 @@ export class PkkmbService {
 
   async exportAttendanceToCsv(sessionId: string): Promise<string> {
     const logs = await this.logModel
-      .find({ sessionId: new Types.ObjectId(sessionId) })
-      .populate({ path: 'userId', select: 'nim name pkkmbGroup' })
+      .find({ session: new Types.ObjectId(sessionId) })
+      .select('participant checkInTime status notes')
+      .populate('participant', 'nim name pkkmbGroup')
+      .lean()
       .exec();
 
     let csv = 'NIM,Nama,Status,Waktu,Catatan\n';
@@ -800,7 +950,6 @@ export class PkkmbService {
   ) {
     const filter: FilterQuery<unknown> = { deletedAt: null };
 
-    // Maba/Public audience can only see Published or due Scheduled announcements
     if (!isPanitia) {
       const now = new Date();
       filter.$or = [
@@ -818,14 +967,17 @@ export class PkkmbService {
     if (paginationDto.search) {
       filter.title = { $regex: paginationDto.search, $options: 'i' };
     }
-    const query = this.announcementModel.find(filter);
+    const query = this.announcementModel
+      .find(filter)
+      .select(
+        '_id title content attachments targetAudience targetGroups isPriority status scheduledAt createdAt',
+      );
 
-    // Default sort by priority first, then createdAt
     if (!paginationDto.sortBy) {
       query.sort({ isPriority: -1, createdAt: -1 });
     }
 
-    return applyPagination(query, paginationDto).exec();
+    return applyPagination(query, paginationDto).lean().exec();
   }
 
   async createAnnouncement(dto: CreateAnnouncementDto) {
@@ -839,7 +991,7 @@ export class PkkmbService {
       }
     }
 
-    return this.announcementModel.create({
+    const result = await this.announcementModel.create({
       ...dto,
       status,
       scheduledAt,
@@ -847,6 +999,9 @@ export class PkkmbService {
         ? dto.targetGroups.map((id) => new Types.ObjectId(id))
         : undefined,
     });
+
+    await this.invalidateCachePatterns('pkkmb:announcements:*');
+    return result;
   }
 
   async updateAnnouncement(id: string, dto: UpdateAnnouncementDto) {
@@ -867,6 +1022,8 @@ export class PkkmbService {
     );
     if (!announcement)
       throw new NotFoundException('Pengumuman tidak ditemukan');
+
+    await this.invalidateCachePatterns('pkkmb:announcements:*');
     return announcement;
   }
 
@@ -878,6 +1035,8 @@ export class PkkmbService {
     );
     if (!announcement)
       throw new NotFoundException('Pengumuman tidak ditemukan');
+
+    await this.invalidateCachePatterns('pkkmb:announcements:*');
     return announcement;
   }
 
@@ -888,21 +1047,25 @@ export class PkkmbService {
     if (paginationDto.search) {
       filter.name = { $regex: paginationDto.search, $options: 'i' };
     }
-    const query = this.scheduleModel.find(filter);
+    const query = this.scheduleModel
+      .find(filter)
+      .select('_id name startTime endTime location pic');
 
     if (!paginationDto.sortBy) {
-      query.sort({ startTime: 1 }); // Sort chronologically by default
+      query.sort({ startTime: 1 });
     }
 
-    return applyPagination(query, paginationDto).exec();
+    return applyPagination(query, paginationDto).lean().exec();
   }
 
   async createSchedule(dto: CreateScheduleDto) {
-    return this.scheduleModel.create({
+    const result = await this.scheduleModel.create({
       ...dto,
       startTime: new Date(dto.startTime),
       endTime: new Date(dto.endTime),
     });
+    await this.invalidateCachePatterns('pkkmb:schedules:*');
+    return result;
   }
 
   async updateSchedule(id: string, dto: UpdateScheduleDto) {
@@ -916,6 +1079,7 @@ export class PkkmbService {
       { new: true },
     );
     if (!schedule) throw new NotFoundException('Jadwal tidak ditemukan');
+    await this.invalidateCachePatterns('pkkmb:schedules:*');
     return schedule;
   }
 
@@ -926,121 +1090,184 @@ export class PkkmbService {
       { new: true },
     );
     if (!schedule) throw new NotFoundException('Jadwal tidak ditemukan');
+    await this.invalidateCachePatterns('pkkmb:schedules:*');
     return schedule;
   }
 
-  // ─── DASHBOARD AGGREGATION ──────────────────────────────────────────────
+  // ─── MABA DASHBOARD (MODULAR) ──────────────────────────────────────────────
+
+  async getMabaDashboardAnnouncements(groupId?: string | null) {
+    const filter: FilterQuery<unknown> = { deletedAt: null };
+    if (groupId) {
+      filter.$or = [
+        { targetAudience: 'all' },
+        {
+          targetAudience: 'specific_groups',
+          targetGroups: new Types.ObjectId(groupId),
+        },
+      ];
+    } else {
+      filter.targetAudience = 'all';
+    }
+    return this.announcementModel
+      .find(filter)
+      .select('_id title content isPriority createdAt')
+      .sort({ isPriority: -1, createdAt: -1 })
+      .limit(3)
+      .lean()
+      .exec();
+  }
+
+  async getMabaDashboardSchedules() {
+    const now = new Date();
+    return this.scheduleModel
+      .find({ deletedAt: null, endTime: { $gte: now } })
+      .select('_id name startTime endTime location pic')
+      .sort({ startTime: 1 })
+      .limit(3)
+      .lean()
+      .exec();
+  }
+
+  async getMabaDashboardTasks(userId: string, groupId?: string | null) {
+    const now = new Date();
+    const allTasks = await this.taskModel
+      .find({ deletedAt: null, deadline: { $gte: now } })
+      .select('_id title deadline type status')
+      .sort({ deadline: 1 })
+      .lean()
+      .exec();
+
+    const queryConds: FilterQuery<unknown>[] = [
+      { userId: new Types.ObjectId(userId) },
+    ];
+    if (groupId) queryConds.push({ groupId: new Types.ObjectId(groupId) });
+
+    const submissions = await this.submissionModel
+      .find({ $or: queryConds, deletedAt: null })
+      .select('taskId status')
+      .lean()
+      .exec();
+
+    const activeTasks = allTasks;
+    const pendingTasks = activeTasks
+      .filter((t) => !submissions.find((s) => s.taskId.toString() === t._id.toString()))
+      .slice(0, 5); // Top 5 nearest deadline
+
+    return {
+      total: allTasks.length,
+      submitted: submissions.length,
+      pending: pendingTasks.length,
+      graded: submissions.filter((s) => s.status === 'GRADED').length,
+      pendingTasks,
+    };
+  }
+
+  async getMabaDashboardAttendance(userId: string) {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const attendanceLogs = await this.logModel
+      .find({
+        participant: new Types.ObjectId(userId),
+        checkInTime: { $gte: todayStart, $lte: todayEnd },
+      })
+      .select('_id')
+      .lean()
+      .exec();
+
+    return { todayCount: attendanceLogs.length };
+  }
+
+  async getMabaDashboardProgress(userId: string, groupId?: string | null) {
+    const totalSteps = 4;
+    let completedSteps = 1;
+
+    if (groupId) completedSteps++;
+
+    const hasAttendedAny = await this.logModel
+      .findOne({ participant: new Types.ObjectId(userId) })
+      .select('_id')
+      .lean();
+
+    if (hasAttendedAny) completedSteps++;
+
+    const queryConds: FilterQuery<unknown>[] = [
+      { userId: new Types.ObjectId(userId) },
+    ];
+    if (groupId) queryConds.push({ groupId: new Types.ObjectId(groupId) });
+    const submissions = await this.submissionModel
+      .find({ $or: queryConds, deletedAt: null })
+      .select('_id')
+      .lean()
+      .exec();
+
+    if (submissions.length > 0) completedSteps++;
+
+    const progressPercent = Math.round((completedSteps / totalSteps) * 100);
+
+    return {
+      percent: progressPercent,
+      completedSteps,
+      totalSteps,
+      hasGroup: !!groupId,
+      hasAttendedAny: !!hasAttendedAny,
+      hasSubmittedTask: submissions.length > 0,
+    };
+  }
 
   async getMabaDashboard(userId: string) {
     try {
       const user = await this.userModel
         .findById(userId)
-        .populate('pkkmbGroup')
-        .exec();
+        .select(
+          'name nim email avatar studyProgram studyProgramId pkkmbGroup role',
+        )
+        .populate('pkkmbGroup', '_id nomor name')
+        .lean();
+
       if (!user) throw new NotFoundException('User tidak ditemukan');
 
       const groupId = user.pkkmbGroup
         ? (user.pkkmbGroup as unknown as { _id: Types.ObjectId })._id.toString()
         : null;
 
-      // 1. Announcements (Priority / Latest)
-      const filterAnn: FilterQuery<unknown> = { deletedAt: null };
-      if (groupId) {
-        filterAnn.$or = [
-          { targetAudience: 'all' },
-          {
-            targetAudience: 'specific_groups',
-            targetGroups: new Types.ObjectId(groupId),
-          },
-        ];
-      } else {
-        filterAnn.targetAudience = 'all';
-      }
-      const announcements = await this.announcementModel
-        .find(filterAnn)
-        .sort({ isPriority: -1, createdAt: -1 })
-        .limit(3)
-        .exec();
+      const [
+        announcements,
+        upcomingSchedules,
+        taskStats,
+        attendance,
+        progress,
+      ] = await Promise.all([
+        this.getMabaDashboardAnnouncements(groupId),
+        this.getMabaDashboardSchedules(),
+        this.getMabaDashboardTasks(userId, groupId),
+        this.getMabaDashboardAttendance(userId),
+        this.getMabaDashboardProgress(userId, groupId),
+      ]);
 
-      // 2. Upcoming Schedules
-      const now = new Date();
-      const upcomingSchedules = await this.scheduleModel
-        .find({ deletedAt: null, endTime: { $gte: now } })
-        .sort({ startTime: 1 })
-        .limit(3)
-        .exec();
-
-      // 3. Tasks & Submissions
-      const allTasks = await this.taskModel.find({ deletedAt: null }).exec();
-
-      const queryConds: FilterQuery<unknown>[] = [
-        { userId: new Types.ObjectId(userId) },
-      ];
-      if (groupId) queryConds.push({ groupId: new Types.ObjectId(groupId) });
-
-      const submissions = await this.submissionModel
-        .find({ $or: queryConds, deletedAt: null })
-        .exec();
-
-      // 4. Attendance Today
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
-
-      const attendanceLogs = await this.logModel
-        .find({
-          userId: new Types.ObjectId(userId),
-          timestamp: { $gte: todayStart, $lte: todayEnd },
-        })
-        .exec();
-
-      // 5. Determine Next Action (Simple rule)
       let nextAction = 'Persiapkan diri Anda untuk kegiatan selanjutnya.';
-      const activeTasks = allTasks.filter((t) => new Date() <= t.deadline);
-      const pendingTasks = activeTasks.filter(
-        (t) =>
-          !submissions.find((s) => s.taskId.toString() === t._id.toString()),
-      );
-
-      if (pendingTasks.length > 0) {
-        nextAction = `Ada ${pendingTasks.length} tugas yang belum dikumpulkan. Batas terdekat: ${pendingTasks[0].title}.`;
+      if (taskStats.pendingTasks.length > 0) {
+        nextAction = `Ada ${taskStats.pendingTasks.length} tugas yang belum dikumpulkan. Batas terdekat: ${taskStats.pendingTasks[0].title}.`;
       } else if (upcomingSchedules.length > 0) {
-        nextAction = `Kegiatan terdekat: ${upcomingSchedules[0].name} pada ${upcomingSchedules[0].startTime.toLocaleString('id-ID')}.`;
+        nextAction = `Kegiatan terdekat: ${upcomingSchedules[0].name} pada ${new Date(upcomingSchedules[0].startTime).toLocaleString('id-ID')}.`;
       }
-
-      // 6. Calculate Progress
-      const totalSteps = 4; // 1. Profil, 2. Grup, 3. Absensi Pertama, 4. Tugas Pertama
-      let completedSteps = 1; // Assume profil is completed if they can login
-      if (groupId) completedSteps++;
-      const hasAttendedAny = await this.logModel
-        .findOne({ userId: new Types.ObjectId(userId) })
-        .exec();
-      if (hasAttendedAny) completedSteps++;
-      if (submissions.length > 0) completedSteps++;
-
-      const progressPercent = Math.round((completedSteps / totalSteps) * 100);
 
       return {
         user,
-        progress: {
-          percent: progressPercent,
-          completedSteps,
-          totalSteps,
-          hasGroup: !!groupId,
-          hasAttendedAny: !!hasAttendedAny,
-          hasSubmittedTask: submissions.length > 0,
-        },
+        progress,
         announcements,
         upcomingSchedules,
         tasks: {
-          total: allTasks.length,
-          submitted: submissions.length,
-          pending: pendingTasks.length,
-          graded: submissions.filter((s) => s.status === 'graded').length,
+          total: taskStats.total,
+          submitted: taskStats.submitted,
+          pending: taskStats.pending,
+          graded: taskStats.graded,
         },
         attendance: {
-          todayCount: attendanceLogs.length,
+          todayCount: attendance.todayCount,
         },
         nextAction,
       };
@@ -1053,9 +1280,14 @@ export class PkkmbService {
     }
   }
 
-  async getPanitiaDashboard() {
-    // 1. Statistics (Count registered MABA participants with role 'user')
-    const userRole = await this.roleModel.findOne({ slug: 'user' }).exec();
+  // ─── PANITIA DASHBOARD (MODULAR) ───────────────────────────────────────────
+
+  async getPanitiaStats() {
+    const userRole = await this.roleModel
+      .findOne({ slug: 'user' })
+      .select('_id')
+      .lean();
+
     const totalPeserta = userRole
       ? await this.userModel
           .countDocuments({ role: userRole._id, deletedAt: null })
@@ -1068,56 +1300,52 @@ export class PkkmbService {
     todayEnd.setHours(23, 59, 59, 999);
 
     const attendanceToday = await this.logModel
-      .countDocuments({ timestamp: { $gte: todayStart, $lte: todayEnd } })
+      .countDocuments({
+        checkInTime: { $gte: todayStart, $lte: todayEnd },
+      })
       .exec();
 
-    // 2. Active Announcements
-    const announcements = await this.announcementModel
-      .find({ deletedAt: null })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .exec();
+    return {
+      totalPeserta,
+      attendanceTodayPercent:
+        totalPeserta > 0
+          ? Math.round((attendanceToday / totalPeserta) * 100)
+          : 0,
+      attendanceToday,
+    };
+  }
 
-    // 3. Upcoming Activities (Schedules)
-    const now = new Date();
-    const schedules = await this.scheduleModel
-      .find({ deletedAt: null, endTime: { $gte: now } })
-      .sort({ startTime: 1 })
-      .limit(5)
-      .exec();
+  async getPanitiaRecentActivities() {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-    // 4. Tasks Overview
-    const totalSubmissions = await this.submissionModel
-      .countDocuments({ deletedAt: null })
-      .exec();
-    const gradedSubmissions = await this.submissionModel
-      .countDocuments({ status: 'graded', deletedAt: null })
-      .exec();
-
-    // 5. Recent Activities (Mocked or queried from audit logs if exist, simple fallback for now)
-    // We can pull the latest 3 submissions and latest 3 attendance logs as "activities"
-    const recentSubmissions = await this.submissionModel
-      .find({ deletedAt: null })
-      .sort({ updatedAt: -1 })
-      .limit(3)
-      .populate('userId', 'name')
-      .exec();
-
-    const recentAttendance = await this.logModel
-      .find({ timestamp: { $gte: todayStart } })
-      .sort({ timestamp: -1 })
-      .limit(3)
-      .populate('userId', 'name')
-      .exec();
+    const [recentSubmissions, recentAttendance] = await Promise.all([
+      this.submissionModel
+        .find({ deletedAt: null })
+        .select('userId updatedAt')
+        .populate('userId', 'name')
+        .sort({ updatedAt: -1 })
+        .limit(3)
+        .lean()
+        .exec(),
+      this.logModel
+        .find({ checkInTime: { $gte: todayStart } })
+        .select('participant checkInTime')
+        .populate('participant', 'name')
+        .sort({ checkInTime: -1 })
+        .limit(3)
+        .lean()
+        .exec(),
+    ]);
 
     const activities = [
       ...recentSubmissions.map((s) => ({
-        type: 'task',
+        type: 'task' as const,
         message: `${(s.userId as unknown as { name?: string })?.name || 'Peserta'} mengumpulkan tugas`,
         time: (s as unknown as { updatedAt: Date }).updatedAt,
       })),
       ...recentAttendance.map((a) => ({
-        type: 'attendance',
+        type: 'attendance' as const,
         message: `${(a.participant as unknown as { name?: string })?.name || 'Peserta'} melakukan presensi`,
         time: a.checkInTime || new Date(),
       })),
@@ -1125,24 +1353,70 @@ export class PkkmbService {
       .sort((a, b) => b.time.getTime() - a.time.getTime())
       .slice(0, 5);
 
+    return activities;
+  }
+
+  async getPanitiaAnnouncements() {
+    return this.announcementModel
+      .find({ deletedAt: null })
+      .select('_id title content isPriority createdAt')
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean()
+      .exec();
+  }
+
+  async getPanitiaSchedules() {
+    const now = new Date();
+    return this.scheduleModel
+      .find({ deletedAt: null, endTime: { $gte: now } })
+      .select('_id name startTime endTime location pic')
+      .sort({ startTime: 1 })
+      .limit(5)
+      .lean()
+      .exec();
+  }
+
+  async getPanitiaTaskStats() {
+    const [totalSubmissions, gradedSubmissions] = await Promise.all([
+      this.submissionModel.countDocuments({ deletedAt: null }).exec(),
+      this.submissionModel
+        .countDocuments({ status: 'GRADED', deletedAt: null })
+        .exec(),
+    ]);
+
+    return {
+      totalSubmissions,
+      pendingGrading: totalSubmissions - gradedSubmissions,
+      graded: gradedSubmissions,
+    };
+  }
+
+  async getPanitiaDashboard() {
+    const [stats, activities, announcements, schedules, taskStats] =
+      await Promise.all([
+        this.getPanitiaStats(),
+        this.getPanitiaRecentActivities(),
+        this.getPanitiaAnnouncements(),
+        this.getPanitiaSchedules(),
+        this.getPanitiaTaskStats(),
+      ]);
+
     return {
       statistics: {
-        totalPeserta,
-        attendanceTodayPercent:
-          totalPeserta > 0
-            ? Math.round((attendanceToday / totalPeserta) * 100)
-            : 0,
+        totalPeserta: stats.totalPeserta,
+        attendanceTodayPercent: stats.attendanceTodayPercent,
       },
       activities,
       announcements,
       schedules,
       tasks: {
-        totalSubmissions,
-        pendingGrading: totalSubmissions - gradedSubmissions,
-        graded: gradedSubmissions,
+        totalSubmissions: taskStats.totalSubmissions,
+        pendingGrading: taskStats.pendingGrading,
+        graded: taskStats.graded,
       },
       attendance: {
-        today: attendanceToday,
+        today: stats.attendanceToday,
       },
     };
   }

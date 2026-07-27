@@ -39,3 +39,7 @@ export class PkkmbAnnouncement {
 
 export const PkkmbAnnouncementSchema =
   SchemaFactory.createForClass(PkkmbAnnouncement);
+
+PkkmbAnnouncementSchema.index({ status: 1, isPriority: -1, createdAt: -1 });
+PkkmbAnnouncementSchema.index({ targetAudience: 1, deletedAt: 1 });
+PkkmbAnnouncementSchema.index({ deletedAt: 1 });

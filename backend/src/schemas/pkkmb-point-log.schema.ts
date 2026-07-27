@@ -30,3 +30,5 @@ export class PkkmbPointLog {
 }
 
 export const PkkmbPointLogSchema = SchemaFactory.createForClass(PkkmbPointLog);
+
+PkkmbPointLogSchema.index({ groupId: 1, deletedAt: 1 });

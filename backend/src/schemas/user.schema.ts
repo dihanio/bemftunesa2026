@@ -72,8 +72,11 @@ export class User {
   @Prop({ default: false })
   isEmailVerified: boolean;
 
-  @Prop({ default: '123456' })
-  emailVerificationCode: string;
+  @Prop()
+  emailVerificationCode?: string;
+
+  @Prop()
+  emailVerificationExpiry?: Date;
 
   @Prop()
   deletedAt?: Date;
@@ -84,3 +87,8 @@ export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.index({ cabinetPeriod: 1, department: 1, isActive: 1 });
 UserSchema.index({ department: 1, isActive: 1 });
 UserSchema.index({ pkkmbGroup: 1, deletedAt: 1 });
+UserSchema.index({ nim: 1 }, { sparse: true });
+UserSchema.index({ email: 1 });
+UserSchema.index({ role: 1, deletedAt: 1 });
+UserSchema.index({ studyProgram: 1, deletedAt: 1 });
+UserSchema.index({ isActive: 1, deletedAt: 1 });

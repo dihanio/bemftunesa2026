@@ -13,31 +13,6 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class MabaCheckinDto {
-  @ApiProperty({
-    description: 'ID Sesi Presensi',
-    example: '60d5ec49f1a2c8a1b4e12345',
-  })
-  @IsMongoId()
-  @IsNotEmpty()
-  sessionId: string;
-
-  @ApiPropertyOptional({ description: 'Token QR Code', example: 'abc123xyz' })
-  @IsString()
-  @IsOptional()
-  qrToken?: string;
-
-  @ApiPropertyOptional({ description: 'Garis Lintang GPS', example: -7.311 })
-  @IsNumber()
-  @IsOptional()
-  latitude?: number;
-
-  @ApiPropertyOptional({ description: 'Garis Bujur GPS', example: 112.729 })
-  @IsNumber()
-  @IsOptional()
-  longitude?: number;
-}
-
 export class MabaSubmitTaskDto {
   @ApiProperty({
     description: 'URL Lampiran Tugas',
@@ -135,6 +110,11 @@ export class CheckInDto {
   @IsString()
   @IsOptional()
   nim?: string;
+
+  @ApiPropertyOptional({ description: 'Token QR Code dari scan' })
+  @IsString()
+  @IsOptional()
+  qrToken?: string;
 
   @ApiPropertyOptional({
     description: 'Metode Check-in',
