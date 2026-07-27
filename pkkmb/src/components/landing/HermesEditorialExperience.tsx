@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence, useScroll, useTransform, useSpring, useReducedMotion, type MotionValue } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion, type MotionValue } from "framer-motion";
 import { useRef, useState, useEffect, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -121,30 +121,24 @@ function DesktopStickyExperience() {
     offset: ["start start", "end end"],
   });
 
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 90,
-    damping: 30,
-    restDelta: 0.001,
-  });
-
   return (
     <div ref={containerRef} className="relative h-[900vh] bg-[#040507] text-[#FAFAFA] font-sans">
       {/* Top Fixed Scroll Progress Bar (Warm Gold Glow Indicator) */}
       <div className="fixed top-0 left-0 right-0 h-[3.5px] bg-[#040507]/80 z-[60] pointer-events-none">
         <motion.div
           className="h-full bg-gradient-to-r from-[#D4AF37] via-amber-300 to-amber-500 shadow-[0_0_14px_rgba(212,175,55,1)] origin-left transform-gpu"
-          style={{ scaleX: smoothProgress }}
+          style={{ scaleX: scrollYProgress }}
         />
       </div>
 
       {/* Sticky Fullscreen Viewport Canvas */}
       <div className="sticky top-0 h-screen w-full overflow-hidden relative">
-        <DesktopBackgroundTexture progress={smoothProgress} />
-        <DesktopViewport1 progress={smoothProgress} />
-        <DesktopViewport2 progress={smoothProgress} />
-        <DesktopViewport3 progress={smoothProgress} />
-        <DesktopViewport4 progress={smoothProgress} />
-        <DesktopViewport5 progress={smoothProgress} />
+        <DesktopBackgroundTexture progress={scrollYProgress} />
+        <DesktopViewport1 progress={scrollYProgress} />
+        <DesktopViewport2 progress={scrollYProgress} />
+        <DesktopViewport3 progress={scrollYProgress} />
+        <DesktopViewport4 progress={scrollYProgress} />
+        <DesktopViewport5 progress={scrollYProgress} />
       </div>
     </div>
   );
