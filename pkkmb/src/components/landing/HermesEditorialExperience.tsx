@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence, useScroll, useTransform, useReducedMotion, type MotionValue } from "framer-motion";
-import { useState, useEffect, memo } from "react";
+import { useRef, useState, useEffect, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -114,10 +114,15 @@ export default function HermesEditorialExperience() {
    Full cinematic 900vh spring physics, progress bar, & 5 viewports
    ═══════════════════════════════════════════════════ */
 function DesktopStickyExperience() {
-  const { scrollYProgress } = useScroll();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
 
   return (
-    <div className="relative h-[900vh] bg-[#040507] text-[#FAFAFA] font-sans">
+    <div ref={containerRef} className="relative h-[900vh] bg-[#040507] text-[#FAFAFA] font-sans">
       {/* Top Fixed Scroll Progress Bar (Warm Gold Glow Indicator) */}
       <div className="fixed top-0 left-0 right-0 h-[3.5px] bg-[#040507]/80 z-[60] pointer-events-none">
         <motion.div
@@ -172,7 +177,8 @@ const DesktopBackgroundTexture = memo(function DesktopBackgroundTexture({ progre
 });
 
 const DesktopViewport1 = memo(function DesktopViewport1({ progress }: { progress: MotionValue<number> }) {
-  const opacity = useTransform(progress, [0, 0.15, 0.22], [1, 1, 0]);
+  const opacity = useTransform(progress, [0, 0.12, 0.20], [1, 1, 0]);
+  const display = useTransform(progress, (p) => (p > 0.22 ? "none" : "flex"));
   const scale = useTransform(progress, [0, 0.18], [1, 0.95]);
   const lineDraw = useTransform(progress, [0.02, 0.16], [1, 0]);
   const mascotLeftX = useTransform(progress, [0, 0.18], [-40, 0]);
@@ -180,8 +186,8 @@ const DesktopViewport1 = memo(function DesktopViewport1({ progress }: { progress
 
   return (
     <motion.div
-      style={{ opacity }}
-      className="absolute inset-0 flex flex-col items-center justify-center pt-28 sm:pt-36 pb-12 px-6 text-center z-20 pointer-events-none max-w-6xl mx-auto transform-gpu"
+      style={{ opacity, display }}
+      className="absolute inset-0 flex-col items-center justify-center pt-28 sm:pt-36 pb-12 px-6 text-center z-20 pointer-events-none max-w-6xl mx-auto transform-gpu"
     >
       <div className="absolute inset-0 flex justify-between items-end pointer-events-none px-4 sm:px-12 bottom-12 opacity-60 sm:opacity-90">
         <motion.div style={{ x: mascotLeftX }} className="w-32 sm:w-48 lg:w-56 h-auto transform-gpu">
@@ -235,14 +241,15 @@ const DesktopViewport1 = memo(function DesktopViewport1({ progress }: { progress
 
 const DesktopViewport2 = memo(function DesktopViewport2({ progress }: { progress: MotionValue<number> }) {
   const opacity = useTransform(progress, [0.18, 0.23, 0.40, 0.45], [0, 1, 1, 0]);
+  const display = useTransform(progress, (p) => (p < 0.16 || p > 0.47 ? "none" : "flex"));
   const textX = useTransform(progress, [0.18, 0.28], [-60, 0]);
   const imageClip = useTransform(progress, [0.20, 0.35], ["inset(15% 15% 15% 15%)", "inset(0% 0% 0% 0%)"]);
   const imageScale = useTransform(progress, [0.20, 0.35], [1.15, 1]);
 
   return (
     <motion.div
-      style={{ opacity }}
-      className="absolute inset-0 flex items-center justify-center pt-28 sm:pt-36 pb-12 px-8 z-20 pointer-events-none max-w-7xl mx-auto transform-gpu"
+      style={{ opacity, display }}
+      className="absolute inset-0 items-center justify-center pt-28 sm:pt-36 pb-12 px-8 z-20 pointer-events-none max-w-7xl mx-auto transform-gpu"
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full">
         <motion.div style={{ x: textX }} className="lg:col-span-7 space-y-6 transform-gpu">
@@ -286,14 +293,15 @@ const DesktopViewport2 = memo(function DesktopViewport2({ progress }: { progress
 
 const DesktopViewport3 = memo(function DesktopViewport3({ progress }: { progress: MotionValue<number> }) {
   const opacity = useTransform(progress, [0.45, 0.50, 0.65, 0.70], [0, 1, 1, 0]);
+  const display = useTransform(progress, (p) => (p < 0.43 || p > 0.72 ? "none" : "flex"));
   const prishaX = useTransform(progress, [0.46, 0.58], [-100, 0]);
   const smayaX = useTransform(progress, [0.46, 0.58], [100, 0]);
   const textY = useTransform(progress, [0.46, 0.56], [10, 0]);
 
   return (
     <motion.div
-      style={{ opacity }}
-      className="absolute inset-0 flex flex-col items-center justify-between pt-36 sm:pt-44 pb-10 px-8 z-20 pointer-events-none max-w-7xl mx-auto transform-gpu"
+      style={{ opacity, display }}
+      className="absolute inset-0 flex-col items-center justify-between pt-36 sm:pt-44 pb-10 px-8 z-20 pointer-events-none max-w-7xl mx-auto transform-gpu"
     >
       <motion.div style={{ y: textY }} className="text-center space-y-3 transform-gpu">
         <span className="text-[#D4AF37]/80 font-mono text-xs tracking-[0.3em] uppercase block">
@@ -343,14 +351,15 @@ const DesktopViewport3 = memo(function DesktopViewport3({ progress }: { progress
 
 const DesktopViewport4 = memo(function DesktopViewport4({ progress }: { progress: MotionValue<number> }) {
   const opacity = useTransform(progress, [0.70, 0.74, 0.84, 0.88], [0, 1, 1, 0]);
+  const display = useTransform(progress, (p) => (p < 0.68 || p > 0.90 ? "none" : "flex"));
   const col1Opacity = useTransform(progress, [0.71, 0.76], [0.3, 1]);
   const col2Opacity = useTransform(progress, [0.75, 0.80], [0.3, 1]);
   const col3Opacity = useTransform(progress, [0.79, 0.84], [0.3, 1]);
 
   return (
     <motion.div
-      style={{ opacity }}
-      className="absolute inset-0 flex flex-col justify-center pt-28 sm:pt-36 pb-12 px-8 z-20 pointer-events-none max-w-7xl mx-auto transform-gpu"
+      style={{ opacity, display }}
+      className="absolute inset-0 flex-col justify-center pt-28 sm:pt-36 pb-12 px-8 z-20 pointer-events-none max-w-7xl mx-auto transform-gpu"
     >
       <div className="mb-12">
         <span className="text-[#D4AF37]/70 font-mono text-xs tracking-[0.3em] uppercase block mb-2">
@@ -392,6 +401,7 @@ const DesktopViewport4 = memo(function DesktopViewport4({ progress }: { progress
 
 const DesktopViewport5 = memo(function DesktopViewport5({ progress }: { progress: MotionValue<number> }) {
   const opacity = useTransform(progress, [0.87, 0.92], [0, 1]);
+  const display = useTransform(progress, (p) => (p < 0.85 ? "none" : "flex"));
   const scale = useTransform(progress, [0.87, 0.95], [0.95, 1]);
 
   const [countdownTime, setCountdownTime] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -415,7 +425,7 @@ const DesktopViewport5 = memo(function DesktopViewport5({ progress }: { progress
 
   return (
     <motion.div
-      style={{ opacity, scale }}
+      style={{ opacity, scale, display }}
       className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center z-30 pointer-events-auto max-w-4xl mx-auto transform-gpu"
     >
       <div className="relative z-10 space-y-6 max-w-2xl bg-[#040507]/80 p-8 rounded-2xl backdrop-blur-sm border border-[#D4AF37]/15">
