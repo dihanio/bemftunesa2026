@@ -5,6 +5,11 @@ import Lenis from "lenis";
 
 export function LenisProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
+    // Disable Lenis on mobile (<768px) so mobile uses 100% native touch scrolling
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      return;
+    }
+
     const lenis = new Lenis({
       duration: 1.1,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -13,12 +18,14 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
       touchMultiplier: 1.0,
     });
 
+    let animationFrameId: number;
+
     function raf(time: number) {
       lenis.raf(time);
-      requestAnimationFrame(raf);
+      animationFrameId = requestAnimationFrame(raf);
     }
 
-    const animationFrameId = requestAnimationFrame(raf);
+    animationFrameId = requestAnimationFrame(raf);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
