@@ -1,0 +1,43 @@
+version: 2
+
+postal:
+  web_hostname: mail.bemftunesa.org
+  web_protocol: https
+  smtp_hostname: mail.bemftunesa.org
+  use_ip_pools: false
+  default_maximum_delivery_attempts: 18
+  default_maximum_hold_expiry_days: 7
+  default_suppression_list_automatic_removal_days: 30
+  support_email: admin@bemftunesa.org
+
+web_server:
+  default_bind_address: 0.0.0.0
+  default_port: 5000
+
+smtp_server:
+  default_bind_address: 0.0.0.0
+  default_port: 25
+
+main_db:
+  host: postal-db
+  port: 3306
+  username: postal
+  password: postal_pass_2026
+  database: postal
+
+message_db:
+  host: postal-db
+  port: 3306
+  username: root
+  password: postal_root_2026
+
+rabbitmq:
+  host: postal-rabbitmq
+  port: 5672
+  username: postal
+  password: postal_rabbit_2026
+  vhost: postal
+
+dns:
+  mx_records:
+    - mail.bemftunesa.org

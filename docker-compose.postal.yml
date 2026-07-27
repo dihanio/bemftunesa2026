@@ -1,24 +1,25 @@
 #
 # Postal - Self-hosted email server for BEM FT UNESA
-# Usage: docker compose -f docker-compose.postal.yml up -d
+# Usage: docker compose up -d
 #
 # Initial setup:
 #   1. Configure DNS (MX, SPF, DKIM, DMARC) — see docs/EMAIL_SETUP.md
-#   2. Start services: docker compose -f docker-compose.postal.yml up -d
-#   3. Create admin: docker compose -f docker-compose.postal.yml exec postal postal make-user
-#   4. Access web UI at http://<VPS_IP>:5000
-#   5. Create a server in Postal UI, get API key and SMTP credentials
-#   6. Add SMTP credentials to backend .env
+#   2. Start services: docker compose up -d postal-db postal-rabbitmq
+#   3. Generate signing key: docker compose run --rm postal postal init-postal
+#   4. Create admin: docker compose run --rm postal postal make-user
+#   5. Access web UI at http://<VPS_IP>:5000
+#   6. Create a server in Postal UI, get API key and SMTP credentials
+#   7. Add SMTP credentials to backend .env
 #
 services:
   postal-db:
     image: mariadb:10.11
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${POSTAL_DB_ROOT_PASSWORD:-postal_root_2026}
-      MYSQL_DATABASE: postal
-      MYSQL_USER: postal
-      MYSQL_PASSWORD: ${POSTAL_DB_PASSWORD:-postal_pass_2026}
+      MARIADB_ROOT_PASSWORD: ${POSTAL_DB_ROOT_PASSWORD:-postal_root_2026}
+      MARIADB_DATABASE: postal
+      MARIADB_USER: postal
+      MARIADB_PASSWORD: ${POSTAL_DB_PASSWORD:-postal_pass_2026}
     volumes:
       - postal_db_data:/var/lib/mysql
     healthcheck:
@@ -48,7 +49,7 @@ services:
       - postal
 
   postal:
-    image: postalserver/postal:2.3
+    image: ghcr.io/postalserver/postal:2
     restart: unless-stopped
     depends_on:
       postal-db:
@@ -56,19 +57,8 @@ services:
       postal-rabbitmq:
         condition: service_healthy
     ports:
-      - "25:25"       # SMTP
-      - "5000:5000"   # Web UI
-      - "5001:5001"   # HTTP API
-    environment:
-      POSTAL_DB_HOST: postal-db
-      POSTAL_DB_PORT: 3306
-      POSTAL_DB_USERNAME: postal
-      POSTAL_DB_PASSWORD: ${POSTAL_DB_PASSWORD:-postal_pass_2026}
-      POSTAL_DB_DATABASE: postal
-      POSTAL_RABBITMQ_HOST: postal-rabbitmq
-      POSTAL_RABBITMQ_USERNAME: postal
-      POSTAL_RABBITMQ_PASSWORD: ${POSTAL_RABBITMQ_PASSWORD:-postal_rabbit_2026}
-      POSTAL_SMTP_SERVER_HOSTNAME: mail.${POSTAL_DOMAIN:-bemftunesa.org}
+      - "25:25"
+      - "5000:5000"
     volumes:
       - postal_config:/config
       - postal_data:/app/data

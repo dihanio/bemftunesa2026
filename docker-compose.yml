@@ -15,8 +15,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      postal:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:4000/api/v1/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))\""]
       interval: 10s
@@ -211,7 +209,7 @@ services:
       - postal
 
   postal:
-    image: postalserver/postal:2.3
+    image: ghcr.io/postalserver/postal:2
     restart: unless-stopped
     depends_on:
       postal-db:
@@ -221,26 +219,9 @@ services:
     ports:
       - "25:25"
       - "5000:5000"
-      - "5001:5001"
-    environment:
-      POSTAL_DB_HOST: postal-db
-      POSTAL_DB_PORT: 3306
-      POSTAL_DB_USERNAME: postal
-      POSTAL_DB_PASSWORD: ${POSTAL_DB_PASSWORD:-postal_pass_2026}
-      POSTAL_DB_DATABASE: postal
-      POSTAL_RABBITMQ_HOST: postal-rabbitmq
-      POSTAL_RABBITMQ_USERNAME: postal
-      POSTAL_RABBITMQ_PASSWORD: ${POSTAL_RABBITMQ_PASSWORD:-postal_rabbit_2026}
-      POSTAL_SMTP_SERVER_HOSTNAME: mail.bemftunesa.org
     volumes:
       - postal_config:/config
       - postal_data:/app/data
-    healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:5000/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
     networks:
       - postal
 
