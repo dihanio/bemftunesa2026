@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
+import AmbiencePlayer from "./AmbiencePlayer";
 
 
 /**
@@ -45,8 +46,9 @@ export default function HermesEditorialExperience() {
           </Link>
         </div>
         
-        {/* Right Actions: Portal Button */}
+        {/* Right Actions: Ambience + Portal Button */}
         <div className="flex-1 flex items-center justify-end gap-2 sm:gap-4 shrink-0">
+          <AmbiencePlayer />
           <Link
             href="/login"
             onClick={handlePortalClick}
