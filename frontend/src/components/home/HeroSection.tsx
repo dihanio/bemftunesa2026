@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles, MessageCircle } from "lucide-react";
 import PublicApiService from "@/lib/api";
+
+type MascotType = "prisha" | "smaya";
 
 export function HeroSection() {
   const [stats, setStats] = useState({
@@ -13,18 +15,21 @@ export function HeroSection() {
     konstituen: "10k+"
   });
 
+  const [activeMascot, setActiveMascot] = useState<MascotType>("prisha");
+  const [showSpeechBubble, setShowSpeechBubble] = useState(true);
+
   useEffect(() => {
     async function fetchStats() {
       try {
         const res = await PublicApiService.getStats();
         const rawData: unknown = res?.data;
         let data: Partial<typeof stats> | undefined;
-        if (rawData && typeof rawData === 'object') {
-          if ('departments' in rawData || 'proker' in rawData) {
+        if (rawData && typeof rawData === "object") {
+          if ("departments" in rawData || "proker" in rawData) {
             data = rawData as Partial<typeof stats>;
-          } else if ('data' in rawData) {
+          } else if ("data" in rawData) {
             const nested = (rawData as Record<string, unknown>).data;
-            if (nested && typeof nested === 'object') {
+            if (nested && typeof nested === "object") {
               data = nested as Partial<typeof stats>;
             }
           }
@@ -43,9 +48,28 @@ export function HeroSection() {
     fetchStats();
   }, []);
 
+  const mascotData = {
+    prisha: {
+      name: "Prisha",
+      role: "Maskot Advokasi & Pelayanan",
+      greeting: "Halo Rek! Ada aspirasi kampus? Kami siap kawal! 💙",
+      image: "/images/prisha_waving.png",
+      alt: "Maskot Prisha BEM FT UNESA"
+    },
+    smaya: {
+      name: "Smaya",
+      role: "Maskot Inovasi & Karya Teknik",
+      greeting: "Salam Teknik! Mari bersinergi dan berinovasi bersama! ⚡",
+      image: "/images/smaya_cheering.png",
+      alt: "Maskot Smaya BEM FT UNESA"
+    }
+  };
+
+  const currentMascot = mascotData[activeMascot];
+
   return (
     <section className="relative w-full min-h-[70vh] flex flex-col items-center justify-center pt-28 pb-6 px-6 overflow-hidden bg-background">
-      {/* Simplified ambient glow - single, smaller, no animation */}
+      {/* Simplified ambient glow */}
       <div 
         className="absolute top-[10%] left-[-10%] w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full bg-accent-blue/10 blur-[80px] pointer-events-none -z-10" 
       />
@@ -53,7 +77,7 @@ export function HeroSection() {
         className="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full bg-accent-blue/10 blur-[80px] pointer-events-none -z-10" 
       />
 
-      {/* Grid Overlay - simplified */}
+      {/* Grid Overlay */}
       <div 
         className="absolute inset-0 z-0 pointer-events-none opacity-30"
         style={{
@@ -113,8 +137,8 @@ export function HeroSection() {
               </div>
             </div>
 
-            {/* Right Column: FT Building Image */}
-            <div className="lg:col-span-7 relative w-full h-[200px] sm:h-[280px] lg:h-auto min-h-[200px] lg:min-h-[400px] overflow-hidden bg-slate-200/30 dark:bg-slate-800/15">
+            {/* Right Column: FT Building Image & Interactive Mascot */}
+            <div className="lg:col-span-7 relative w-full h-[320px] sm:h-[380px] lg:h-auto min-h-[320px] lg:min-h-[420px] overflow-hidden bg-slate-200/30 dark:bg-slate-800/15 group/rightCol">
               <Image
                 src="/images/gedung-ft.png"
                 alt="Gedung Fakultas Teknik UNESA"
@@ -126,11 +150,106 @@ export function HeroSection() {
               />
               
               {/* Ambient vignette gradient overlays */}
-              <div className="absolute inset-0 bg-gradient-to-r from-background/40 via-transparent to-background/10 z-10" />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent z-10" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background/50 via-transparent to-background/20 z-10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10" />
               
               {/* Single corner glow */}
               <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-accent-blue/20 blur-[60px] z-20 rounded-full" />
+
+              {/* Floating Mascot Widget */}
+              <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-20 flex flex-col items-end gap-2 max-w-[280px] sm:max-w-[320px]">
+                
+                {/* Speech Bubble */}
+                {showSpeechBubble && (
+                  <div className="relative glass-active p-3 rounded-2xl border border-accent-blue/30 shadow-2xl backdrop-blur-md animate-enter transition-all duration-300">
+                    <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-1.5 mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-accent-gold animate-pulse" />
+                        <span className="text-[11px] font-bold text-accent-gold font-mono tracking-wide">
+                          {currentMascot.name}
+                        </span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-accent-blue/20 text-accent-blue font-semibold">
+                          {currentMascot.role}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={() => setShowSpeechBubble(false)}
+                        className="text-foreground/40 hover:text-foreground text-xs px-1"
+                        title="Tutup percakapan"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    
+                    <p className="text-xs text-foreground/90 font-medium leading-snug">
+                      {currentMascot.greeting}
+                    </p>
+
+                    {/* Speech pointer */}
+                    <div className="absolute -bottom-2 right-8 w-3 h-3 bg-slate-900 border-r border-b border-accent-blue/30 rotate-45" />
+                  </div>
+                )}
+
+                {/* Mascot Image & Selector Bar */}
+                <div className="flex items-end gap-2">
+                  {/* Selector Pills */}
+                  <div className="glass-subtle p-1 rounded-full flex flex-col gap-1 border border-white/10 backdrop-blur-md shadow-lg">
+                    <button
+                      onClick={() => {
+                        setActiveMascot("prisha");
+                        setShowSpeechBubble(true);
+                      }}
+                      className={`px-2.5 py-1 text-[10px] font-bold rounded-full transition-all ${
+                        activeMascot === "prisha"
+                          ? "bg-accent-blue text-white shadow-md"
+                          : "text-foreground/70 hover:text-foreground hover:bg-white/10"
+                      }`}
+                      title="Tampilkan Prisha"
+                    >
+                      Prisha
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveMascot("smaya");
+                        setShowSpeechBubble(true);
+                      }}
+                      className={`px-2.5 py-1 text-[10px] font-bold rounded-full transition-all ${
+                        activeMascot === "smaya"
+                          ? "bg-accent-blue text-white shadow-md"
+                          : "text-foreground/70 hover:text-foreground hover:bg-white/10"
+                      }`}
+                      title="Tampilkan Smaya"
+                    >
+                      Smaya
+                    </button>
+                  </div>
+
+                  {/* Mascot Avatar */}
+                  <div 
+                    className="relative cursor-pointer group/mascot transition-transform hover:scale-105 active:scale-95"
+                    onClick={() => setShowSpeechBubble(prev => !prev)}
+                    title={`Klik untuk berinteraksi dengan ${currentMascot.name}`}
+                  >
+                    <div className="relative w-28 h-36 sm:w-36 sm:h-44 drop-shadow-[0_10px_20px_rgba(0,0,0,0.4)] transition-all duration-300">
+                      <Image
+                        src={currentMascot.image}
+                        alt={currentMascot.alt}
+                        fill
+                        sizes="180px"
+                        style={{ objectFit: "contain", objectPosition: "bottom" }}
+                        className="transition-all duration-300 group-hover/mascot:brightness-110"
+                      />
+                    </div>
+
+                    {/* Interactive hint icon */}
+                    <div className="absolute top-0 right-0 p-1 rounded-full bg-accent-blue text-white shadow-md group-hover/mascot:scale-110 transition-transform">
+                      <MessageCircle className="w-3.5 h-3.5" />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
             </div>
 
           </div>
