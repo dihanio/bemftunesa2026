@@ -80,6 +80,14 @@ steps:
     when:
       - event: [push, tag]
         branch: main
+        path:
+          include:
+            - "backend/**"
+            - "packages/**"
+            - "package.json"
+            - "package-lock.json"
+            - "turbo.json"
+            - "Dockerfile.backend"
 
   # ── 4. Push Docker image – public web (Next.js) ───────────────────────────
   - name: push-public-web
@@ -107,6 +115,14 @@ steps:
     when:
       - event: [push, tag]
         branch: main
+        path:
+          include:
+            - "frontend/**"
+            - "packages/**"
+            - "package.json"
+            - "package-lock.json"
+            - "turbo.json"
+            - "Dockerfile.frontend"
 
   # ── 5. Push Docker image – IMS dashboard (Next.js) ────────────────────────
   - name: push-ims-web
@@ -133,6 +149,14 @@ steps:
     when:
       - event: [push, tag]
         branch: main
+        path:
+          include:
+            - "ims/**"
+            - "packages/**"
+            - "package.json"
+            - "package-lock.json"
+            - "turbo.json"
+            - "Dockerfile.frontend"
 
   # ── 6. Push Docker image – PKKMB portal (Next.js) ─────────────────────────
   - name: push-pkkmb-web
@@ -159,6 +183,14 @@ steps:
     when:
       - event: [push, tag]
         branch: main
+        path:
+          include:
+            - "pkkmb/**"
+            - "packages/**"
+            - "package.json"
+            - "package-lock.json"
+            - "turbo.json"
+            - "Dockerfile.frontend"
 
   # ── 7. Deploy ke VPS via SSH ───────────────────────────────────────────────
   # Memanggil vps_deploy.sh yang sudah ada — mendukung change-detection
@@ -203,3 +235,18 @@ steps:
     when:
       - event: push
         branch: main
+        path:
+          include:
+            - "backend/**"
+            - "frontend/**"
+            - "ims/**"
+            - "pkkmb/**"
+            - "packages/**"
+            - "package.json"
+            - "package-lock.json"
+            - "turbo.json"
+            - "Dockerfile.backend"
+            - "Dockerfile.frontend"
+            - "docker-compose.yml"
+            - "scripts/deploy/**"
+            - "Caddyfile"
