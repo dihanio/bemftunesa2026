@@ -109,8 +109,15 @@ docker compose -f docker-compose.yml up -d db redis
 # restart services via docker-compose
 for svc in "${SERVICES_TO_RESTART[@]}"; do
   log "Rebuilding and restarting service: $svc"
-  docker compose -f docker-compose.yml pull $svc || log "Failed to pull latest image for $svc"
-  docker compose -f docker-compose.yml up -d --no-deps --force-recreate $svc || { log "Failed to restart $svc"; ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"; exit 1; }
+  docker compose -f docker-compose.yml pull "$svc" || { log "Failed to pull latest image for $svc"; ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"; exit 1; }
+  docker compose -f docker-compose.yml up -d --no-deps --force-recreate "$svc" || { log "Failed to restart $svc"; ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"; exit 1; }
+  IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$(docker compose -f docker-compose.yml ps -q "$svc")" 2>/dev/null || true)
+  if [ -z "$IMAGE_DIGEST" ]; then
+    log "No image digest found for $svc"
+    ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"
+    exit 1
+  fi
+  log "$svc image: $IMAGE_DIGEST"
   # wait for health
   for i in $(seq 1 30); do
     STATUS=$(docker inspect --format='{{json .State.Health}}' $(docker compose -f docker-compose.yml ps -q $svc) 2>/dev/null || echo "{}")

@@ -111,7 +111,9 @@ jobs:
       - name: Check if build needed
         id: check
         run: |
-          if [ "${{ needs.changes.outputs.shared }}" == "true" ] || [ "${{ needs.changes.outputs[matrix.change_key] }}" == "true" ]; then
+          # PKKMB always gets a fresh immutable image on deploy. Its runtime is
+          # public-facing and must not silently reuse an older `latest` image.
+          if [ "${{ matrix.service }}" == "pkkmb_web" ] || [ "${{ needs.changes.outputs.shared }}" == "true" ] || [ "${{ needs.changes.outputs[matrix.change_key] }}" == "true" ]; then
             echo "build=true" >> $GITHUB_OUTPUT
           else
             echo "build=false" >> $GITHUB_OUTPUT
