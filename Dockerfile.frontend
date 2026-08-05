@@ -26,10 +26,10 @@ ENV APP_NAME=${APP_NAME}
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-ARG NEXT_PUBLIC_API_URL
-ARG NEXT_PUBLIC_PUBLIC_URL
-ARG NEXT_PUBLIC_IMS_URL
-ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ARG NEXT_PUBLIC_API_URL=https://api.bemftunesa.org/api/v1
+ARG NEXT_PUBLIC_PUBLIC_URL=https://bemftunesa.org
+ARG NEXT_PUBLIC_IMS_URL=https://ims.bemftunesa.org
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=dummy-client-id
 
 # Copy dependencies
 COPY --from=installer /app/ .
