@@ -80,7 +80,7 @@ export default function UserManagementPage() {
     pkkmbGroup: ''
   });
 
-  const [roles, setRoles] = useState<{_id: string, name: string}[]>([]);
+  const [roles, setRoles] = useState<{_id: string, name: string, slug?: string}[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
