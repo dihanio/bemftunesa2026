@@ -75,8 +75,10 @@ steps:
       platforms:
         - linux/amd64
       # Registry cache: simpan layer di GHCR tag :buildcache agar build berikutnya lebih cepat
-      cache_from: type=registry,ref=ghcr.io/dihanio/bemftunesa2026-api:buildcache
-      cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-api:buildcache,mode=max"
+      cache_from:
+        - type=registry,ref=ghcr.io/dihanio/bemftunesa2026-api:buildcache
+      cache_to:
+        - type=registry,ref=ghcr.io/dihanio/bemftunesa2026-api:buildcache,mode=max
     when:
       - event: [push, tag]
         branch: main
@@ -106,8 +108,10 @@ steps:
         - NEXT_PUBLIC_PUBLIC_URL
         - NEXT_PUBLIC_IMS_URL
         - NEXT_PUBLIC_GOOGLE_CLIENT_ID
-      cache_from: type=registry,ref=ghcr.io/dihanio/bemftunesa2026-public_web:buildcache
-      cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-public_web:buildcache,mode=max"
+      cache_from:
+        - type=registry,ref=ghcr.io/dihanio/bemftunesa2026-public_web:buildcache
+      cache_to:
+        - type=registry,ref=ghcr.io/dihanio/bemftunesa2026-public_web:buildcache,mode=max
     environment:
       NEXT_PUBLIC_API_URL:
         from_secret: next_public_api_url
@@ -145,8 +149,10 @@ steps:
         - NEXT_PUBLIC_PUBLIC_URL
         - NEXT_PUBLIC_IMS_URL
         - NEXT_PUBLIC_GOOGLE_CLIENT_ID
-      cache_from: type=registry,ref=ghcr.io/dihanio/bemftunesa2026-ims_web:buildcache
-      cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-ims_web:buildcache,mode=max"
+      cache_from:
+        - type=registry,ref=ghcr.io/dihanio/bemftunesa2026-ims_web:buildcache
+      cache_to:
+        - type=registry,ref=ghcr.io/dihanio/bemftunesa2026-ims_web:buildcache,mode=max
     environment:
       NEXT_PUBLIC_API_URL:
         from_secret: next_public_api_url
@@ -184,8 +190,10 @@ steps:
         - NEXT_PUBLIC_PUBLIC_URL
         - NEXT_PUBLIC_IMS_URL
         - NEXT_PUBLIC_GOOGLE_CLIENT_ID
-      cache_from: type=registry,ref=ghcr.io/dihanio/bemftunesa2026-pkkmb_web:buildcache
-      cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-pkkmb_web:buildcache,mode=max"
+      cache_from:
+        - type=registry,ref=ghcr.io/dihanio/bemftunesa2026-pkkmb_web:buildcache
+      cache_to:
+        - type=registry,ref=ghcr.io/dihanio/bemftunesa2026-pkkmb_web:buildcache,mode=max
     environment:
       NEXT_PUBLIC_API_URL:
         from_secret: next_public_api_url
