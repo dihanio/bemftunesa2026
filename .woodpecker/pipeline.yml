@@ -59,6 +59,7 @@ steps:
 
   # ── 3. Push Docker image – backend (NestJS API) ───────────────────────────
   - name: push-api
+    depends_on: [lint]
     image: woodpeckerci/plugin-docker-buildx
     privileged: true
     settings:
@@ -75,13 +76,14 @@ steps:
       platforms:
         - linux/amd64
       cache_from: ghcr.io/dihanio/bemftunesa2026-api:buildcache
-      cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-api:buildcache,mode=max"
+      cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-api:buildcache,mode=min"
     when:
       - event: [push, tag]
         branch: main
 
   # ── 4. Push Docker image – public web (Next.js) ───────────────────────────
   - name: push-public-web
+    depends_on: [lint]
     image: woodpeckerci/plugin-docker-buildx
     privileged: true
     settings:
@@ -122,6 +124,7 @@ steps:
 
   # ── 5. Push Docker image – IMS dashboard (Next.js) ────────────────────────
   - name: push-ims-web
+    depends_on: [lint]
     image: woodpeckerci/plugin-docker-buildx
     privileged: true
     settings:
@@ -161,6 +164,7 @@ steps:
 
   # ── 6. Push Docker image – PKKMB portal (Next.js) ─────────────────────────
   - name: push-pkkmb-web
+    depends_on: [lint]
     image: woodpeckerci/plugin-docker-buildx
     privileged: true
     settings:
@@ -202,6 +206,7 @@ steps:
   # Memanggil vps_deploy.sh yang sudah ada — mendukung change-detection
   # per-service, health-check, dan rollback otomatis.
   - name: deploy
+    depends_on: [push-api, push-public-web, push-ims-web, push-pkkmb-web]
     image: alpine:3.20
     environment:
       VPS_HOST:
