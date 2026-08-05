@@ -98,8 +98,7 @@ steps:
       platforms:
         - linux/amd64
       # build_args_from_env membaca nilai dari environment: block di bawah
-      build_args:
-        - APP_NAME=frontend
+      build_args: APP_NAME=frontend
       build_args_from_env:
         - NEXT_PUBLIC_API_URL
         - NEXT_PUBLIC_PUBLIC_URL
@@ -137,8 +136,7 @@ steps:
       target: runner
       platforms:
         - linux/amd64
-      build_args:
-        - APP_NAME=ims
+      build_args: APP_NAME=ims
       build_args_from_env:
         - NEXT_PUBLIC_API_URL
         - NEXT_PUBLIC_PUBLIC_URL
@@ -176,8 +174,7 @@ steps:
       target: runner
       platforms:
         - linux/amd64
-      build_args:
-        - APP_NAME=pkkmb
+      build_args: APP_NAME=pkkmb
       build_args_from_env:
         - NEXT_PUBLIC_API_URL
         - NEXT_PUBLIC_PUBLIC_URL
