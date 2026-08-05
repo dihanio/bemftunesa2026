@@ -39,6 +39,9 @@ import {
   UpdateAnnouncementDto,
   CreateScheduleDto,
   UpdateScheduleDto,
+  AdminCreateUserDto,
+  AdminUpdateUserDto,
+  OnboardDto,
 } from './dto/pkkmb.dto';
 
 @ApiTags('pkkmb')
@@ -81,13 +84,20 @@ export class PkkmbController {
     return { success: true, data };
   }
 
+  @Post('onboard')
+  @ApiOperation({ summary: 'Submit onboarding data untuk Maba' })
+  async submitOnboard(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: OnboardDto,
+  ) {
+    const result = await this.pkkmbService.submitOnboard(user.userId, dto);
+    return { success: true, message: 'Onboarding berhasil', data: result };
+  }
+
   @Get('dashboard/maba/tasks')
   @ApiOperation({ summary: 'Status tugas untuk Dashboard Maba' })
-  async getMabaDashboardTasks(@CurrentUser() user: UserDocument) {
-    const data = await this.pkkmbService.getMabaDashboardTasks(
-      user._id.toString(),
-      user.pkkmbGroup?.toString(),
-    );
+  async getMabaDashboardTasks(@CurrentUser() user: { userId: string }) {
+    const data = await this.pkkmbService.getMabaDashboardTasks(user.userId);
     return { success: true, data };
   }
 
@@ -102,10 +112,9 @@ export class PkkmbController {
 
   @Get('dashboard/maba/progress')
   @ApiOperation({ summary: 'Progress PKKMB mahasiswa' })
-  async getMabaDashboardProgress(@CurrentUser() user: UserDocument) {
+  async getMabaDashboardProgress(@CurrentUser() user: { userId: unknown }) {
     const data = await this.pkkmbService.getMabaDashboardProgress(
-      user._id.toString(),
-      user.pkkmbGroup?.toString(),
+      user.userId as string,
     );
     return { success: true, data };
   }
@@ -164,6 +173,56 @@ export class PkkmbController {
   async autoDistributeGugus() {
     const data = await this.pkkmbService.autoDistributeGugus();
     return { success: true, ...data };
+  }
+
+  @Get('admin/maba/pending-verification')
+  @RequiredPermissions(PkkmbPermission.REGISTRATION_MANAGE)
+  @ApiOperation({ summary: 'Daftar MABA yang menunggu verifikasi' })
+  async getPendingVerifications(@Query() query: PaginationDto) {
+    const result = await this.pkkmbService.getPendingVerifications(query);
+    return { success: true, ...result };
+  }
+
+  @Patch('admin/maba/:id/verify')
+  @RequiredPermissions(PkkmbPermission.REGISTRATION_MANAGE)
+  @ApiOperation({ summary: 'Verifikasi data MABA' })
+  async verifyMaba(@Param('id') id: string) {
+    const data = await this.pkkmbService.verifyMaba(id);
+    return { success: true, message: 'MABA berhasil diverifikasi', data };
+  }
+
+  @Patch('admin/maba/:id/reject')
+  @RequiredPermissions(PkkmbPermission.REGISTRATION_MANAGE)
+  @ApiOperation({ summary: 'Tolak verifikasi MABA' })
+  async rejectMaba(@Param('id') id: string, @Body('reason') reason: string) {
+    const data = await this.pkkmbService.rejectMaba(id, reason);
+    return { success: true, message: 'MABA ditolak', data };
+  }
+
+  @Post('admin/gugus/publish')
+  @RequiredPermissions(PkkmbPermission.GROUP_PUBLISH)
+  @ApiOperation({ summary: 'Publish hasil assignment gugus' })
+  async publishGugus(@CurrentUser() user: { userId: string }) {
+    const data = await this.pkkmbService.publishGugus(user.userId);
+    return { success: true, ...data };
+  }
+
+  @Post('admin/gugus/schedule-publish')
+  @RequiredPermissions(PkkmbPermission.GROUP_PUBLISH)
+  @ApiOperation({ summary: 'Jadwalkan publish gugus' })
+  async schedulePublishGugus(@Body('scheduledAt') scheduledAt: string) {
+    const data = await this.pkkmbService.schedulePublishGugus(
+      new Date(scheduledAt),
+    );
+    return { success: true, ...data };
+  }
+
+  @Get('admin/gugus/publish-config')
+  @RequiredPermissions(PkkmbPermission.GROUP_PUBLISH)
+  @ApiOperation({ summary: 'Lihat konfigurasi publish gugus' })
+  async getPublishConfig() {
+    const data = await this.pkkmbService.getPublishConfig();
+    return { success: true, data };
   }
 
   // ─── UNIVERSAL ATTENDANCE MODULE ──────────────────────────────────────────
@@ -228,7 +287,7 @@ export class PkkmbController {
       'Melakukan check-in presensi universal (QR, Manual Operator, Search NIM)',
   })
   async checkIn(
-    @CurrentUser() user: { userId: string },
+    @CurrentUser() user: { userId: string; role?: { slug: string } },
     @Body() dto: CheckInDto,
     @Req() req: Request,
   ) {
@@ -241,8 +300,16 @@ export class PkkmbController {
       user.userId,
       ipAddress,
       userAgent,
+      user.role?.slug,
     );
     return { success: true, message: 'Presensi berhasil dicatat!', data };
+  }
+  @Delete('attendance/records/:id')
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @ApiOperation({ summary: 'Menghapus record presensi (Admin)' })
+  async deleteAttendanceRecord(@Param('id') id: string) {
+    await this.pkkmbService.deleteAttendanceRecord(id);
+    return { success: true, message: 'Record presensi berhasil dihapus' };
   }
 
   @Get('attendance/monitoring')
@@ -250,8 +317,11 @@ export class PkkmbController {
   @ApiOperation({
     summary: 'Monitoring dashboard & laporan presensi real-time',
   })
-  async getAttendanceMonitoring(@Query() query: AttendanceFilterDto) {
-    const data = await this.pkkmbService.getAttendanceMonitoring(query);
+  async getAttendanceMonitoring(
+    @Query() query: AttendanceFilterDto,
+    @CurrentUser() user: { userId: unknown },
+  ) {
+    const data = await this.pkkmbService.getAttendanceMonitoring(query, user);
     return { success: true, data };
   }
 
@@ -275,6 +345,25 @@ export class PkkmbController {
     const roleSlug = user?.role?.slug;
     const isPanitia = roleSlug !== 'user' && roleSlug !== 'maba';
     const data = await this.pkkmbService.getTasks(query, isPanitia);
+    return { success: true, data };
+  }
+  @Get('maba/points/summary')
+  @ApiOperation({ summary: 'Melihat total skor poin (MABA)' })
+  async getMyPointsSummary(
+    @CurrentUser() user: { userId: string; pkkmbGroupId?: string },
+  ) {
+    const data = await this.pkkmbService.getMyPointsSummary(user.userId);
+    return { success: true, data };
+  }
+
+  @Get('maba/submissions')
+  @RequiredPermissions(PkkmbPermission.TASK_READ)
+  @ApiOperation({ summary: 'Melihat status pengumpulan tugas diri sendiri' })
+  async getMySubmissions(
+    @CurrentUser() user: { userId: string },
+    @Query() query: PaginationDto,
+  ) {
+    const data = await this.pkkmbService.getMySubmissions(user.userId, query);
     return { success: true, data };
   }
 
@@ -311,6 +400,20 @@ export class PkkmbController {
     return { success: true, message: 'Tugas berhasil dibuat', data };
   }
 
+  @Get('pemateri/submissions')
+  @RequiredPermissions(
+    PkkmbPermission.GRADING_READ_ALL,
+    PkkmbPermission.GRADING_READ_OWN,
+  )
+  @ApiOperation({ summary: 'Mendapatkan daftar semua tugas Maba' })
+  async getAllSubmissions(
+    @Query() query: PaginationDto,
+    @CurrentUser() user: { userId: unknown },
+  ) {
+    const result = await this.pkkmbService.getAllSubmissions(query, user);
+    return { success: true, ...result };
+  }
+
   @Patch('pemateri/submissions/:id/grade')
   @RequiredPermissions(PkkmbPermission.GRADING_UPDATE)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -344,6 +447,16 @@ export class PkkmbController {
   @ApiOperation({ summary: 'Statistik peserta & kehadiran' })
   async getPanitiaStats() {
     const data = await this.pkkmbService.getPanitiaStats();
+    return { success: true, data };
+  }
+
+  @Get('dashboard/admin')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Mendapatkan data agregasi untuk Dashboard Admin' })
+  async getAdminDashboard(
+    @CurrentUser() user: { userId: unknown; role?: { slug?: string } },
+  ) {
+    const data = await this.pkkmbService.getAdminDashboardStats(user);
     return { success: true, data };
   }
 
@@ -451,5 +564,86 @@ export class PkkmbController {
   async deleteSchedule(@Param('id') id: string) {
     const data = await this.pkkmbService.deleteSchedule(id);
     return { success: true, message: 'Jadwal berhasil dihapus', data };
+  }
+  @Post('admin/groups/set-ketua')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Menetapkan Ketua Gugus (Oleh Pendamping)' })
+  async setKetuaGugus(
+    @CurrentUser() user: { userId: unknown },
+    @Body('mabaId') mabaId: string,
+  ) {
+    if (!mabaId) {
+      throw new BadRequestException('mabaId is required');
+    }
+    const result = await this.pkkmbService.setKetuaGugus(user, mabaId);
+    return { success: true, data: result };
+  }
+
+  @Post('admin/groups/unset-ketua')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Membatalkan Ketua Gugus (Oleh Pendamping)' })
+  async unsetKetuaGugus(
+    @CurrentUser() user: { userId: unknown },
+    @Body('mabaId') mabaId: string,
+  ) {
+    if (!mabaId) {
+      throw new BadRequestException('mabaId is required');
+    }
+    const result = await this.pkkmbService.unsetKetuaGugus(user, mabaId);
+    return { success: true, data: result };
+  }
+
+  @Post('admin/groups/auto-assign')
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @ApiOperation({ summary: 'Membagi gugus Maba secara otomatis' })
+  async autoAssignGroups(@Query('dryRun') dryRun?: string) {
+    const isDryRun = dryRun !== 'false';
+    const result = await this.pkkmbService.autoAssignGroups(isDryRun);
+    return { success: true, ...result };
+  }
+  @Get('admin/maba')
+  @RequiredPermissions(
+    PkkmbPermission.GROUP_READ_ALL,
+    PkkmbPermission.GROUP_READ_OWN,
+  )
+  @ApiOperation({ summary: 'Melihat seluruh Mahasiswa Baru' })
+  async getAllMaba(
+    @CurrentUser() user: { userId: unknown; role?: { slug?: string } },
+    @Query() query: PaginationDto,
+  ) {
+    const result = await this.pkkmbService.getAllMaba(user, query);
+    return { success: true, ...result };
+  }
+
+  @Get('admin/users')
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @ApiOperation({ summary: 'Melihat semua user (Super Admin / Admin PKKMB)' })
+  async getAllUsers(@Query() query: PaginationDto) {
+    const result = await this.pkkmbService.getAllUsers(query);
+    return { success: true, ...result };
+  }
+
+  @Post('admin/users')
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @ApiOperation({ summary: 'Membuat user baru (Super Admin / Admin PKKMB)' })
+  async createUser(@Body() dto: AdminCreateUserDto) {
+    const result = await this.pkkmbService.createUser(dto);
+    return { success: true, message: 'User berhasil dibuat', data: result };
+  }
+
+  @Patch('admin/users/:id')
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @ApiOperation({ summary: 'Mengupdate user (Super Admin / Admin PKKMB)' })
+  async updateUser(@Param('id') id: string, @Body() dto: AdminUpdateUserDto) {
+    const result = await this.pkkmbService.updateUser(id, dto);
+    return { success: true, message: 'User berhasil diupdate', data: result };
+  }
+
+  @Delete('admin/users/:id')
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @ApiOperation({ summary: 'Menghapus user (Super Admin / Admin PKKMB)' })
+  async deleteUser(@Param('id') id: string) {
+    const result = await this.pkkmbService.deleteUser(id);
+    return { success: true, message: 'User berhasil dihapus', data: result };
   }
 }

@@ -8,10 +8,12 @@ export class PkkmbPointLog {
   @Prop({
     type: MongooseSchema.Types.ObjectId,
     ref: 'PkkmbGroup',
-    required: true,
+    required: false,
     index: true,
   })
   groupId: Types.ObjectId;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', index: true })
+  userId?: Types.ObjectId;
 
   @Prop({ required: true })
   points: number; // Bisa positif atau negatif

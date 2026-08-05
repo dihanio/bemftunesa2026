@@ -118,12 +118,12 @@ export class CheckInDto {
 
   @ApiPropertyOptional({
     description: 'Metode Check-in',
-    enum: ['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM'],
+    enum: ['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM', 'SELF_CHECKIN'],
     default: 'QR_CODE',
   })
-  @IsEnum(['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM'])
+  @IsEnum(['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM', 'SELF_CHECKIN'])
   @IsOptional()
-  method?: 'QR_CODE' | 'MANUAL_OPERATOR' | 'SEARCH_NIM';
+  method?: 'QR_CODE' | 'MANUAL_OPERATOR' | 'SEARCH_NIM' | 'SELF_CHECKIN';
 
   @ApiPropertyOptional({
     description: 'Status Kehadiran',
@@ -138,6 +138,16 @@ export class CheckInDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Latitude' })
+  @IsNumber()
+  @IsOptional()
+  lat?: number;
+
+  @ApiPropertyOptional({ description: 'Longitude' })
+  @IsNumber()
+  @IsOptional()
+  lng?: number;
 }
 
 export class PaginationDto {
@@ -418,4 +428,109 @@ export class UpdateScheduleDto {
   @IsString()
   @IsOptional()
   pic?: string;
+}
+
+export class OnboardDto {
+  @ApiProperty({ description: 'NIM Mahasiswa', example: '26051204001' })
+  @IsString()
+  @IsNotEmpty()
+  nim: string;
+
+  @ApiProperty({ description: 'Nama Lengkap', example: 'Andi Saputra' })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({
+    description: 'Program Studi',
+    example: 'S1 Teknik Informatika',
+  })
+  @IsString()
+  @IsNotEmpty()
+  department: string;
+
+  @ApiProperty({ description: 'Jenis Kelamin', enum: ['L', 'P'] })
+  @IsEnum(['L', 'P'])
+  @IsNotEmpty()
+  gender: 'L' | 'P';
+
+  @ApiProperty({ description: 'Nomor WhatsApp', example: '081234567890' })
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
+
+  @ApiProperty({ description: 'Nomor Darurat', example: '081234567890' })
+  @IsString()
+  @IsNotEmpty()
+  emergencyContact: string;
+
+  @ApiPropertyOptional({ description: 'Object Key Avatar / URL' })
+  @IsString()
+  @IsOptional()
+  avatarObjectKey?: string;
+
+  @ApiPropertyOptional({ description: 'Object Key KTM / URL' })
+  @IsString()
+  @IsOptional()
+  ktmObjectKey?: string;
+}
+
+export class AdminCreateUserDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsOptional()
+  nim?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  role: string; // role ID
+
+  @IsString()
+  @IsOptional()
+  password?: string;
+
+  @IsString()
+  @IsOptional()
+  division?: string; // Sie
+
+  @IsString()
+  @IsOptional()
+  pkkmbGroup?: string; // Group ID
+}
+
+export class AdminUpdateUserDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsString()
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @IsOptional()
+  nim?: string;
+
+  @IsString()
+  @IsOptional()
+  role?: string;
+
+  @IsString()
+  @IsOptional()
+  password?: string;
+
+  @IsString()
+  @IsOptional()
+  division?: string;
+
+  @IsString()
+  @IsOptional()
+  pkkmbGroup?: string;
 }

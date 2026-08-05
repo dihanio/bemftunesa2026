@@ -41,6 +41,10 @@ import {
   StudyProgram,
   StudyProgramSchema,
 } from '../schemas/study-program.schema';
+import {
+  PkkmbPublishConfig,
+  PkkmbPublishConfigSchema,
+} from '../schemas/pkkmb-publish-config.schema';
 
 import { PkkmbController } from './pkkmb.controller';
 import { PkkmbService } from './pkkmb.service';
@@ -65,6 +69,7 @@ import { PkkmbService } from './pkkmb.service';
       { name: PkkmbGallery.name, schema: PkkmbGallerySchema },
       { name: Rumpun.name, schema: RumpunSchema },
       { name: StudyProgram.name, schema: StudyProgramSchema },
+      { name: PkkmbPublishConfig.name, schema: PkkmbPublishConfigSchema },
     ]),
   ],
   controllers: [PkkmbController],

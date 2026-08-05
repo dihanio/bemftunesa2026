@@ -17,6 +17,9 @@ export class PkkmbGroup {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   pendampingId?: Types.ObjectId; // Panitia from Sie Pendamping
 
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  ketuaGugusId?: Types.ObjectId; // User (Maba) selected as Ketua Gugus
+
   @Prop({ default: 0 })
   totalPoints: number;
 
@@ -25,6 +28,15 @@ export class PkkmbGroup {
 
   @Prop()
   deletedAt?: Date;
+
+  @Prop({ type: String })
+  pendampingName?: string;
+
+  @Prop({ type: String })
+  pendampingWhatsApp?: string;
+
+  @Prop({ type: String })
+  pendampingEmail?: string;
 }
 
 export const PkkmbGroupSchema = SchemaFactory.createForClass(PkkmbGroup);

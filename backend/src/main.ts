@@ -19,7 +19,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Serve static assets (local fallback uploads)
-  app.useStaticAssets(join(__dirname, '..', '..', 'uploads'), {
+  app.useStaticAssets(join(process.cwd(), 'public', 'uploads'), {
     prefix: '/uploads/',
   });
 

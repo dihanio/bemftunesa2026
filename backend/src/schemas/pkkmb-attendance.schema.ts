@@ -130,6 +130,12 @@ export class PkkmbAttendanceRecord {
   notes?: string;
 
   @Prop()
+  lat?: number;
+
+  @Prop()
+  lng?: number;
+
+  @Prop()
   deletedAt?: Date;
 }
 

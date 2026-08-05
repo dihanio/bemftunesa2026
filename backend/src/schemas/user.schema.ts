@@ -55,13 +55,40 @@ export class User {
   avatar: string; // Simple string URL from Google SSO
 
   @Prop()
+  ktmUrl?: string; // KTM / KTMS URL for Maba
+
+  @Prop()
   publicPhoto?: string; // Khusus halaman publik struktur, foto pop-up/no-bg (diatur oleh Super Admin)
+
+  @Prop()
+  emergencyContact?: string;
+
+  @Prop()
+  shirtSize?: string;
+
+  @Prop({ default: false })
+  isOnboarded?: boolean;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Role', required: true })
   role: import('mongoose').Types.ObjectId;
 
+  @Prop()
+  imsRole?: string;
+
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'PkkmbGroup' })
   pkkmbGroup?: import('mongoose').Types.ObjectId;
+
+  @Prop({ default: false })
+  isKetuaGugus?: boolean;
+
+  @Prop({ type: String })
+  pendampingName?: string;
+
+  @Prop({ type: String })
+  pendampingWhatsApp?: string;
+
+  @Prop({ type: String })
+  pendampingEmail?: string;
 
   @Prop({ default: true })
   isActive: boolean;
@@ -92,6 +119,33 @@ export class User {
 
   @Prop()
   deletedAt?: Date;
+
+  @Prop({
+    enum: ['PENDING_VERIFICATION', 'VERIFIED', 'REJECTED'],
+    default: 'PENDING_VERIFICATION',
+  })
+  verificationStatus?: 'PENDING_VERIFICATION' | 'VERIFIED' | 'REJECTED';
+
+  @Prop()
+  verificationRejectionReason?: string;
+
+  @Prop()
+  verifiedAt?: Date;
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  verifiedBy?: import('mongoose').Types.ObjectId;
+
+  @Prop({
+    enum: ['UNASSIGNED', 'ASSIGNED', 'PUBLISHED'],
+    default: 'UNASSIGNED',
+  })
+  assignmentStatus?: 'UNASSIGNED' | 'ASSIGNED' | 'PUBLISHED';
+
+  @Prop()
+  assignmentAssignedAt?: Date;
+
+  @Prop()
+  assignmentPublishedAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

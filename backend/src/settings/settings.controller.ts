@@ -57,6 +57,31 @@ export class SettingsController {
     };
   }
 
+  @Get('public/links')
+  async getPublicLinks() {
+    const keys = [
+      'pkkmb_buku_panduan_url',
+      'pkkmb_pusat_bantuan_url',
+      'pkkmb_twibbon_url',
+    ];
+    const settings = await this.settingsService.findMany(keys);
+
+    const data: Record<string, string> = {
+      pkkmb_buku_panduan_url: '#',
+      pkkmb_pusat_bantuan_url: '#',
+      pkkmb_twibbon_url: '#',
+    };
+
+    settings.forEach((s) => {
+      if (s.value) data[s.key] = s.value as string;
+    });
+
+    return {
+      success: true,
+      data,
+    };
+  }
+
   // CMS ENDPOINTS
 
   @UseGuards(JwtAuthGuard)

@@ -260,6 +260,12 @@ const PERMISSIONS_DATA = [
     description: 'Verifikasi berkas pendaftaran Maba',
   },
   {
+    name: 'pkkmb.registration.manage',
+    resource: 'registration',
+    action: 'manage',
+    description: 'Kelola verifikasi dan pengumuman status Maba',
+  },
+  {
     name: 'pkkmb.registration.checkin',
     resource: 'registration',
     action: 'checkin',
@@ -276,6 +282,12 @@ const PERMISSIONS_DATA = [
     resource: 'registration',
     action: 'upload_document',
     description: 'Bantu upload berkas Maba',
+  },
+  {
+    name: 'pkkmb.group.publish',
+    resource: 'group',
+    action: 'publish',
+    description: 'Publish hasil assignment gugus',
   },
 
   // Profile
@@ -309,7 +321,7 @@ async function seed() {
   }
 
   console.log('📦 Seeding Permissions...');
-  const permissionMap = new Map<string, string>();
+  const permissionMap = new Map<string, unknown>();
 
   for (const perm of PERMISSIONS_DATA) {
     const res = await db
@@ -320,14 +332,16 @@ async function seed() {
         { upsert: true, returnDocument: 'after' },
       );
     if (res?._id) {
-      permissionMap.set(perm.name, res._id.toString());
+      permissionMap.set(perm.name, res._id);
     }
   }
   console.log(`✅ Seeded ${permissionMap.size} Permissions.`);
 
   // Helper to map permission names to Mongo ObjectIds
   const getPermIds = (names: string[]) =>
-    names.map((n) => permissionMap.get(n)).filter(Boolean);
+    names
+      .map((n) => permissionMap.get(n))
+      .filter((id): id is NonNullable<typeof id> => Boolean(id));
 
   const ROLES_DEFINITIONS = [
     {
@@ -368,6 +382,8 @@ async function seed() {
         'pkkmb.attendance.read',
         'pkkmb.profile.read_own',
         'pkkmb.profile.update_own',
+        'pkkmb.registration.manage',
+        'pkkmb.group.publish',
       ]),
     },
     {
@@ -389,6 +405,8 @@ async function seed() {
         'pkkmb.attendance.session_create',
         'pkkmb.profile.read_own',
         'pkkmb.profile.update_own',
+        'pkkmb.registration.manage',
+        'pkkmb.group.publish',
       ]),
     },
     {
@@ -438,7 +456,7 @@ async function seed() {
   ];
 
   console.log('🎭 Seeding Roles...');
-  const roleMap = new Map<string, string>();
+  const roleMap = new Map<string, { _id: unknown }>();
 
   for (const r of ROLES_DEFINITIONS) {
     const res = await db
@@ -449,7 +467,7 @@ async function seed() {
         { upsert: true, returnDocument: 'after' },
       );
     if (res?._id) {
-      roleMap.set(r.slug, res._id.toString());
+      roleMap.set(r.slug, res._id);
     }
   }
   console.log(`✅ Seeded ${roleMap.size} Roles.`);

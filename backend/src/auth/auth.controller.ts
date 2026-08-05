@@ -3,15 +3,18 @@ import {
   Get,
   Post,
   Patch,
+  Param,
   Body,
   UseGuards,
   Req,
   Res,
   ForbiddenException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
+import * as crypto from 'crypto';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -131,49 +134,8 @@ export class AuthController {
 
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Get('bypass')
-  async bypassLogin(@Req() req: Request, @Res() res: Response) {
-    if (this.configService.get<string>('NODE_ENV') === 'production') {
-      throw new ForbiddenException('Bypass login is disabled in production');
-    }
-    const email = req.query.email as string;
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email query parameter is required for bypass login',
-      });
-    }
-
-    try {
-      const user = await this.authService.validateBypassUser(email);
-      const tokens = await this.authService.generateTokensWithPermissions(user);
-
-      const isProduction =
-        this.configService.get<string>('NODE_ENV') === 'production';
-
-      // Set httpOnly cookies for security
-      res.cookie('accessToken', tokens.accessToken, {
-        httpOnly: true,
-        secure: true, // Always true - required by browsers for sameSite: 'none'
-        sameSite: isProduction ? 'lax' : 'none',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-        path: '/',
-      });
-
-      res.cookie('refreshToken', tokens.refreshToken, {
-        httpOnly: true,
-        secure: true, // Always true - required by browsers for sameSite: 'none'
-        sameSite: isProduction ? 'lax' : 'none',
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        path: '/',
-      });
-
-      const imsUrl = this.configService.get<string>('IMS_URL');
-      res.redirect(`${imsUrl}/login?authenticated=true`);
-    } catch (error: unknown) {
-      res
-        .status(401)
-        .json({ success: false, message: (error as Error).message });
-    }
+  bypassLogin() {
+    throw new ForbiddenException('Bypass login is disabled');
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -430,12 +392,89 @@ export class AuthController {
       permissions = ['manage:all', ...permissions];
     }
 
+    let verificationToken = '';
+    if (rawObj.nim) {
+      try {
+        const algorithm = 'aes-256-cbc';
+        const secretKey = crypto.scryptSync(
+          this.configService.get<string>('JWT_SECRET') || 'pkkmb_super_secret',
+          'salt',
+          32,
+        );
+        const iv = crypto.randomBytes(16);
+        const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+        let encrypted = cipher.update(rawObj.nim as string, 'utf8', 'hex');
+        encrypted += cipher.final('hex');
+        verificationToken = `${iv.toString('hex')}-${encrypted}`;
+      } catch (err) {
+        this.logger.error(
+          'Failed to generate verification token',
+          (err as Error).message,
+        );
+      }
+    }
+
+    console.log(
+      'Generated verificationToken:',
+      verificationToken,
+      'for NIM:',
+      rawObj.nim,
+    );
+
     return {
       success: true,
       data: {
         ...rawObj,
         permissions,
+        verificationToken,
       },
     };
+  }
+
+  @Get('verify-token/:token')
+  async verifyMabaToken(@Param('token') token: string) {
+    try {
+      const [ivHex, encryptedHex] = token.split('-');
+      if (!ivHex || !encryptedHex)
+        throw new BadRequestException('Token tidak valid');
+
+      const algorithm = 'aes-256-cbc';
+      const secretKey = crypto.scryptSync(
+        this.configService.get<string>('JWT_SECRET') || 'pkkmb_super_secret',
+        'salt',
+        32,
+      );
+      const iv = Buffer.from(ivHex, 'hex');
+      const decipher = crypto.createDecipheriv(algorithm, secretKey, iv);
+      let nim = decipher.update(encryptedHex, 'hex', 'utf8');
+      nim += decipher.final('utf8');
+
+      const user = await this.authService.validateUserByNim(nim);
+      if (!user)
+        throw new BadRequestException('Data mahasiswa tidak ditemukan');
+
+      return {
+        success: true,
+        data: {
+          name: user.name,
+          nim: user.nim,
+          department:
+            (typeof user.department === 'object' &&
+            user.department &&
+            'name' in user.department
+              ? (user.department as { name?: string }).name
+              : undefined) ||
+            user.department ||
+            (user as unknown as { studyProgram?: string }).studyProgram ||
+            '-',
+          pkkmbGroup: user.pkkmbGroup,
+          avatar: user.avatar,
+        },
+      };
+    } catch {
+      throw new BadRequestException(
+        'Token verifikasi tidak valid atau kedaluwarsa',
+      );
+    }
   }
 }

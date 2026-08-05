@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/src/main.js",
-    "start:dev": "nest start --watch",
+    "start:dev": "lsof -ti:4000 | xargs -r kill -9 2>/dev/null || true && nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main.js",
     "seed:rbac": "ts-node src/database/seeders/seed-rbac.ts",

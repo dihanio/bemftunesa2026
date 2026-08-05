@@ -54,6 +54,10 @@ export enum PkkmbPermission {
   REGISTRATION_CHECKIN = 'pkkmb.registration.checkin',
   REGISTRATION_EDIT_BIODATA = 'pkkmb.registration.edit_biodata',
   REGISTRATION_UPLOAD_DOCUMENT = 'pkkmb.registration.upload_document',
+  REGISTRATION_MANAGE = 'pkkmb.registration.manage',
+
+  // Group publish
+  GROUP_PUBLISH = 'pkkmb.group.publish',
 
   // Profile
   PROFILE_READ_OWN = 'pkkmb.profile.read_own',
