@@ -1,44 +1,66 @@
 "use client";
 
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { useState } from "react";
-import { Terminal } from "lucide-react";
-import AmbiencePlayer from "./AmbiencePlayer";
 
 export default function Navbar() {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
 
-  useMotionValueEvent(scrollY, "change", (v) => setScrolled(v > 80));
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setScrolled(latest > 50);
+  });
 
   return (
     <motion.header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b ${
         scrolled
-          ? "py-2 sm:py-3 bg-[#08090C]/90 backdrop-blur-md border-b border-amber-500/20"
-          : "py-3 sm:py-5 bg-transparent"
+          ? "bg-black/60 backdrop-blur-xl border-white/10 py-3"
+          : "bg-transparent border-transparent py-5"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 flex items-center justify-between gap-2">
-        <Link href="/" className="flex items-center gap-2 sm:gap-3 bg-[#040507]/60 px-3 sm:px-4 py-1.5 rounded-full border border-[#D4AF37]/20 backdrop-blur-md">
-          <Image src="/logobemft.png" alt="BEM FT" width={28} height={28} className="object-contain h-5 sm:h-7 w-auto" style={{ width: "auto" }} />
-          <Image src="/logo_kabinet.png" alt="Kabinet" width={28} height={28} className="object-contain h-5 sm:h-7 w-auto" style={{ width: "auto" }} />
-          <Image src="/logo_adrata.png" alt="Adrata" width={36} height={36} className="object-contain h-6 sm:h-9 w-auto" style={{ width: "auto" }} />
+      <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
+        {/* Logo Area */}
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="relative w-10 h-10 md:w-12 md:h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
+            <Image
+              src="/logo_adrata.webp"
+              alt="Logo PKKMB Adrata"
+              fill
+              className="object-contain"
+              sizes="36px"
+            />
+          </div>
+          <div className="flex flex-col">
+            <span style={{ color: '#166534' }} className="font-display font-bold text-sm md:text-base leading-none tracking-wide">
+              PKKMB FT UNESA
+            </span>
+            <span className="font-body text-[10px] md:text-xs text-gold-500 font-semibold uppercase tracking-[0.2em] mt-0.5">
+              Adrata 2026
+            </span>
+          </div>
         </Link>
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <AmbiencePlayer />
+        {/* Desktop Nav (Opsional, minimal) */}
+        <nav className="hidden md:flex items-center gap-8">
+          <Link href="#tentang" className="text-white/60 hover:text-white font-body text-xs uppercase tracking-widest transition-colors">
+            Filosofi
+          </Link>
+          <Link href="#faq" className="text-white/60 hover:text-white font-body text-xs uppercase tracking-widest transition-colors">
+            FAQ
+          </Link>
           <Link
             href="/login"
-            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-mono font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 rounded-none transition-colors border border-amber-500/30 uppercase tracking-wider shrink-0"
+            className="px-5 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white font-body text-xs font-bold uppercase tracking-widest transition-all"
           >
-            <Terminal className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-            <span className="hidden sm:inline">KONSOL </span>
-            <span>PORTAL</span>
+            Masuk Portal
           </Link>
-        </div>
+        </nav>
       </div>
     </motion.header>
   );
