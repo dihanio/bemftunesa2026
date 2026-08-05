@@ -16,6 +16,8 @@ jobs:
     permissions:
       contents: read
       packages: read
+    env:
+      DEPLOY_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout (minimal)
         uses: actions/checkout@v4
@@ -41,19 +43,19 @@ jobs:
             echo "=> remote: ensure repo exists"
             if [ -d .git ]; then
               git fetch --all --prune
-              git reset --hard ${{ github.sha }}
+              git reset --hard "$DEPLOY_SHA"
             else
               git clone --depth 1 https://github.com/${{ github.repository }} .
               git fetch --all || true
-              git checkout --force ${{ github.sha }} || true
-              git reset --hard ${{ github.sha }} || true
+              git checkout --force "$DEPLOY_SHA" || true
+              git reset --hard "$DEPLOY_SHA" || true
             fi
             echo "=> remote: authenticate with GHCR"
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
             chmod +x ./scripts/deploy/vps_deploy.sh || true
             echo "=> remote: invoke vps_deploy.sh"
-            GITHUB_SHA=${{ github.sha }} GITHUB_REF=${{ github.ref }} ./scripts/deploy/vps_deploy.sh ${{ github.sha }}
+            GITHUB_SHA="$DEPLOY_SHA" GITHUB_REF=${{ github.ref }} ./scripts/deploy/vps_deploy.sh "$DEPLOY_SHA"
 
       - name: Fetch remote logs (last 2000 lines)
         uses: appleboy/ssh-action@v0.1.8
