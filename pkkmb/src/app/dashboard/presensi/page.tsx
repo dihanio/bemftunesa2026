@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, Clock, MapPin, Search, Fingerprint, AlertCircle, Trash2 } from "lucide-react";
+import { CheckCircle2, Clock, MapPin, Search, Fingerprint, AlertCircle } from "lucide-react";
 import { API_URL } from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -32,7 +32,6 @@ export default function PresensiMabaPage() {
   // Form State
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: string }>({ show: false, id: '' });
 
   const fetchData = async () => {
     setLoading(true);
@@ -239,13 +238,6 @@ export default function PresensiMabaPage() {
                         {new Date(record.checkInTime).toLocaleTimeString("id-ID", { timeStyle: "medium" })}
                       </span>
                     </div>
-                    <button
-                      onClick={() => setDeleteModal({ show: true, id: record._id })}
-                      className="ml-3 p-1.5 text-red-500/50 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                      title="Hapus"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
                   </div>
                 </div>
               );
@@ -253,33 +245,6 @@ export default function PresensiMabaPage() {
           </div>
         )}
       </div>
-      {deleteModal.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1a1405] border border-red-500/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl -mr-10 -mt-10" />
-            <h3 className="text-lg font-bold text-white mb-2 relative z-10 flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-red-500" /> Hapus Record Presensi?
-            </h3>
-            <p className="text-red-200/60 text-sm mb-6 relative z-10">Data presensi ini akan dihapus permanen.</p>
-            <div className="flex justify-end gap-3 relative z-10">
-              <button onClick={() => setDeleteModal({ show: false, id: '' })} className="px-4 py-2 rounded-xl text-white/70 hover:bg-white/10 text-sm font-semibold transition-colors">Batal</button>
-              <button
-                onClick={async () => {
-                  const id = deleteModal.id;
-                  setDeleteModal({ show: false, id: '' });
-                  try {
-                    const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/records/${id}`, { method: 'DELETE', credentials: 'include' });
-                    const json = await res.json();
-                    if (res.ok && json.success) { toast.success('Record dihapus'); fetchData(); }
-                    else toast.error(json.message || 'Gagal menghapus');
-                  } catch { toast.error('Kesalahan jaringan'); }
-                }}
-                className="px-5 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors shadow-[0_0_15px_rgba(239,68,68,0.3)]"
-              >Hapus</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
