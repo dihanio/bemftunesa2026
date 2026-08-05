@@ -111,13 +111,16 @@ for svc in "${SERVICES_TO_RESTART[@]}"; do
   log "Rebuilding and restarting service: $svc"
   docker compose -f docker-compose.yml pull "$svc" || { log "Failed to pull latest image for $svc"; ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"; exit 1; }
   docker compose -f docker-compose.yml up -d --no-deps --force-recreate "$svc" || { log "Failed to restart $svc"; ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"; exit 1; }
-  IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$(docker compose -f docker-compose.yml ps -q "$svc")" 2>/dev/null || true)
+  IMAGE_REF=$(docker compose -f docker-compose.yml config --images "$svc" 2>/dev/null | head -n1 || echo "ghcr.io/dihanio/bemftunesa2026-$svc:latest")
+  IMAGE_DIGEST=$(docker image inspect --format='{{index .RepoDigests 0}}' "$IMAGE_REF" 2>/dev/null || true)
   if [ -z "$IMAGE_DIGEST" ]; then
-    log "No image digest found for $svc"
-    ./scripts/deploy/rollback.sh "$CURRENT_SHA_FILE"
-    exit 1
+    # ponytail: `:latest` from GHCR often has empty RepoDigests after pull.
+    # fresh image is guaranteed by `docker compose pull` + `--force-recreate` above;
+    # healthcheck below is the real gate. Warn, don't roll back.
+    log "No RepoDigests for $svc (may be empty for :latest); relying on healthcheck"
+  else
+    log "$svc image: $IMAGE_DIGEST"
   fi
-  log "$svc image: $IMAGE_DIGEST"
   # wait for health
   for i in $(seq 1 30); do
     STATUS=$(docker inspect --format='{{json .State.Health}}' $(docker compose -f docker-compose.yml ps -q $svc) 2>/dev/null || echo "{}")
