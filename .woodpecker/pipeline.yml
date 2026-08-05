@@ -21,14 +21,18 @@
 
 steps:
   # ── 1. Lint ────────────────────────────────────────────────────────────────
-  # Jalankan di semua event. Pipeline GAGAL jika ada lint error.
+  # Jalankan di semua event kecuali Dependabot/automated dependency PRs.
+  # Pipeline GAGAL jika ada lint error.
   - name: lint
     image: node:22-bookworm-slim
     commands:
       - npm ci
       - npx turbo run lint
     when:
-      - event: [push, pull_request, tag]
+      - event: [push, tag]
+      - event: pull_request
+        branch:
+          exclude: [dependabot/**, renovate/**]
 
   # ── 2. Build check – hanya saat pull_request ──────────────────────────────
   # Pastikan semua workspace bisa di-build sebelum merge ke main.
@@ -50,6 +54,8 @@ steps:
         --filter=@bemft/pkkmb
     when:
       - event: pull_request
+        branch:
+          exclude: [dependabot/**, renovate/**]
 
   # ── 3. Push Docker image – backend (NestJS API) ───────────────────────────
   - name: push-api
