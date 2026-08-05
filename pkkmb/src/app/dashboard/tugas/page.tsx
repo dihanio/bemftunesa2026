@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FileText, CheckCircle2, Clock, AlertTriangle, UploadCloud, Users, User, X } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 interface Task {
   _id: string;
@@ -40,7 +41,7 @@ export default function TugasMabaPage() {
 
   const fetchProfile = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/v1/auth/me", { credentials: "include" });
+      const res = await fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" });
       const json = await res.json();
       if (json.success && json.data) {
         setIsKetuaGugus(json.data.isKetuaGugus || false);
@@ -56,8 +57,8 @@ export default function TugasMabaPage() {
     setLoading(true);
     try {
       const [tasksRes, subsRes] = await Promise.all([
-        fetch("http://localhost:4000/api/v1/pkkmb/tasks", { credentials: "include" }),
-        fetch("http://localhost:4000/api/v1/pkkmb/maba/submissions", { credentials: "include" })
+        fetch(`${API_URL}/api/v1/pkkmb/tasks`, { credentials: "include" }),
+        fetch(`${API_URL}/api/v1/pkkmb/maba/submissions`, { credentials: "include" })
       ]);
       
       const tasksJson = await tasksRes.json();
@@ -100,7 +101,7 @@ export default function TugasMabaPage() {
     setSubmitSuccess(false);
 
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/pkkmb/maba/tasks/${selectedTask._id}/submit`, {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/maba/tasks/${selectedTask._id}/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

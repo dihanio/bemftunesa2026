@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
+import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
 import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone } from "lucide-react";
@@ -25,7 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/v1/auth/me", {
+        const res = await fetch(`${API_URL}/api/v1/auth/me`, {
           credentials: "include"
         });
         if (res.ok) {
@@ -65,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:4000/api/v1/auth/logout", {
+      await fetch(`${API_URL}/api/v1/auth/logout`, {
         method: "POST",
         credentials: "include"
       });
@@ -220,7 +221,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden border-2 border-gold-500/30">
               {session.user?.avatar || session.user?.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={(session.user.avatar || session.user.image)?.startsWith('/') ? `http://localhost:4000${session.user.avatar || session.user.image}` : (session.user.avatar || session.user.image)} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                <img src={(session.user.avatar || session.user.image)?.startsWith('/') ? `${API_URL}${session.user.avatar || session.user.image}` : (session.user.avatar || session.user.image)} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gold-500 font-bold">
                   {session.user?.name?.charAt(0) || "M"}

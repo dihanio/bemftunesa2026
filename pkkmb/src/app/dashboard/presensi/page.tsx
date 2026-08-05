@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { CheckCircle2, Clock, MapPin, Search, Fingerprint, AlertCircle, Trash2 } from "lucide-react";
+import { API_URL } from "@/lib/api";
 import toast from "react-hot-toast";
 
 interface Session {
@@ -37,8 +38,8 @@ export default function PresensiMabaPage() {
     setLoading(true);
     try {
       const [histRes, sessRes] = await Promise.all([
-        fetch("http://localhost:4000/api/v1/pkkmb/attendance/my-history", { credentials: "include" }),
-        fetch("http://localhost:4000/api/v1/pkkmb/attendance/sessions?status=PUBLISHED", { credentials: "include" })
+        fetch(`${API_URL}/api/v1/pkkmb/attendance/my-history`, { credentials: "include" }),
+        fetch(`${API_URL}/api/v1/pkkmb/attendance/sessions?status=PUBLISHED`, { credentials: "include" })
       ]);
       
       const histJson = await histRes.json();
@@ -88,7 +89,7 @@ export default function PresensiMabaPage() {
         // GPS gagal, tetap lanjut tanpa koordinat
       }
 
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/attendance/checkin", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/checkin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -267,7 +268,7 @@ export default function PresensiMabaPage() {
                   const id = deleteModal.id;
                   setDeleteModal({ show: false, id: '' });
                   try {
-                    const res = await fetch(`http://localhost:4000/api/v1/pkkmb/attendance/records/${id}`, { method: 'DELETE', credentials: 'include' });
+                    const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/records/${id}`, { method: 'DELETE', credentials: 'include' });
                     const json = await res.json();
                     if (res.ok && json.success) { toast.success('Record dihapus'); fetchData(); }
                     else toast.error(json.message || 'Gagal menghapus');

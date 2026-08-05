@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
+import { API_URL } from "@/lib/api";
 import PhotoCropDialog from "@/components/onboarding/PhotoCropDialog";
 import QRCode from "react-qr-code";
 
@@ -66,8 +67,8 @@ export default function ProfilPage() {
     const fetchProfile = async () => {
       try {
         const [res, pointsRes] = await Promise.all([
-          fetch("http://localhost:4000/api/v1/auth/me", { credentials: "include" }),
-          fetch("http://localhost:4000/api/v1/pkkmb/maba/points/summary", { credentials: "include" })
+          fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" }),
+          fetch(`${API_URL}/api/v1/pkkmb/maba/points/summary`, { credentials: "include" })
         ]);
 
         if (pointsRes.ok) {
@@ -132,7 +133,7 @@ export default function ProfilPage() {
       if (croppedAvatarBlob) {
         const uploadForm = new FormData();
         uploadForm.append("file", croppedAvatarBlob, "avatar.webp");
-        const uploadRes = await fetch("http://localhost:4000/api/v1/contents/upload", {
+        const uploadRes = await fetch(`${API_URL}/api/v1/contents/upload`, {
           method: "POST",
           body: uploadForm,
           credentials: "include",
@@ -153,7 +154,7 @@ export default function ProfilPage() {
         avatarObjectKey: finalAvatarKey,
       };
 
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/onboard", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/onboard`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -184,7 +185,7 @@ export default function ProfilPage() {
     );
   }
 
-  const avatarDisplayUrl = croppedAvatarUrl?.startsWith('/') ? `http://localhost:4000${croppedAvatarUrl}` : croppedAvatarUrl || '';
+  const avatarDisplayUrl = croppedAvatarUrl?.startsWith('/') ? `${API_URL}${croppedAvatarUrl}` : croppedAvatarUrl || '';
 
   return (
     <div className="space-y-8 w-full max-w-6xl mx-auto pb-12">

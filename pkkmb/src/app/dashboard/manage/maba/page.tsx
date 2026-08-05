@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Loader2, Wand2, Star, StarOff, Eye, Trash2, Award } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 interface MabaData {
   _id: string;
@@ -73,8 +74,8 @@ export default function DataMabaPage() {
     try {
       setIsLoading(true);
       const [res, authRes] = await Promise.all([
-        fetch(`http://localhost:4000/api/v1/pkkmb/admin/maba?page=${currentPage}&limit=${currentLimit}&search=${searchQuery}&sortBy=${sort}&sortOrder=${order}`, { credentials: "include" }),
-        fetch("http://localhost:4000/api/v1/auth/me", { credentials: "include" })
+        fetch(`${API_URL}/api/v1/pkkmb/admin/maba?page=${currentPage}&limit=${currentLimit}&search=${searchQuery}&sortBy=${sort}&sortOrder=${order}`, { credentials: "include" }),
+        fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" })
       ]);
 
         if (authRes.ok) {
@@ -137,7 +138,7 @@ export default function DataMabaPage() {
     setShowConfirmModal(false);
     setIsGrouping(true);
     try {
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/admin/groups/auto-assign?dryRun=false", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/groups/auto-assign?dryRun=false`, {
         method: "POST",
         credentials: "include"
       });
@@ -205,7 +206,7 @@ export default function DataMabaPage() {
     const { mabaId, mabaName } = ketuaConfirmModal;
     setKetuaConfirmModal({ show: false, mabaId: '', mabaName: '' });
     try {
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/admin/groups/set-ketua", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/groups/set-ketua`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mabaId }),
@@ -231,7 +232,7 @@ export default function DataMabaPage() {
     const { mabaId, mabaName } = unsetKetuaConfirmModal;
     setUnsetKetuaConfirmModal({ show: false, mabaId: '', mabaName: '' });
     try {
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/admin/groups/unset-ketua", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/groups/unset-ketua`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mabaId }),
@@ -253,7 +254,7 @@ export default function DataMabaPage() {
   const handleDeleteMaba = async (id: string, name: string) => {
     if (!confirm(`Hapus data mahasiswa ${name}? Tindakan ini tidak dapat dibatalkan.`)) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/pkkmb/admin/users/${id}`, {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/users/${id}`, {
         method: "DELETE",
         credentials: "include"
       });
@@ -288,7 +289,7 @@ export default function DataMabaPage() {
     try {
       // Assuming backend supports DELETE /admin/users with body { ids } or we do Promise.all
       // For now, let's do Promise.all since there's no bulk endpoint defined yet
-      await Promise.all(selectedIds.map(id => fetch(`http://localhost:4000/api/v1/pkkmb/admin/users/${id}`, {
+      await Promise.all(selectedIds.map(id => fetch(`${API_URL}/api/v1/pkkmb/admin/users/${id}`, {
         method: "DELETE",
         credentials: "include"
       })));

@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -22,7 +23,7 @@ function LoginContent() {
   const handleLogin = () => {
     setIsLoading(true);
     // Redirect direct to backend for OAuth
-    window.location.href = "http://localhost:4000/api/v1/auth/google?state=pkkmb";
+    window.location.href = `${API_URL}/api/v1/auth/google?state=pkkmb`;
   };
 
   if (authenticated === "true") {

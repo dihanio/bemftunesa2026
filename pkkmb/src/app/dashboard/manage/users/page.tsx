@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Loader2, Plus, Edit, Trash2, Shield, Search } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 interface UserData {
   _id: string;
@@ -89,7 +90,7 @@ export default function UserManagementPage() {
   const fetchUsers = useCallback(async (currentPage = pagination.page, searchQuery = search, sort = sortBy, order = sortOrder, currentLimit = pagination.limit) => {
     try {
       setIsLoading(true);
-      const res = await fetch(`http://localhost:4000/api/v1/pkkmb/admin/users?page=${currentPage}&limit=${currentLimit}&search=${searchQuery}&sortBy=${sort}&sortOrder=${order}`, { credentials: "include" });
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/users?page=${currentPage}&limit=${currentLimit}&search=${searchQuery}&sortBy=${sort}&sortOrder=${order}`, { credentials: "include" });
 
       if (!res.ok) throw new Error("Gagal mengambil data users");
       const json = await res.json();
@@ -120,7 +121,7 @@ export default function UserManagementPage() {
 
   const fetchRoles = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/roles", { credentials: "include" });
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/roles`, { credentials: "include" });
       const json = await res.json();
       if (json.success) setRoles(json.data);
     } catch (err) {
@@ -144,7 +145,7 @@ export default function UserManagementPage() {
   const executeDelete = useCallback(async () => {
     if (!confirmDelete.id) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/pkkmb/admin/users/${confirmDelete.id}`, {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/users/${confirmDelete.id}`, {
         method: "DELETE",
         credentials: "include"
       });
@@ -169,7 +170,7 @@ export default function UserManagementPage() {
       setIsLoading(true);
       
       const promises = selectedIds.map(id => 
-        fetch(`http://localhost:4000/api/v1/pkkmb/admin/users/${id}`, {
+        fetch(`${API_URL}/api/v1/pkkmb/admin/users/${id}`, {
           method: "DELETE",
           credentials: "include"
         }).then(r => r.json())
@@ -262,8 +263,8 @@ export default function UserManagementPage() {
     
     try {
       const url = modalMode === "CREATE" 
-        ? "http://localhost:4000/api/v1/pkkmb/admin/users" 
-        : `http://localhost:4000/api/v1/pkkmb/admin/users/${selectedUser?._id}`;
+        ? `${API_URL}/api/v1/pkkmb/admin/users` 
+        : `${API_URL}/api/v1/pkkmb/admin/users/${selectedUser?._id}`;
       
       const method = modalMode === "CREATE" ? "POST" : "PATCH";
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { API_URL } from "@/lib/api";
 import { Loader2, XCircle, ShieldCheck, GraduationCap, Users } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -26,7 +27,7 @@ export default function VerifyPage() {
   useEffect(() => {
     if (!token) return;
     
-    fetch(`http://localhost:4000/api/v1/auth/verify-token/${token}`)
+    fetch(`${API_URL}/api/v1/auth/verify-token/${token}`)
       .then(res => res.json())
       .then(json => {
         if (json.success && json.data) {
@@ -100,7 +101,7 @@ export default function VerifyPage() {
                 {data.avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img 
-                    src={data.avatar.startsWith('/') ? `http://localhost:4000${data.avatar}` : data.avatar} 
+                    src={data.avatar.startsWith('/') ? `${API_URL}${data.avatar}` : data.avatar} 
                     alt={data.name}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"

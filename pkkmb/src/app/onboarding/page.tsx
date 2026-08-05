@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Info, CheckCircle2, LogOut } from "lucide-react";
@@ -79,7 +80,7 @@ export default function OnboardingPage() {
     // 2. Fetch from backend to ensure we have the latest server truth
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:4000/api/v1/auth/me", { credentials: "include" });
+        const res = await fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.data) {
@@ -190,7 +191,7 @@ export default function OnboardingPage() {
       if (croppedAvatarBlob) {
         const uploadForm = new FormData();
         uploadForm.append("file", croppedAvatarBlob, "avatar.webp");
-        const uploadRes = await fetch("http://localhost:4000/api/v1/contents/upload", {
+        const uploadRes = await fetch(`${API_URL}/api/v1/contents/upload`, {
           method: "POST",
           body: uploadForm,
           credentials: "include",
@@ -210,7 +211,7 @@ export default function OnboardingPage() {
       if (ktmFile) {
         const uploadForm = new FormData();
         uploadForm.append("file", ktmFile, ktmFile.name);
-        const uploadRes = await fetch("http://localhost:4000/api/v1/contents/upload", {
+        const uploadRes = await fetch(`${API_URL}/api/v1/contents/upload`, {
           method: "POST",
           body: uploadForm,
           credentials: "include",
@@ -232,7 +233,7 @@ export default function OnboardingPage() {
         ktmObjectKey: finalKtmKey,
       };
 
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/onboard", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/onboard`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -259,7 +260,7 @@ export default function OnboardingPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch("http://localhost:4000/api/v1/auth/logout", {
+      await fetch(`${API_URL}/api/v1/auth/logout`, {
         method: "POST",
         credentials: "include"
       });
@@ -576,7 +577,7 @@ export default function OnboardingPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-gold-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         <div className="relative w-[150px] h-[200px] rounded-2xl overflow-hidden border-2 border-gold-500/50 shadow-[0_0_40px_rgba(234,179,8,0.15)] group-hover:border-gold-400 group-hover:shadow-[0_0_50px_rgba(234,179,8,0.3)] transition-all duration-500">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={croppedAvatarUrl?.startsWith('/') ? `http://localhost:4000${croppedAvatarUrl}` : croppedAvatarUrl || ''} alt="Cropped preview" className="w-full h-full object-cover" />
+                          <img src={croppedAvatarUrl?.startsWith('/') ? `${API_URL}${croppedAvatarUrl}` : croppedAvatarUrl || ''} alt="Cropped preview" className="w-full h-full object-cover" />
                         </div>
                         <p className="mt-6 text-green-400 font-bold flex items-center gap-2">
                           <CheckCircle2 className="w-5 h-5" />
@@ -660,7 +661,7 @@ export default function OnboardingPage() {
                             </div>
                           ) : (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={ktmPreviewUrl.startsWith('/') ? `http://localhost:4000${ktmPreviewUrl}` : ktmPreviewUrl} alt="KTM preview" className="w-full h-full object-contain" />
+                            <img src={ktmPreviewUrl.startsWith('/') ? `${API_URL}${ktmPreviewUrl}` : ktmPreviewUrl} alt="KTM preview" className="w-full h-full object-contain" />
                           )}
                         </div>
                         <p className="mt-6 text-green-400 font-bold flex items-center gap-2">

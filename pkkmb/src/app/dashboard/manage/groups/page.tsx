@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Users, RefreshCw, X, AlertCircle } from 'lucide-react';
+import { API_URL } from "@/lib/api";
 import toast from 'react-hot-toast';
 
 interface GroupDetail {
@@ -21,7 +22,7 @@ export default function ManageGroupsPage() {
   const fetchGroups = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/gugus", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/gugus`, {
         credentials: "include"
       });
       const json = await res.json();
@@ -41,7 +42,7 @@ export default function ManageGroupsPage() {
   const handleAutoAssign = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/gugus/auto-distribute", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/gugus/auto-distribute`, {
         method: "POST",
         credentials: "include"
       });
@@ -64,7 +65,7 @@ export default function ManageGroupsPage() {
     setDetailLoading(true);
     setDetail(null);
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/pkkmb/gugus/${id}`, {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/gugus/${id}`, {
         credentials: "include"
       });
       const json = await res.json();
@@ -236,7 +237,7 @@ export default function ManageGroupsPage() {
                         <div className="w-9 h-9 rounded-full bg-white/10 overflow-hidden border border-white/10 shrink-0">
                           {m.avatar ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={m.avatar.startsWith('/') ? `http://localhost:4000${m.avatar}` : m.avatar} alt={m.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                            <img src={m.avatar.startsWith('/') ? `${API_URL}${m.avatar}` : m.avatar} alt={m.name} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-gold-500 font-bold text-sm">{m.name.charAt(0)}</div>
                           )}

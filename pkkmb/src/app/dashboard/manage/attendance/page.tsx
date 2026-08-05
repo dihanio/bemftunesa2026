@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { MapPin, Clock, Users, Activity } from "lucide-react";
+import { API_URL } from "@/lib/api";
 import LiveAttendanceMap from './LiveAttendanceMap';
 
 interface Log {
@@ -21,7 +22,7 @@ export default function AttendancePage() {
 
   const fetchLogs = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/attendance/monitoring?limit=50", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/monitoring?limit=50`, {
         credentials: "include"
       });
       if (res.ok) {
@@ -47,7 +48,7 @@ export default function AttendancePage() {
 
   const checkProfile = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/v1/auth/me", {
+      const res = await fetch(`${API_URL}/api/v1/auth/me`, {
         credentials: "include"
       });
       if (res.ok) {

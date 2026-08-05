@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { FileText, CheckCircle2, Clock, Search, X, Check } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 interface Submission {
   _id: string;
@@ -29,7 +30,7 @@ export default function EvaluatorPage() {
   const fetchSubmissions = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("http://localhost:4000/api/v1/pkkmb/pemateri/submissions", {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/pemateri/submissions`, {
         credentials: "include"
       });
       if (res.ok) {
@@ -58,7 +59,7 @@ export default function EvaluatorPage() {
     if (!selectedItem || score === "") return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/pkkmb/pemateri/submissions/${selectedItem._id}/grade`, {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/pemateri/submissions/${selectedItem._id}/grade`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -214,7 +215,7 @@ export default function EvaluatorPage() {
                 
                 <div className="mt-4">
                   {selectedItem.fileUrl ? (
-                    <a href={`http://localhost:4000${selectedItem.fileUrl}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-xl hover:bg-blue-500/30 transition-colors text-sm font-bold border border-blue-500/30">
+                    <a href={`${API_URL}${selectedItem.fileUrl}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-xl hover:bg-blue-500/30 transition-colors text-sm font-bold border border-blue-500/30">
                       <FileText className="w-4 h-4" />
                       Lihat File Tugas
                     </a>

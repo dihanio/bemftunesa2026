@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { API_URL } from "@/lib/api";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useState, useRef } from "react";
 import { Download, ArrowRight } from "lucide-react";
@@ -12,7 +13,7 @@ export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/v1/settings/public/links")
+    fetch(`${API_URL}/api/v1/settings/public/links`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data?.pkkmb_buku_panduan_url && data.data.pkkmb_buku_panduan_url !== '#') {

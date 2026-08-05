@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { API_URL } from "@/lib/api";
 import Link from "next/link";
 
 interface Profile {
@@ -45,10 +46,10 @@ export default function DashboardPage() {
     const fetchProfileAndStats = async () => {
       try {
         const [res, dashRes, statsRes, linksRes] = await Promise.all([
-          fetch("http://localhost:4000/api/v1/auth/me", { credentials: "include" }),
-          fetch("http://localhost:4000/api/v1/pkkmb/dashboard/maba", { credentials: "include" }),
-          fetch("http://localhost:4000/api/v1/pkkmb/dashboard/maba/tasks", { credentials: "include" }),
-          fetch("http://localhost:4000/api/v1/settings/public/links")
+          fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" }),
+          fetch(`${API_URL}/api/v1/pkkmb/dashboard/maba`, { credentials: "include" }),
+          fetch(`${API_URL}/api/v1/pkkmb/dashboard/maba/tasks`, { credentials: "include" }),
+          fetch(`${API_URL}/api/v1/settings/public/links`)
         ]);
         
         if (res.ok) {
@@ -63,7 +64,7 @@ export default function DashboardPage() {
 
             if (roleString !== 'user' && roleString !== 'maba') {
               try {
-                const adminRes = await fetch("http://localhost:4000/api/v1/pkkmb/dashboard/admin", { credentials: "include" });
+                const adminRes = await fetch(`${API_URL}/api/v1/pkkmb/dashboard/admin`, { credentials: "include" });
                 if (adminRes.ok) {
                   const adminData = await adminRes.json();
                   if (adminData.success) {
