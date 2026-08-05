@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useMemo } from "react";
 import DashboardShell from "@/components/DashboardShell";
-import { Info, CheckCircle, Plus } from "lucide-react";
+import { Info, Plus } from "lucide-react";
 import { useConfirm } from "@/components/ui/CustomConfirm";
 import { useLetters, useLetterMutations } from "@/hooks/useLetters";
 import { RequirePermission } from "@/components/authorization/RequirePermission";

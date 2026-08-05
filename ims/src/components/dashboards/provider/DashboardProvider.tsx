@@ -1,7 +1,6 @@
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { UserProfileBase, ActiveContext } from '../../../types/rbac';
 import { useAuth } from '../../../core/auth/useAuth';
-import { LoadingState } from '../../ui/states/LoadingState';
 import { ErrorState } from '../../ui/states/ErrorState';
 
 interface DashboardContextValue {

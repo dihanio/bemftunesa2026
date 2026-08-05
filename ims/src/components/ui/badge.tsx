@@ -1,4 +1,4 @@
-export const Badge = ({ children, className, variant, ...props }: React.HTMLAttributes<HTMLDivElement> & { variant?: string }) => {
+export const Badge = ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement> & { variant?: string }) => {
   // Base styling follows the status-badge token
   // background: {colors.surface-2}, text: {colors.ink-muted}, typography: {typography.caption}, rounded: {rounded.pill}, padding: 2px 8px
   return (

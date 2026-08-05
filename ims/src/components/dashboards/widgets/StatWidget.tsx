@@ -6,14 +6,7 @@ interface StatWidgetProps {
 }
 
 export function StatWidget({ data }: StatWidgetProps) {
-  const { label, value, trend, trendDirection, color = 'primary' } = data;
-
-  const colorClasses = {
-    primary: 'bg-primary-50 text-primary-600',
-    success: 'bg-green-50 text-green-600',
-    warning: 'bg-orange-50 text-orange-600',
-    danger: 'bg-red-50 text-red-600',
-  };
+  const { label, value, trend, trendDirection } = data;
 
   const trendColor = trendDirection === 'up' ? 'text-green-600' : trendDirection === 'down' ? 'text-red-600' : 'text-zinc-500';
 

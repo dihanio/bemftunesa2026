@@ -61,7 +61,7 @@ const iconMap: Record<string, React.ElementType> = {
   'sliders': Sliders,
 };
 
-export function DesktopSidebar({ sections, onLogout, roleName }: DesktopSidebarProps) {
+export function DesktopSidebar({ sections, onLogout }: DesktopSidebarProps) {
   const pathname = usePathname();
 
   return (

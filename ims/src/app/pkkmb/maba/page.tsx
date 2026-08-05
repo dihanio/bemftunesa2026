@@ -2,11 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { FileUp, Trash2 } from "lucide-react";
 import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService from "@/lib/api";
-import { Users, Search, Plus, Loader2, Upload, AlertCircle, RefreshCw, KeyRound } from "lucide-react";
+import { Users, Search, Plus, Loader2, Upload, AlertCircle, KeyRound } from "lucide-react";
 import React, { useState, useEffect, useCallback } from "react";
 
 interface MabaItem {

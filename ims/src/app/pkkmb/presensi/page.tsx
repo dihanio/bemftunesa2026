@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService, { API_BASE_URL } from "@/lib/api";
-import { Clock, Plus, Loader2, Calendar, MapPin, QrCode, AlertCircle, Eye, Edit3, Download, UserPlus } from "lucide-react";
+import { Clock, Plus, Loader2, Calendar, MapPin, QrCode, Eye, Edit3, Download, UserPlus } from "lucide-react";
 
 interface MabaItem {
   _id: string;

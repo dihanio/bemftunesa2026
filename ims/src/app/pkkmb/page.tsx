@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import ImsApiService from "@/lib/api";
-import { BookOpen, Users, Clock, FileText, Award, ChevronRight } from "lucide-react";
+import { Users, Clock, FileText, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 export default function PkkmbDashboard() {

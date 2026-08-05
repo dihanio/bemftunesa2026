@@ -1,5 +1,4 @@
 import React, { ReactNode } from 'react';
-import { useDashboardContext } from '../provider/DashboardProvider';
 
 interface DashboardLayoutProps {
   sidebar?: ReactNode;

@@ -9,10 +9,10 @@ import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Role, RoleDocument } from '../schemas/role.schema';
+import { User, UserDocument } from '../schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { User, UserDocument } from '../schemas/user.schema';
-import { Role, RoleDocument } from '../schemas/role.schema';
 import { StructuredLogger } from '../common/logger/structured-logger.service';
 
 const OTP_LENGTH = 6;
@@ -21,6 +21,15 @@ const MAX_VERIFY_ATTEMPTS = 5;
 const MAX_RESEND_COUNT = 5;
 const RESEND_COOLDOWN_SECONDS = 60;
 const LOCKOUT_MINUTES = 15;
+const ALLOWED_EMAIL_DOMAINS = new Set(['mhs.unesa.ac.id', 'unesa.ac.id']);
+
+function isAllowedUnesaEmail(email: string): boolean {
+  const normalized = email.trim().toLowerCase();
+  const at = normalized.lastIndexOf('@');
+  if (at < 0) return false;
+  const domain = normalized.slice(at + 1);
+  return ALLOWED_EMAIL_DOMAINS.has(domain);
+}
 
 function generateOtp(): string {
   const min = Math.pow(10, OTP_LENGTH - 1);
@@ -66,7 +75,7 @@ export class AuthService {
         superAdminEmail &&
         profile.email.toLowerCase() === superAdminEmail.toLowerCase();
 
-      const roleSlug = isSuperAdmin ? 'super_admin' : 'staf';
+      const roleSlug = isSuperAdmin ? 'super_admin' : 'panitia';
       let defaultRole = await this.roleModel.findOne({ slug: roleSlug }).exec();
       if (!defaultRole) {
         defaultRole = await this.roleModel.findOne().exec();
@@ -113,43 +122,15 @@ export class AuthService {
       }
     }
 
+    if (!isAllowedUnesaEmail(user.email)) {
+      throw new UnauthorizedException(
+        'Gunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).',
+      );
+    }
+
     user.googleId = profile.googleId;
     if (profile.avatar) {
       user.avatar = profile.avatar;
-    }
-
-    user.lastLoginAt = new Date();
-    await user.save();
-
-    return user;
-  }
-
-  async validateBypassUser(email: string): Promise<UserDocument> {
-    let user = await this.userModel.findOne({ email }).exec();
-
-    if (!user) {
-      let role = await this.roleModel.findOne({ slug: 'user' }).exec();
-      if (!role) {
-        role = await this.roleModel.create({
-          name: 'User',
-          slug: 'user',
-          description: 'Default user role',
-          isSystem: true,
-          permissions: [],
-        });
-      }
-      user = new this.userModel({
-        name: email.split('@')[0].replace('.', ' ').toUpperCase(),
-        email: email,
-        googleId: `bypass-${Date.now()}`,
-        role: role._id,
-        isActive: true,
-      });
-      await user.save();
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('Your account has been deactivated.');
     }
 
     user.lastLoginAt = new Date();
@@ -162,6 +143,12 @@ export class AuthService {
     dto: import('./dto/register.dto').RegisterDto,
   ): Promise<UserDocument> {
     const { nim, name, email, phone, password } = dto;
+
+    if (!isAllowedUnesaEmail(email)) {
+      throw new ConflictException(
+        'Gunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).',
+      );
+    }
 
     const orQuery: Record<string, unknown>[] = [{ email }];
     if (nim) orQuery.push({ nim });
@@ -480,6 +467,11 @@ export class AuthService {
   }
 
   async validateMabaLogin(email: string, pass: string): Promise<UserDocument> {
+    if (!isAllowedUnesaEmail(email)) {
+      throw new UnauthorizedException(
+        'Gunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).',
+      );
+    }
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
       throw new UnauthorizedException('Email tidak ditemukan.');
@@ -494,32 +486,27 @@ export class AuthService {
         throw new UnauthorizedException('Password salah.');
       }
     } else {
-      const validPassword = user.password ? user.password : user.nim;
-      if (pass !== validPassword) {
-        throw new UnauthorizedException('Password salah.');
-      }
+      throw new UnauthorizedException('Password salah.');
     }
 
-    await this.userModel.updateOne(
-      { _id: user._id },
-      { $set: { lastLoginAt: new Date() } },
-    );
+    user.lastLoginAt = new Date();
+    await user.save();
 
     return user;
   }
 
   generateTokens(
     user: UserDocument,
-    permissions: string[] = [],
+    permissions: string[],
     roleSlug?: string,
     roleId?: string,
   ) {
     const payload = {
       sub: user._id.toString(),
       email: user.email,
-      roleId,
-      roleSlug,
       permissions,
+      roleSlug,
+      roleId,
     };
 
     const expiresInConfig = this.configService.get<string>(
@@ -651,6 +638,15 @@ export class AuthService {
       .populate({ path: 'role', populate: { path: 'permissions' } })
       .populate('department')
       .populate('avatar')
+      .populate('pkkmbGroup')
+      .exec();
+  }
+
+  async validateUserByNim(nim: string) {
+    return this.userModel
+      .findOne({ nim })
+      .populate('pkkmbGroup')
+      .populate('department')
       .exec();
   }
 }

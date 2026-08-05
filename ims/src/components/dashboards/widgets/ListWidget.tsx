@@ -32,7 +32,7 @@ export function ListWidget<T>({ title, data, columns, keyExtractor }: ListWidget
             </tr>
           </thead>
           <tbody className="divide-y divide-hairline">
-            {data.map((item, i) => (
+            {data.map((item, _i) => (
               <tr key={keyExtractor(item)} className="hover:bg-surface-2/70 transition-all duration-150 cursor-pointer">
                 {columns.map((col, j) => (
                   <td key={j} className={`px-4 py-3 ${col.className || ''}`}>

@@ -28,7 +28,7 @@ export function LetterTable({ letters, loading, dssMode, onEdit, onDelete }: Let
     }
   };
 
-  const getTypeBadge = (type: string) => {
+  const getTypeBadge = (_type: string) => {
     return "bg-surface-2 text-ink-muted border-hairline";
   };
 

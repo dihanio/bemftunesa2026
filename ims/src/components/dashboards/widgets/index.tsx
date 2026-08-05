@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
-  ArrowUpRight, ArrowDownRight, CheckCircle2, Circle, Clock, AlertTriangle, 
-  ChevronRight, Calendar, Info
+  ArrowUpRight, ArrowDownRight, CheckCircle2, Circle, Clock,
+  Calendar
 } from 'lucide-react';
 import type { StatItem, ActivityItem, TaskItem, AgendaItem } from '../../../types/dashboard-widgets';
 

@@ -5,7 +5,6 @@ import { composeDashboard } from '../../../core/dashboard/widget-composer';
 import { composeNavigation } from '../../../core/dashboard/navigation-composer';
 import { DashboardLayout } from '../base/DashboardLayout';
 import { NoPermissionState } from '../../ui/states/NoPermissionState';
-import { EmptyState } from '../../ui/states/EmptyState';
 import { WidgetFactory } from './WidgetFactory';
 import { DashboardHeader } from '../../layout/DashboardHeader';
 import { DesktopSidebar } from '../../layout/DesktopSidebar';

@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import DashboardShell from "@/components/DashboardShell";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import ImsApiService, { RecruitmentData } from "@/lib/api";
-import { Plus, Edit2, Trash2, Calendar, Link as LinkIcon, Info, ChevronDown, Users, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Calendar, Link as LinkIcon, Info, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useConfirm } from "@/components/ui/CustomConfirm";
 
@@ -127,7 +127,7 @@ export default function RecruitmentPage() {
       let parsedPositions = [];
       try {
         parsedPositions = JSON.parse(formData.positions || "[]");
-      } catch (e) {
+      } catch {
         throw new Error("Format JSON untuk Positions tidak valid.");
       }
 

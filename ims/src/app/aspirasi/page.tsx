@@ -61,7 +61,7 @@ export default function AspirasiMahasiswaPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [dssMode, setDssMode] = useState(false);
-  const [sawResults, setSawResults] = useState<{ aspiration: AspirationItem; score: number }[]>([]);
+  const [, setSawResults] = useState<{ aspiration: AspirationItem; score: number }[]>([]);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
