@@ -17,17 +17,17 @@
 #   next_public_google_client_id : Google OAuth Client ID
 
 steps:
-  # ── 1. Lint (semua event) ──────────────────────────────────────────────────
+  # ── 1. Lint ────────────────────────────────────────────────────────────────
   - name: lint
     image: node:22-bookworm-slim
     commands:
       - corepack enable || true
       - npm ci
       - npm run lint --workspaces --if-present || true
+    when:
+      event: [push, pull_request, tag]
 
   # ── 2. Build check – hanya saat pull_request ──────────────────────────────
-  #    Saat push ke main, Docker build di step push-* sudah compile ulang,
-  #    jadi tidak perlu double-build dengan Node.js di sini.
   - name: build-check
     image: node:22-bookworm-slim
     commands:
@@ -65,21 +65,22 @@ steps:
       dockerfile: Dockerfile.frontend
       auto_tag: true
       target: runner
+      build_args_from_env:
+        - NEXT_PUBLIC_API_URL
+        - NEXT_PUBLIC_PUBLIC_URL
+        - NEXT_PUBLIC_IMS_URL
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID
       build_args:
         - APP_NAME=frontend
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - NEXT_PUBLIC_PUBLIC_URL=${NEXT_PUBLIC_PUBLIC_URL}
-        - NEXT_PUBLIC_IMS_URL=${NEXT_PUBLIC_IMS_URL}
-        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
-    environment:
-      NEXT_PUBLIC_API_URL:
-        from_secret: next_public_api_url
-      NEXT_PUBLIC_PUBLIC_URL:
-        from_secret: next_public_public_url
-      NEXT_PUBLIC_IMS_URL:
-        from_secret: next_public_ims_url
-      NEXT_PUBLIC_GOOGLE_CLIENT_ID:
-        from_secret: next_public_google_client_id
+    secrets:
+      - source: next_public_api_url
+        target: NEXT_PUBLIC_API_URL
+      - source: next_public_public_url
+        target: NEXT_PUBLIC_PUBLIC_URL
+      - source: next_public_ims_url
+        target: NEXT_PUBLIC_IMS_URL
+      - source: next_public_google_client_id
+        target: NEXT_PUBLIC_GOOGLE_CLIENT_ID
     when:
       event: [push, tag]
       branch: [main]
@@ -96,21 +97,22 @@ steps:
       dockerfile: Dockerfile.frontend
       auto_tag: true
       target: runner
+      build_args_from_env:
+        - NEXT_PUBLIC_API_URL
+        - NEXT_PUBLIC_PUBLIC_URL
+        - NEXT_PUBLIC_IMS_URL
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID
       build_args:
         - APP_NAME=ims
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - NEXT_PUBLIC_PUBLIC_URL=${NEXT_PUBLIC_PUBLIC_URL}
-        - NEXT_PUBLIC_IMS_URL=${NEXT_PUBLIC_IMS_URL}
-        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
-    environment:
-      NEXT_PUBLIC_API_URL:
-        from_secret: next_public_api_url
-      NEXT_PUBLIC_PUBLIC_URL:
-        from_secret: next_public_public_url
-      NEXT_PUBLIC_IMS_URL:
-        from_secret: next_public_ims_url
-      NEXT_PUBLIC_GOOGLE_CLIENT_ID:
-        from_secret: next_public_google_client_id
+    secrets:
+      - source: next_public_api_url
+        target: NEXT_PUBLIC_API_URL
+      - source: next_public_public_url
+        target: NEXT_PUBLIC_PUBLIC_URL
+      - source: next_public_ims_url
+        target: NEXT_PUBLIC_IMS_URL
+      - source: next_public_google_client_id
+        target: NEXT_PUBLIC_GOOGLE_CLIENT_ID
     when:
       event: [push, tag]
       branch: [main]
@@ -127,21 +129,22 @@ steps:
       dockerfile: Dockerfile.frontend
       auto_tag: true
       target: runner
+      build_args_from_env:
+        - NEXT_PUBLIC_API_URL
+        - NEXT_PUBLIC_PUBLIC_URL
+        - NEXT_PUBLIC_IMS_URL
+        - NEXT_PUBLIC_GOOGLE_CLIENT_ID
       build_args:
         - APP_NAME=pkkmb
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-        - NEXT_PUBLIC_PUBLIC_URL=${NEXT_PUBLIC_PUBLIC_URL}
-        - NEXT_PUBLIC_IMS_URL=${NEXT_PUBLIC_IMS_URL}
-        - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
-    environment:
-      NEXT_PUBLIC_API_URL:
-        from_secret: next_public_api_url
-      NEXT_PUBLIC_PUBLIC_URL:
-        from_secret: next_public_public_url
-      NEXT_PUBLIC_IMS_URL:
-        from_secret: next_public_ims_url
-      NEXT_PUBLIC_GOOGLE_CLIENT_ID:
-        from_secret: next_public_google_client_id
+    secrets:
+      - source: next_public_api_url
+        target: NEXT_PUBLIC_API_URL
+      - source: next_public_public_url
+        target: NEXT_PUBLIC_PUBLIC_URL
+      - source: next_public_ims_url
+        target: NEXT_PUBLIC_IMS_URL
+      - source: next_public_google_client_id
+        target: NEXT_PUBLIC_GOOGLE_CLIENT_ID
     when:
       event: [push, tag]
       branch: [main]
@@ -149,17 +152,17 @@ steps:
   # ── 7. Deploy ke VPS via SSH ───────────────────────────────────────────────
   - name: deploy
     image: alpine:latest
-    environment:
-      VPS_HOST:
-        from_secret: vps_host
-      VPS_PORT:
-        from_secret: vps_port
-      VPS_USER:
-        from_secret: vps_user
-      VPS_DEPLOY_KEY:
-        from_secret: vps_deploy_key
-      VPS_COMPOSE_PROJECT:
-        from_secret: vps_compose_project
+    secrets:
+      - source: vps_host
+        target: VPS_HOST
+      - source: vps_port
+        target: VPS_PORT
+      - source: vps_user
+        target: VPS_USER
+      - source: vps_deploy_key
+        target: VPS_DEPLOY_KEY
+      - source: vps_compose_project
+        target: VPS_COMPOSE_PROJECT
     commands:
       - apk add --no-cache openssh-client
       - mkdir -p ~/.ssh && chmod 700 ~/.ssh
@@ -168,7 +171,7 @@ steps:
       - |
         ssh -o StrictHostKeyChecking=no -p "$VPS_PORT" "$VPS_USER@$VPS_HOST" "
           set -e
-          cd '$VPS_COMPOSE_PROJECT' || { echo 'ERROR: folder tidak ditemukan: $VPS_COMPOSE_PROJECT'; exit 1; }
+          cd '$VPS_COMPOSE_PROJECT' || { echo 'ERROR: folder tidak ditemukan'; exit 1; }
           git fetch origin
           git reset --hard origin/main
           docker compose pull
