@@ -100,24 +100,9 @@ steps:
       platforms:
         - linux/amd64
       # build_args_from_env membaca nilai dari environment: block di bawah
-      build_args_from_env:
-        - APP_NAME
-        - NEXT_PUBLIC_API_URL
-        - NEXT_PUBLIC_PUBLIC_URL
-        - NEXT_PUBLIC_IMS_URL
-        - NEXT_PUBLIC_GOOGLE_CLIENT_ID
+      build_args: APP_NAME=frontend
       cache_from: ghcr.io/dihanio/bemftunesa2026-public_web:buildcache
       cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-public_web:buildcache,mode=min"
-    environment:
-      APP_NAME: frontend
-      NEXT_PUBLIC_API_URL:
-        from_secret: next_public_api_url
-      NEXT_PUBLIC_PUBLIC_URL:
-        from_secret: next_public_public_url
-      NEXT_PUBLIC_IMS_URL:
-        from_secret: next_public_ims_url
-      NEXT_PUBLIC_GOOGLE_CLIENT_ID:
-        from_secret: next_public_google_client_id
     when:
       - event: [push, tag]
         branch: main
@@ -140,24 +125,9 @@ steps:
       target: runner
       platforms:
         - linux/amd64
-      build_args_from_env:
-        - APP_NAME
-        - NEXT_PUBLIC_API_URL
-        - NEXT_PUBLIC_PUBLIC_URL
-        - NEXT_PUBLIC_IMS_URL
-        - NEXT_PUBLIC_GOOGLE_CLIENT_ID
+      build_args: APP_NAME=ims
       cache_from: ghcr.io/dihanio/bemftunesa2026-ims_web:buildcache
       cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-ims_web:buildcache,mode=min"
-    environment:
-      APP_NAME: ims
-      NEXT_PUBLIC_API_URL:
-        from_secret: next_public_api_url
-      NEXT_PUBLIC_PUBLIC_URL:
-        from_secret: next_public_public_url
-      NEXT_PUBLIC_IMS_URL:
-        from_secret: next_public_ims_url
-      NEXT_PUBLIC_GOOGLE_CLIENT_ID:
-        from_secret: next_public_google_client_id
     when:
       - event: [push, tag]
         branch: main
@@ -180,24 +150,9 @@ steps:
       target: runner
       platforms:
         - linux/amd64
-      build_args_from_env:
-        - APP_NAME
-        - NEXT_PUBLIC_API_URL
-        - NEXT_PUBLIC_PUBLIC_URL
-        - NEXT_PUBLIC_IMS_URL
-        - NEXT_PUBLIC_GOOGLE_CLIENT_ID
+      build_args: APP_NAME=pkkmb
       cache_from: ghcr.io/dihanio/bemftunesa2026-pkkmb_web:buildcache
       cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-pkkmb_web:buildcache,mode=min"
-    environment:
-      APP_NAME: pkkmb
-      NEXT_PUBLIC_API_URL:
-        from_secret: next_public_api_url
-      NEXT_PUBLIC_PUBLIC_URL:
-        from_secret: next_public_public_url
-      NEXT_PUBLIC_IMS_URL:
-        from_secret: next_public_ims_url
-      NEXT_PUBLIC_GOOGLE_CLIENT_ID:
-        from_secret: next_public_google_client_id
     when:
       - event: [push, tag]
         branch: main
