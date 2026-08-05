@@ -36,7 +36,7 @@ async function bootstrap() {
   const frontendUrl = configService.get<string>('FRONTEND_URL') as string;
   const imsUrl = configService.get<string>('IMS_URL') as string;
   const pkkmbUrl =
-    configService.get<string>('PKKMB_URL') || 'http://localhost:3002';
+    configService.get<string>('PKKMB_URL') || 'https://pkkmb.bemftunesa.org';
 
   app.enableCors({
     origin: (origin, callback) => {
