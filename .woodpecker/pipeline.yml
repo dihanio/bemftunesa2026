@@ -100,7 +100,8 @@ steps:
       platforms:
         - linux/amd64
       # build_args_from_env membaca nilai dari environment: block di bawah
-      build_args: APP_NAME=frontend
+      build_args:
+        APP_NAME: frontend
       cache_from: ghcr.io/dihanio/bemftunesa2026-public_web:buildcache
       cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-public_web:buildcache,mode=min"
     when:
@@ -125,7 +126,8 @@ steps:
       target: runner
       platforms:
         - linux/amd64
-      build_args: APP_NAME=ims
+      build_args:
+        APP_NAME: ims
       cache_from: ghcr.io/dihanio/bemftunesa2026-ims_web:buildcache
       cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-ims_web:buildcache,mode=min"
     when:
@@ -150,7 +152,8 @@ steps:
       target: runner
       platforms:
         - linux/amd64
-      build_args: APP_NAME=pkkmb
+      build_args:
+        APP_NAME: pkkmb
       cache_from: ghcr.io/dihanio/bemftunesa2026-pkkmb_web:buildcache
       cache_to: "type=registry,ref=ghcr.io/dihanio/bemftunesa2026-pkkmb_web:buildcache,mode=min"
     when:
