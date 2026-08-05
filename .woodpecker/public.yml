@@ -5,7 +5,9 @@ steps:
     privileged: true
     settings:
       repo: ghcr.io/dihanio/bemftunesa2026-public_web
-      tags: [latest, ${CI_COMMIT_SHA:0:8}]
+      tags:
+        - latest
+        - ${CI_COMMIT_SHA:0:8}
       registry: ghcr.io
       username: dihanio
       password:
