@@ -114,12 +114,7 @@ export class AuthController {
           : this.configService.get<string>('IMS_URL');
 
       // Handle specific authentication errors by redirecting
-      if (err.message === 'PENDING_APPROVAL') {
-        const pendingUrl = `${baseUrl}/pending`;
-        this.logger.log(`User pending approval, redirecting to: ${pendingUrl}`);
-        res.redirect(pendingUrl);
-        return;
-      } else if (
+      if (
         err.message === 'DEACTIVATED_ACCOUNT' ||
         err.message ===
           'Gunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).'

@@ -150,7 +150,7 @@ export default function DashboardPage() {
                 {profile?.pkkmbGroup?.name ? (
                   <span>Kamu tergabung dalam <strong className="text-white">Gugus {profile.pkkmbGroup.nomor}: {profile.pkkmbGroup.name}</strong>.</span>
                 ) : (
-                  <span>Status Gugus PKKMB: <strong className="text-gold-400">Sedang Diproses</strong>.</span>
+                  <span>Gugus PKKMB: <strong className="text-gold-400">Belum ada</strong>. Info gugus akan tampil di sini setelah ditetapkan.</span>
                 )}
               </p>
               <p className="text-white/40 mt-1 text-sm">

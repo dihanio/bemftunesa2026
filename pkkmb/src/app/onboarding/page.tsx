@@ -783,7 +783,10 @@ export default function OnboardingPage() {
                       <p className="text-xs text-gold-200/50 leading-relaxed">Selamat! Kamu sudah tergabung dalam gugus. Selengkapnya bisa dilihat di Dashboard.</p>
                     </>
                   ) : (
-                    <p className="text-2xl font-bold text-gold-400 mb-3 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">Sedang Diproses</p>
+                    <>
+                      <p className="text-2xl font-bold text-gold-400 mb-1 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">Belum Ada Gugus</p>
+                      <p className="text-xs text-gold-200/50 leading-relaxed">Gugus belum ditetapkan. Info gugus akan muncul di Dashboard begitu tersedia.</p>
+                    </>
                   )}
                 </div>
                 
