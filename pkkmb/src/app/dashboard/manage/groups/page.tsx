@@ -61,6 +61,28 @@ export default function ManageGroupsPage() {
     }
   }, [fetchGroups]);
 
+  const handleRebalance = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/gugus/rebalance`, {
+        method: "POST",
+        credentials: "include"
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        toast.success(`Rebalance berhasil: ${json.data?.rebalancedCount || 0} maba`);
+        fetchGroups();
+      } else {
+        toast.error(json.message || "Gagal rebalance gugus");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal terhubung ke server");
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchGroups]);
+
   const openDetail = useCallback(async (id: string) => {
     setDetailLoading(true);
     setDetail(null);
@@ -124,6 +146,14 @@ export default function ManageGroupsPage() {
           >
             <Users className="w-4 h-4" />
             Auto Assign
+          </button>
+          <button
+            onClick={handleRebalance}
+            disabled={loading}
+            className="px-4 py-2 bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 font-bold rounded-xl border border-blue-500/30 transition-colors flex items-center gap-2 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Rebalance
           </button>
         </div>
       </div>

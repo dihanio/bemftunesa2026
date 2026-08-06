@@ -8,33 +8,6 @@ export class MailListener {
 
   constructor(private readonly postalAdapter: PostalSmtpAdapter) {}
 
-  @OnEvent('email.verification.send', { async: true })
-  async handleVerificationEmail(payload: {
-    to: string;
-    name: string;
-    otp: string;
-    userId: string;
-  }) {
-    this.logger.log(
-      `Handling email.verification.send for ${payload.to} (userId: ${payload.userId})`,
-    );
-
-    try {
-      await this.postalAdapter.sendVerificationEmail({
-        to: payload.to,
-        name: payload.name,
-        otp: payload.otp,
-        expiresInMinutes: 10,
-      });
-      this.logger.log(`Verification email dispatched to ${payload.to}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send verification email to ${payload.to}`,
-        error instanceof Error ? error.stack : 'Unknown error',
-      );
-    }
-  }
-
   @OnEvent('applicant.created')
   async handleApplicantCreated(payload: { email: string; name: string }) {
     this.logger.log(`Handling applicant.created event for ${payload.email}`);

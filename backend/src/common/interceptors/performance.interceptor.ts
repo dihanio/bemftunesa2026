@@ -34,7 +34,10 @@ export class PerformanceInterceptor implements NestInterceptor {
           this.logger.debug(`${method} ${url} ${statusCode} ${duration}ms`);
         }
 
-        response.setHeader('X-Response-Time', `${duration}ms`);
+        // Jangan set header jika respons sudah terkirim (mis. redirect dari @Res)
+        if (!response.headersSent) {
+          response.setHeader('X-Response-Time', `${duration}ms`);
+        }
       }),
     );
   }

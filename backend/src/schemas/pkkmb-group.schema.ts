@@ -37,6 +37,9 @@ export class PkkmbGroup {
 
   @Prop({ type: String })
   pendampingEmail?: string;
+
+  @Prop({ type: String })
+  grupLink?: string; // Link grup WA/Telegram gugus
 }
 
 export const PkkmbGroupSchema = SchemaFactory.createForClass(PkkmbGroup);

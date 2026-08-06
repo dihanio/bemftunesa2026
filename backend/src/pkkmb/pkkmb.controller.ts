@@ -77,6 +77,28 @@ export class PkkmbController {
     return { success: true, data };
   }
 
+  @Get('dashboard/maba/announcements/notifications')
+  @ApiOperation({
+    summary: 'Feed notifikasi pengumuman dengan status read/unread (MABA)',
+  })
+  async getMabaNotificationFeed(@CurrentUser() user: { userId: string }) {
+    const data = await this.pkkmbService.getMabaNotificationFeed(user.userId);
+    return { success: true, data };
+  }
+
+  @Post('dashboard/maba/announcements/read')
+  @ApiOperation({ summary: 'Menandai pengumuman sebagai telah dibaca (MABA)' })
+  async markAnnouncementsRead(
+    @CurrentUser() user: { userId: string },
+    @Body() body: { announcementIds?: string[] },
+  ) {
+    const data = await this.pkkmbService.markAnnouncementsRead(
+      user.userId,
+      body?.announcementIds,
+    );
+    return { success: true, data };
+  }
+
   @Get('dashboard/maba/schedules')
   @ApiOperation({ summary: 'Jadwal mendatang untuk Dashboard Maba' })
   async getMabaDashboardSchedules() {
@@ -172,6 +194,18 @@ export class PkkmbController {
   })
   async autoDistributeGugus() {
     const data = await this.pkkmbService.autoDistributeGugus();
+    return { success: true, ...data };
+  }
+
+  @Post('gugus/rebalance')
+  @RequiredPermissions(PkkmbPermission.GROUP_CREATE)
+  @Throttle({ default: { limit: 2, ttl: 60000 } })
+  @ApiOperation({
+    summary:
+      'Rebalance seluruh maba ke gugus secara seimbang per Program Studi',
+  })
+  async rebalanceGugus() {
+    const data = await this.pkkmbService.rebalanceGugus();
     return { success: true, ...data };
   }
 
@@ -353,6 +387,13 @@ export class PkkmbController {
     @CurrentUser() user: { userId: string; pkkmbGroupId?: string },
   ) {
     const data = await this.pkkmbService.getMyPointsSummary(user.userId);
+    return { success: true, data };
+  }
+
+  @Get('maba/points')
+  @ApiOperation({ summary: 'Melihat riwayat dan total skor poin (MABA)' })
+  async getMyPoints(@CurrentUser() user: { userId: string }) {
+    const data = await this.pkkmbService.getMyPoints(user.userId);
     return { success: true, data };
   }
 

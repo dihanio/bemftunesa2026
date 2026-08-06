@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  HttpException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, Query, FilterQuery } from 'mongoose';
@@ -232,7 +233,143 @@ export class PkkmbService {
 
     await user.save();
 
-    return user;
+    // Pembagian gugus otomatis langsung saat onboarding selesai.
+    try {
+      await this.assignMabaToGroup(user);
+    } catch {
+      /* non-fatal: biarkan UNASSIGNED jika gagal, bisa di-assign ulang admin */
+    }
+
+    return user.populate('pkkmbGroup', '_id nomor name');
+  }
+
+  // Assign 1 maba ke gugus dengan Balanced Round Robin per Program Studi:
+  // pilih gugus yang jumlah mahasiswa prodi yang sama paling sedikit (selisih <=1),
+  // lalu seimbangkan total anggota.
+  async assignMabaToGroup(user: UserDocument) {
+    const activeGugus = await this.groupModel
+      .find({ status: 'ACTIVE', deletedAt: null })
+      .select('_id nomor')
+      .sort({ nomor: 1 })
+      .lean()
+      .exec();
+    if (activeGugus.length === 0) return false;
+
+    const groupIds = activeGugus.map((g) => g._id);
+    const prodi = user.studyProgram || null;
+
+    // Hitung jumlah anggota per gugus: total & per prodi, dalam 2 aggregate.
+    const [totalAgg, prodiAgg] = await Promise.all([
+      this.userModel.aggregate([
+        { $match: { pkkmbGroup: { $in: groupIds }, deletedAt: null } },
+        { $group: { _id: '$pkkmbGroup', n: { $sum: 1 } } },
+      ]),
+      prodi
+        ? this.userModel.aggregate([
+            {
+              $match: {
+                pkkmbGroup: { $in: groupIds },
+                deletedAt: null,
+                studyProgram: prodi,
+              },
+            },
+            { $group: { _id: '$pkkmbGroup', n: { $sum: 1 } } },
+          ])
+        : Promise.resolve([]),
+    ]);
+
+    const totalMap = new Map<string, number>();
+    (totalAgg as Array<{ _id: { toString: () => string }; n: number }>).forEach(
+      (r) => totalMap.set(r._id.toString(), r.n),
+    );
+    const prodiMap = new Map<string, number>();
+    (prodiAgg as Array<{ _id: { toString: () => string }; n: number }>).forEach(
+      (r) => prodiMap.set(r._id.toString(), r.n),
+    );
+
+    let best = activeGugus[0];
+    let bestScore = Infinity;
+    activeGugus.forEach((g) => {
+      const gid = g._id.toString();
+      const prodiN = prodiMap.get(gid) || 0;
+      const totalN = totalMap.get(gid) || 0;
+      // Prioritaskan keseimbangan per prodi, lalu total anggota.
+      const score = prodiN * 10000 + totalN;
+      if (score < bestScore) {
+        bestScore = score;
+        best = g;
+      }
+    });
+
+    user.pkkmbGroup = best._id;
+    user.assignmentStatus = 'ASSIGNED';
+    user.assignmentAssignedAt = new Date();
+    await user.save();
+    return true;
+  }
+
+  // Rebalance seluruh maba yang sudah ter-assign ke gugus secara balanced:
+  // tiap Program Studi tersebar round-robin ke seluruh gugus (selisih <=1),
+  // dengan offset per prodi agar total anggota juga seimbang.
+  // Tidak membuat/menghapus gugus.
+  async rebalanceGugus() {
+    const activeGugus = await this.groupModel
+      .find({ status: 'ACTIVE', deletedAt: null })
+      .select('_id nomor')
+      .sort({ nomor: 1 })
+      .lean()
+      .exec();
+    if (activeGugus.length === 0) {
+      throw new BadRequestException('Tidak ada Gugus aktif yang tersedia.');
+    }
+
+    const mabaRole = await this.roleModel
+      .findOne({
+        $or: [{ slug: 'user' }, { slug: 'maba' }, { name: 'Mahasiswa Baru' }],
+      })
+      .select('_id')
+      .lean();
+
+    const query: FilterQuery<UserDocument> = {
+      deletedAt: null,
+      pkkmbGroup: { $exists: true, $ne: null },
+    };
+    if (mabaRole) query.role = mabaRole._id;
+
+    const maba = await this.userModel
+      .find(query)
+      .select('_id studyProgram')
+      .lean()
+      .exec();
+
+    // Kelompokkan per prodi.
+    const perProdi = new Map<string, Types.ObjectId[]>();
+    maba.forEach((m) => {
+      const prog = m.studyProgram || 'Umum';
+      const arr = perProdi.get(prog) || [];
+      arr.push(m._id);
+      perProdi.set(prog, arr);
+    });
+
+    // Round-robin per prodi dgn offset berbeda agar total seimbang.
+    const updates: Promise<unknown>[] = [];
+    let prodiIndex = 0;
+    perProdi.forEach((ids) => {
+      const offset = prodiIndex % activeGugus.length;
+      ids.forEach((uid, i) => {
+        const g = activeGugus[(offset + i) % activeGugus.length];
+        updates.push(
+          this.userModel.updateOne(
+            { _id: uid },
+            { $set: { pkkmbGroup: g._id, assignmentStatus: 'ASSIGNED' } },
+          ),
+        );
+      });
+      prodiIndex++;
+    });
+
+    await Promise.all(updates);
+    return { rebalancedCount: maba.length, totalGugus: activeGugus.length };
   }
 
   async getAllRumpun() {
@@ -773,6 +910,7 @@ export class PkkmbService {
       startTime: new Date(dto.startTime),
       endTime,
       location: dto.location,
+      isOnline: dto.isOnline ?? false,
       targetParticipantType: dto.targetParticipantType || 'ALL',
       targetDivision: dto.targetDivision,
       qrCode,
@@ -832,6 +970,25 @@ export class PkkmbService {
     userAgent?: string,
     operatorRoleSlug?: string,
   ) {
+    // Per-user rate limit (5/min) — maba normal check-in sekali per sesi.
+    // Tambahan di atas throttle per-IP 10/min dari @Throttle.
+    if (operatorId) {
+      const key = `pkkmb:checkin:limit:${operatorId}`;
+      try {
+        const count = await this.redis.incr(key);
+        if (count === 1) await this.redis.expire(key, 60);
+        if (count > 5) {
+          throw new HttpException(
+            'Terlalu banyak percobaan presensi. Coba lagi beberapa saat.',
+            429,
+          );
+        }
+      } catch (err) {
+        if (err instanceof HttpException) throw err;
+        /* Redis error -> biarkan, jangan blokir presensi */
+      }
+    }
+
     const session = await this.sessionModel.findById(dto.sessionId).exec();
     if (!session) {
       throw new NotFoundException('Sesi presensi tidak ditemukan.');
@@ -842,7 +999,8 @@ export class PkkmbService {
     }
 
     // Geofence: Gedung FT E1 UNESA, radius 200m (bypass for super_admin)
-    if (dto.method === 'SELF_CHECKIN') {
+    // Remote/online sessions skip geofence entirely.
+    if (dto.method === 'SELF_CHECKIN' && !session.isOnline) {
       let bypassGeofence = false;
       if (
         operatorRoleSlug === 'super_admin' ||
@@ -955,9 +1113,14 @@ export class PkkmbService {
         : undefined;
 
     const now = new Date();
-    let finalStatus = dto.status || 'Hadir';
-    if (!dto.status && now > session.endTime) {
-      finalStatus = 'Telat';
+    const isSelfCheckin = dto.method === 'SELF_CHECKIN';
+    // Self-check-in: status ditentukan server dari waktu, jangan percaya client.
+    let finalStatus: 'Hadir' | 'Telat' | 'Izin' | 'Sakit' | 'Tidak Hadir' =
+      'Hadir';
+    if (isSelfCheckin) {
+      finalStatus = now > session.endTime ? 'Telat' : 'Hadir';
+    } else if (dto.status) {
+      finalStatus = dto.status;
     }
 
     const method = dto.method || 'QR_CODE';
@@ -968,51 +1131,77 @@ export class PkkmbService {
         session: new Types.ObjectId(dto.sessionId),
         participant: participantUser._id,
       })
+      .select('status')
       .lean()
       .exec();
 
-    if (
-      finalStatus === 'Telat' &&
-      (!existingLog || existingLog.status !== 'Telat')
-    ) {
-      await this.pointLogModel.create({
-        userId: participantUser._id,
-        points: -5,
-        source: 'Kehadiran',
-        reason: 'Terlambat check-in presensi',
-      });
+    const baseRecord = {
+      session: new Types.ObjectId(dto.sessionId),
+      participant: participantUser._id,
+      participantType,
+      role: roleId,
+      division,
+      checkInTime: now,
+      status: finalStatus,
+      attendanceMethod: method,
+      operator: operatorId ? new Types.ObjectId(operatorId) : undefined,
+      device: userAgent,
+      ipAddress,
+      notes: dto.notes,
+      lat: dto.lat,
+      lng: dto.lng,
+    };
+
+    let record: PkkmbAttendanceRecordDocument | null = null;
+    try {
+      record = await this.logModel
+        .findOneAndUpdate(
+          {
+            session: new Types.ObjectId(dto.sessionId),
+            participant: participantUser._id,
+          },
+          baseRecord,
+          { upsert: true, new: true },
+        )
+        .populate(
+          'participant',
+          'name nim email division position studyProgram avatar',
+        )
+        .populate('session', 'title location startTime endTime')
+        .exec();
+    } catch (err: unknown) {
+      // E11000 duplicate key: dua request paralel untuk (session, participant) sama.
+      // Idempotent — anggap sudah tercatat, jangan error 500.
+      const code = (err as { code?: number })?.code;
+      if (code !== 11000) throw err;
+      record = await this.logModel
+        .findOne({
+          session: new Types.ObjectId(dto.sessionId),
+          participant: participantUser._id,
+        })
+        .populate(
+          'participant',
+          'name nim email division position studyProgram avatar',
+        )
+        .populate('session', 'title location startTime endTime')
+        .exec();
     }
 
-    return this.logModel
-      .findOneAndUpdate(
-        {
-          session: new Types.ObjectId(dto.sessionId),
-          participant: participantUser._id,
-        },
-        {
-          session: new Types.ObjectId(dto.sessionId),
-          participant: participantUser._id,
-          participantType,
-          role: roleId,
-          division,
-          checkInTime: now,
-          status: finalStatus,
-          attendanceMethod: method,
-          operator: operatorId ? new Types.ObjectId(operatorId) : undefined,
-          device: userAgent,
-          ipAddress,
-          notes: dto.notes,
-          lat: dto.lat,
-          lng: dto.lng,
-        },
-        { upsert: true, new: true },
-      )
-      .populate(
-        'participant',
-        'name nim email division position studyProgram avatar',
-      )
-      .populate('session', 'title location startTime endTime')
-      .exec();
+    // Point -5 hanya untuk record BARU yang telat, agar tidak double-deduct.
+    if (finalStatus === 'Telat' && !existingLog && record) {
+      try {
+        await this.pointLogModel.create({
+          userId: participantUser._id,
+          points: -5,
+          source: 'Kehadiran',
+          reason: 'Terlambat check-in presensi',
+        });
+      } catch {
+        /* non-fatal */
+      }
+    }
+
+    return record;
   }
 
   async getMyPointsSummary(userId: string) {
@@ -1034,6 +1223,31 @@ export class PkkmbService {
     const aggregationResult = result as Array<{ totalPoints?: unknown }>;
     return {
       totalPoints: aggregationResult[0]?.totalPoints ?? 0,
+    };
+  }
+
+  async getMyPoints(userId: string) {
+    const user = await this.userModel.findById(userId).lean().exec();
+    const filter: FilterQuery<unknown> = { deletedAt: null };
+    if (user?.pkkmbGroup) {
+      filter.$or = [
+        { userId: new Types.ObjectId(userId) },
+        { groupId: new Types.ObjectId(user.pkkmbGroup) },
+      ];
+    } else {
+      filter.userId = new Types.ObjectId(userId);
+    }
+    const logs = await this.pointLogModel
+      .find(filter)
+      .sort({ createdAt: -1 })
+      .select('points source reason createdAt')
+      .lean()
+      .exec();
+    return {
+      totalPoints: await this.getMyPointsSummary(userId).then(
+        (s) => s.totalPoints,
+      ),
+      logs,
     };
   }
 
@@ -1114,44 +1328,86 @@ export class PkkmbService {
     const limit = parseInt(filterDto.limit || '50', 10);
     const skip = (page - 1) * limit;
 
-    // Get total count for pagination
-    const totalRecords = await this.logModel.countDocuments(filter).exec();
-
-    const records = await this.logModel
-      .find(filter)
-      .select(
-        'session participant participantType checkInTime status attendanceMethod operator division notes lat lng',
-      )
-      .sort({ checkInTime: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate(
-        'participant',
-        'name nim email division position studyProgram avatar',
-      )
-      .populate(
-        'session',
-        'title location startTime endTime targetParticipantType',
-      )
-      .populate('operator', 'name email')
-      .lean()
-      .exec();
-
-    // Get statistics using aggregation for the filtered set (all records, not paginated)
-    const statsResult = await this.logModel.aggregate([
+    // Single aggregate: records + status stats + total count in one DB round-trip
+    const [facetResult] = (await this.logModel.aggregate<{
+      records: Record<string, unknown>[];
+      statusCounts: { _id: string; count: number }[];
+      totalCount: { total: number }[];
+    }>([
       { $match: filter },
       {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
+        $facet: {
+          records: [
+            { $sort: { checkInTime: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'participant',
+                foreignField: '_id',
+                as: 'participant',
+              },
+            },
+            {
+              $unwind: {
+                path: '$participant',
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $lookup: {
+                from: 'pkkmb_attendance_sessions',
+                localField: 'session',
+                foreignField: '_id',
+                as: 'session',
+              },
+            },
+            { $unwind: { path: '$session', preserveNullAndEmptyArrays: true } },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'operator',
+                foreignField: '_id',
+                as: 'operator',
+              },
+            },
+            {
+              $unwind: { path: '$operator', preserveNullAndEmptyArrays: true },
+            },
+            {
+              $project: {
+                session: 1,
+                participant: 1,
+                participantType: 1,
+                checkInTime: 1,
+                status: 1,
+                attendanceMethod: 1,
+                operator: 1,
+                division: 1,
+                notes: 1,
+                lat: 1,
+                lng: 1,
+              },
+            },
+          ],
+          statusCounts: [{ $group: { _id: '$status', count: { $sum: 1 } } }],
+          totalCount: [{ $count: 'total' }],
         },
       },
-    ]);
+    ])) as unknown as {
+      records: Record<string, unknown>[];
+      statusCounts: { _id: string; count: number }[];
+      totalCount: { total: number }[];
+    }[];
 
+    const records = (facetResult.records as unknown[]) || [];
     const statsMap = new Map<string, number>();
-    statsResult.forEach((s: { _id: string; count: number }) =>
-      statsMap.set(s._id, s.count),
+    (facetResult.statusCounts || []).forEach(
+      (s: { _id: string; count: number }) => statsMap.set(s._id, s.count),
     );
+    const totalRecords =
+      (facetResult.totalCount && facetResult.totalCount[0]?.total) || 0;
 
     return {
       records,
@@ -1677,6 +1933,67 @@ export class PkkmbService {
       .limit(3)
       .lean()
       .exec();
+  }
+
+  async getMabaNotificationFeed(userId: string) {
+    const user = await this.userModel
+      .findById(userId)
+      .select('pkkmbGroup announcementsRead')
+      .lean()
+      .exec();
+    const readIds = new Set(
+      (user?.announcementsRead || []).map((id) => id.toString()),
+    );
+    const filter: FilterQuery<unknown> = { deletedAt: null };
+    if (user?.pkkmbGroup) {
+      filter.$or = [
+        { targetAudience: 'all' },
+        {
+          targetAudience: 'specific_groups',
+          targetGroups: new Types.ObjectId(user.pkkmbGroup),
+        },
+      ];
+    } else {
+      filter.targetAudience = 'all';
+    }
+    const items = await this.announcementModel
+      .find(filter)
+      .select('_id title content isPriority createdAt')
+      .sort({ isPriority: -1, createdAt: -1 })
+      .limit(3)
+      .lean()
+      .exec();
+    const enriched = items.map((a) => ({
+      _id: a._id.toString(),
+      title: a.title,
+      content: a.content,
+      isPriority: a.isPriority,
+      createdAt: (a as unknown as { createdAt?: Date }).createdAt,
+      isRead: readIds.has(a._id.toString()),
+    }));
+    return {
+      unreadCount: enriched.filter((a) => !a.isRead).length,
+      items: enriched,
+    };
+  }
+
+  async markAnnouncementsRead(userId: string, ids?: string[]) {
+    let announcementIds: import('mongoose').Types.ObjectId[];
+    if (ids && ids.length > 0) {
+      announcementIds = ids.map((id) => new Types.ObjectId(id));
+    } else {
+      const feed = await this.getMabaNotificationFeed(userId);
+      announcementIds = feed.items.map((a) => new Types.ObjectId(a._id));
+    }
+    await this.userModel
+      .findByIdAndUpdate(
+        userId,
+        { $addToSet: { announcementsRead: { $each: announcementIds } } },
+        { new: true },
+      )
+      .exec();
+    const feed = await this.getMabaNotificationFeed(userId);
+    return { unreadCount: feed.unreadCount };
   }
 
   async getMabaDashboardSchedules() {

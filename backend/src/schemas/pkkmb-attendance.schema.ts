@@ -22,6 +22,9 @@ export class PkkmbAttendanceSession {
   @Prop({ required: true, trim: true })
   location: string; // e.g. "Gedung Dekanat FT UNESA"
 
+  @Prop({ default: false })
+  isOnline?: boolean; // remote/online session: skip geofence on self check-in
+
   @Prop({
     required: true,
     enum: ['ALL', 'MABA', 'PANITIA'],

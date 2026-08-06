@@ -3,6 +3,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
@@ -25,6 +26,10 @@ async function bootstrap() {
 
   // Cookie parser middleware (required for JWT authentication via cookies)
   app.use(cookieParser());
+
+  // Compress responses (gzip) — reduces payload for monitoring/sessions
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  app.use(compression());
 
   // Security — disable CSP in dev so Swagger UI works
   app.use(

@@ -10,6 +10,7 @@ import {
   IsMongoId,
   IsDateString,
   IsUrl,
+  IsBoolean,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -68,6 +69,14 @@ export class CreateAttendanceSessionDto {
   @IsString()
   @IsNotEmpty()
   location: string;
+
+  @ApiPropertyOptional({
+    description: 'Sesi online/remote (skipp geofence saat self check-in)',
+    default: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isOnline?: boolean;
 
   @ApiPropertyOptional({
     description: 'Target Jenis Peserta',

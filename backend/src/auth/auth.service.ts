@@ -1,26 +1,16 @@
 import {
   Injectable,
   UnauthorizedException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Role, RoleDocument } from '../schemas/role.schema';
 import { User, UserDocument } from '../schemas/user.schema';
 import { ConfigService } from '@nestjs/config';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { StructuredLogger } from '../common/logger/structured-logger.service';
 
-const OTP_LENGTH = 6;
-const OTP_EXPIRY_MINUTES = 10;
-const MAX_VERIFY_ATTEMPTS = 5;
-const MAX_RESEND_COUNT = 5;
-const RESEND_COOLDOWN_SECONDS = 60;
-const LOCKOUT_MINUTES = 15;
 const ALLOWED_EMAIL_DOMAINS = new Set(['mhs.unesa.ac.id', 'unesa.ac.id']);
 
 function isAllowedUnesaEmail(email: string): boolean {
@@ -29,12 +19,6 @@ function isAllowedUnesaEmail(email: string): boolean {
   if (at < 0) return false;
   const domain = normalized.slice(at + 1);
   return ALLOWED_EMAIL_DOMAINS.has(domain);
-}
-
-function generateOtp(): string {
-  const min = Math.pow(10, OTP_LENGTH - 1);
-  const max = Math.pow(10, OTP_LENGTH) - 1;
-  return crypto.randomInt(min, max + 1).toString();
 }
 
 interface GoogleProfile {
@@ -55,7 +39,6 @@ export class AuthService {
     private roleModel: Model<RoleDocument>,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private eventEmitter: EventEmitter2,
   ) {
     this.logger.setContext('AuthService');
   }
@@ -75,7 +58,7 @@ export class AuthService {
         superAdminEmail &&
         profile.email.toLowerCase() === superAdminEmail.toLowerCase();
 
-      const roleSlug = isSuperAdmin ? 'super_admin' : 'panitia';
+      const roleSlug = isSuperAdmin ? 'super_admin' : 'user';
       let defaultRole = await this.roleModel.findOne({ slug: roleSlug }).exec();
       if (!defaultRole) {
         defaultRole = await this.roleModel.findOne().exec();
@@ -91,15 +74,11 @@ export class AuthService {
         email: profile.email,
         googleId: profile.googleId,
         avatar: profile.avatar || '',
-        isActive: isSuperAdmin ? true : false,
+        isActive: true,
         role: defaultRole._id,
         cabinetPeriod: '2026',
-        position: isSuperAdmin ? 'Super Administrator' : 'Pendaftar Akses Baru',
+        position: isSuperAdmin ? 'Super Administrator' : 'Mahasiswa Baru',
       });
-
-      if (!isSuperAdmin) {
-        throw new UnauthorizedException('PENDING_APPROVAL');
-      }
     }
 
     if (!user.isActive) {
@@ -112,14 +91,15 @@ export class AuthService {
           .findOne({ slug: 'super_admin' })
           .exec();
         if (superRole) user.role = superRole._id;
-        user.isActive = true;
         user.position = 'Super Administrator';
-        await user.save();
-      } else if (user.position === 'Pendaftar Akses Baru') {
-        throw new UnauthorizedException('PENDING_APPROVAL');
       } else {
-        throw new UnauthorizedException('DEACTIVATED_ACCOUNT');
+        // Maba baru/aktif ulang: jadi role user (maba) + langsung aktif, lanjut onboarding.
+        const mabaRole = await this.roleModel.findOne({ slug: 'user' }).exec();
+        if (mabaRole) user.role = mabaRole._id;
+        user.position = 'Mahasiswa Baru';
       }
+      user.isActive = true;
+      await user.save();
     }
 
     if (!isAllowedUnesaEmail(user.email)) {
@@ -137,333 +117,6 @@ export class AuthService {
     await user.save();
 
     return user;
-  }
-
-  async registerMaba(
-    dto: import('./dto/register.dto').RegisterDto,
-  ): Promise<UserDocument> {
-    const { nim, name, email, phone, password } = dto;
-
-    if (!isAllowedUnesaEmail(email)) {
-      throw new ConflictException(
-        'Gunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).',
-      );
-    }
-
-    const orQuery: Record<string, unknown>[] = [{ email }];
-    if (nim) orQuery.push({ nim });
-
-    const existingUser = await this.userModel.findOne({ $or: orQuery }).exec();
-    if (existingUser) {
-      if (nim && existingUser.nim === nim) {
-        throw new ConflictException('NIM sudah terdaftar.');
-      }
-      throw new ConflictException('Email sudah terdaftar.');
-    }
-
-    const role = await this.roleModel.findOne({ slug: 'user' }).exec();
-    if (!role) {
-      throw new ConflictException('Role tidak ditemukan, hubungi admin.');
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const rawOtp = generateOtp();
-    const hashedOtp = await bcrypt.hash(rawOtp, 10);
-    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
-
-    const newUser = new this.userModel({
-      nim,
-      name,
-      email,
-      phone,
-      password: hashedPassword,
-      role: role._id,
-      isActive: true,
-      isEmailVerified: false,
-      emailVerificationCode: hashedOtp,
-      emailVerificationExpiry: otpExpiry,
-      emailVerifyAttempts: 0,
-      emailResendCount: 0,
-      cabinetPeriod: '2026',
-    });
-
-    const savedUser = await newUser.save();
-
-    this.eventEmitter.emit('email.verification.send', {
-      to: email,
-      name,
-      otp: rawOtp,
-      userId: savedUser._id.toString(),
-    });
-
-    this.eventEmitter.emit('audit.log', {
-      actor: savedUser._id,
-      actorRole: 'system',
-      action: 'EMAIL_SEND',
-      resourceType: 'User',
-      resourceId: savedUser._id,
-      resourceName: email,
-      details: { type: 'registration_verification', nip: nim },
-    });
-
-    this.logger.log(
-      `Registration successful for ${email}, verification email queued`,
-    );
-
-    return savedUser;
-  }
-
-  async verifyEmailCode(
-    email: string,
-    code: string,
-    ip?: string,
-    userAgent?: string,
-  ): Promise<{ success: boolean; message: string }> {
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
-      throw new UnauthorizedException('Email tidak ditemukan.');
-    }
-
-    if (user.isEmailVerified) {
-      return {
-        success: true,
-        message: 'Email sudah terverifikasi sebelumnya.',
-      };
-    }
-
-    if (user.emailLockedUntil && new Date() < user.emailLockedUntil) {
-      const remaining = Math.ceil(
-        (user.emailLockedUntil.getTime() - Date.now()) / 60000,
-      );
-      throw new BadRequestException(
-        `Akun terkunci karena terlalu banyak percobaan gagal. Coba lagi dalam ${remaining} menit.`,
-      );
-    }
-
-    if (!user.emailVerificationCode) {
-      throw new BadRequestException(
-        'Tidak ada kode verifikasi aktif. Silakan minta kode baru.',
-      );
-    }
-
-    if (
-      user.emailVerificationExpiry &&
-      new Date() > user.emailVerificationExpiry
-    ) {
-      throw new BadRequestException(
-        'Kode verifikasi telah kedaluwarsa. Silakan minta kode baru.',
-      );
-    }
-
-    if (user.emailVerifyAttempts >= MAX_VERIFY_ATTEMPTS) {
-      user.emailVerificationCode = undefined;
-      user.emailVerificationExpiry = undefined;
-      user.emailVerifyAttempts = 0;
-      user.emailResendCount = 0;
-      user.emailLockedUntil = new Date(
-        Date.now() + LOCKOUT_MINUTES * 60 * 1000,
-      );
-      await user.save();
-
-      this.eventEmitter.emit('audit.log', {
-        actor: user._id,
-        actorRole: 'user',
-        action: 'EMAIL_VERIFY_LOCKED',
-        resourceType: 'User',
-        resourceId: user._id,
-        resourceName: email,
-        ipAddress: ip,
-        userAgent,
-        details: {
-          reason: 'max_attempts_exceeded',
-          lockedUntil: user.emailLockedUntil,
-        },
-      });
-
-      throw new BadRequestException(
-        `Terlalu banyak percobaan gagal. Akun dikunci selama ${LOCKOUT_MINUTES} menit.`,
-      );
-    }
-
-    user.emailVerifyAttempts += 1;
-    await user.save();
-
-    const isMatch = await bcrypt.compare(code, user.emailVerificationCode);
-    if (!isMatch) {
-      this.eventEmitter.emit('audit.log', {
-        actor: user._id,
-        actorRole: 'user',
-        action: 'EMAIL_VERIFY_FAILED',
-        resourceType: 'User',
-        resourceId: user._id,
-        resourceName: email,
-        ipAddress: ip,
-        userAgent,
-        details: {
-          attempts: user.emailVerifyAttempts,
-          maxAttempts: MAX_VERIFY_ATTEMPTS,
-        },
-      });
-
-      const remaining = MAX_VERIFY_ATTEMPTS - user.emailVerifyAttempts;
-      throw new UnauthorizedException(
-        `Kode verifikasi tidak valid. Sisa percobaan: ${remaining}.`,
-      );
-    }
-
-    user.isEmailVerified = true;
-    user.emailVerificationCode = undefined;
-    user.emailVerificationExpiry = undefined;
-    user.emailVerifyAttempts = 0;
-    user.emailResendCount = 0;
-    user.emailLastResendAt = undefined;
-    user.emailLockedUntil = undefined;
-    await user.save();
-
-    this.eventEmitter.emit('audit.log', {
-      actor: user._id,
-      actorRole: 'user',
-      action: 'EMAIL_VERIFY_SUCCESS',
-      resourceType: 'User',
-      resourceId: user._id,
-      resourceName: email,
-      ipAddress: ip,
-      userAgent,
-    });
-
-    this.logger.log(`Email verified successfully for ${email}`);
-
-    return {
-      success: true,
-      message: 'Email berhasil diverifikasi! Silakan login.',
-    };
-  }
-
-  async resendVerificationCode(
-    email: string,
-    ip?: string,
-    userAgent?: string,
-  ): Promise<{ success: boolean; message: string }> {
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
-      throw new UnauthorizedException('Email tidak ditemukan.');
-    }
-
-    if (user.isEmailVerified) {
-      return { success: true, message: 'Email sudah terverifikasi.' };
-    }
-
-    if (user.emailLockedUntil && new Date() < user.emailLockedUntil) {
-      const remaining = Math.ceil(
-        (user.emailLockedUntil.getTime() - Date.now()) / 60000,
-      );
-      throw new BadRequestException(
-        `Akun terkunci. Coba lagi dalam ${remaining} menit.`,
-      );
-    }
-
-    if (user.emailResendCount >= MAX_RESEND_COUNT) {
-      user.emailLockedUntil = new Date(
-        Date.now() + LOCKOUT_MINUTES * 60 * 1000,
-      );
-      await user.save();
-
-      this.eventEmitter.emit('audit.log', {
-        actor: user._id,
-        actorRole: 'user',
-        action: 'EMAIL_RESEND_LOCKED',
-        resourceType: 'User',
-        resourceId: user._id,
-        resourceName: email,
-        ipAddress: ip,
-        userAgent,
-        details: {
-          reason: 'max_resend_exceeded',
-          resendCount: user.emailResendCount,
-        },
-      });
-
-      throw new BadRequestException(
-        `Batas maksimal pengiriman ulang (${MAX_RESEND_COUNT}x) tercapai. Akun dikunci selama ${LOCKOUT_MINUTES} menit.`,
-      );
-    }
-
-    if (user.emailLastResendAt) {
-      const elapsed =
-        (Date.now() - new Date(user.emailLastResendAt).getTime()) / 1000;
-      if (elapsed < RESEND_COOLDOWN_SECONDS) {
-        const wait = Math.ceil(RESEND_COOLDOWN_SECONDS - elapsed);
-        throw new BadRequestException(
-          `Tunggu ${wait} detik sebelum meminta kode baru.`,
-        );
-      }
-    }
-
-    const rawOtp = generateOtp();
-    const hashedOtp = await bcrypt.hash(rawOtp, 10);
-    const otpExpiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
-
-    user.emailVerificationCode = hashedOtp;
-    user.emailVerificationExpiry = otpExpiry;
-    user.emailResendCount += 1;
-    user.emailLastResendAt = new Date();
-    await user.save();
-
-    this.eventEmitter.emit('email.verification.send', {
-      to: email,
-      name: user.name,
-      otp: rawOtp,
-      userId: user._id.toString(),
-    });
-
-    this.eventEmitter.emit('audit.log', {
-      actor: user._id,
-      actorRole: 'user',
-      action: 'EMAIL_RESEND',
-      resourceType: 'User',
-      resourceId: user._id,
-      resourceName: email,
-      ipAddress: ip,
-      userAgent,
-      details: {
-        resendCount: user.emailResendCount,
-        maxResends: MAX_RESEND_COUNT,
-      },
-    });
-
-    this.logger.log(
-      `Verification code resent to ${email} (attempt ${user.emailResendCount}/${MAX_RESEND_COUNT})`,
-    );
-
-    return {
-      success: true,
-      message: `Kode konfirmasi baru telah dikirimkan ke email ${email}.`,
-    };
-  }
-
-  async getVerificationStatus(email: string): Promise<{
-    isVerified: boolean;
-    resendCount: number;
-    maxResends: number;
-    isLocked: boolean;
-    lockedUntil?: Date;
-  }> {
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
-      throw new UnauthorizedException('Email tidak ditemukan.');
-    }
-
-    const isLocked =
-      !!user.emailLockedUntil && new Date() < user.emailLockedUntil;
-
-    return {
-      isVerified: user.isEmailVerified,
-      resendCount: user.emailResendCount,
-      maxResends: MAX_RESEND_COUNT,
-      isLocked,
-      lockedUntil: user.emailLockedUntil,
-    };
   }
 
   async validateMabaLogin(email: string, pass: string): Promise<UserDocument> {

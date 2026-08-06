@@ -5,13 +5,21 @@ import { motion } from "framer-motion";
 import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const authenticated = searchParams.get("authenticated");
+  const error = searchParams.get("error");
+
+  const errorMessages: Record<string, string> = {
+    not_unesa: "Gagal masuk: gunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).",
+    deactivated: "Akun Anda dinonaktifkan. Hubungi Tim IT PKKMB.",
+    auth_failed: "Autentikasi gagal. Silakan coba lagi.",
+  };
+  const errorMessage = error ? (errorMessages[error] || "") : "";
 
   useEffect(() => {
     if (authenticated === "true") {
@@ -46,6 +54,13 @@ function LoginContent() {
       <p className="text-white/60 font-body text-sm mb-10 leading-relaxed">
         Silakan masuk menggunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).
       </p>
+
+      {errorMessage && (
+        <div className="flex items-start gap-2 p-4 mb-6 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-left w-full">
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       <button
         onClick={handleLogin}

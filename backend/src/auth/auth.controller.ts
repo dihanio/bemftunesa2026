@@ -16,7 +16,6 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import * as crypto from 'crypto';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedRequest } from '../common/interfaces/authenticated-request.interface';
@@ -72,13 +71,16 @@ export class AuthController {
         this.configService.get<string>('NODE_ENV') === 'production';
 
       // Set httpOnly cookies for security (prevent XSS)
-      // Use 'none' in development for cross-origin requests (localhost:3001 → localhost:4000)
+      // domain=.bemftunesa.org agar token dibaca semua subdomain (pkkmb/ims/www)
+      const cookieDomain = '.bemftunesa.org';
+
       res.cookie('accessToken', tokens.accessToken, {
         httpOnly: true,
         secure: true, // Always true - required by browsers for sameSite: 'none'
         sameSite: isProduction ? 'lax' : 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: '/',
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
       });
 
       res.cookie('refreshToken', tokens.refreshToken, {
@@ -87,6 +89,7 @@ export class AuthController {
         sameSite: isProduction ? 'lax' : 'none',
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         path: '/',
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
       });
 
       const state = req.query.state as string;
@@ -116,11 +119,15 @@ export class AuthController {
         this.logger.log(`User pending approval, redirecting to: ${pendingUrl}`);
         res.redirect(pendingUrl);
         return;
-      } else if (err.message === 'DEACTIVATED_ACCOUNT') {
-        const deactivatedUrl = `${baseUrl}/login?error=deactivated`;
-        this.logger.warn(`User deactivated, redirecting to: ${deactivatedUrl}`);
+      } else if (
+        err.message === 'DEACTIVATED_ACCOUNT' ||
+        err.message ===
+          'Gunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).'
+      ) {
+        const failedUrl = `${baseUrl}/login?error=${err.message === 'DEACTIVATED_ACCOUNT' ? 'deactivated' : 'not_unesa'}`;
+        this.logger.warn(`Auth failed, redirecting to: ${failedUrl}`);
 
-        res.redirect(deactivatedUrl);
+        res.redirect(failedUrl);
         return;
       } else {
         const failedUrl = `${baseUrl}/login?error=auth_failed`;
@@ -136,63 +143,6 @@ export class AuthController {
   @Get('bypass')
   bypassLogin() {
     throw new ForbiddenException('Bypass login is disabled');
-  }
-
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @Post('register')
-  async registerMaba(@Body() registerDto: RegisterDto) {
-    const user = await this.authService.registerMaba(registerDto);
-    return {
-      success: true,
-      message: 'Pendaftaran berhasil. Silakan verifikasi email Anda.',
-      data: {
-        nim: user.nim,
-        name: user.name,
-      },
-    };
-  }
-
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
-  @Post('verify-email')
-  async verifyEmailCode(
-    @Body() body: { email: string; code: string },
-    @Req() req: Request,
-  ) {
-    return await this.authService.verifyEmailCode(
-      body.email,
-      body.code,
-      (req.headers['x-forwarded-for'] as string) || req.ip,
-      req.headers['user-agent'],
-    );
-  }
-
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
-  @Post('resend-verification')
-  async resendVerificationCode(
-    @Body() body: { email: string },
-    @Req() req: Request,
-  ) {
-    return await this.authService.resendVerificationCode(
-      body.email,
-      (req.headers['x-forwarded-for'] as string) || req.ip,
-      req.headers['user-agent'],
-    );
-  }
-
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
-  @Post('send-verification')
-  async sendVerification(@Body() body: { email: string }) {
-    return await this.authService.resendVerificationCode(body.email);
-  }
-
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
-  @Get('verification-status')
-  async getVerificationStatus(@Req() req: Request) {
-    const email = req.query.email as string;
-    if (!email) {
-      throw new ForbiddenException('Email query parameter is required.');
-    }
-    return await this.authService.getVerificationStatus(email);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -353,9 +303,19 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   logout(@Res({ passthrough: true }) res: Response) {
-    // Clear authentication cookies
-    res.clearCookie('accessToken', { path: '/' });
-    res.clearCookie('refreshToken', { path: '/' });
+    // Clear authentication cookies (harus match domain & secure saat set)
+    res.clearCookie('accessToken', {
+      path: '/',
+      domain: '.bemftunesa.org',
+      secure: true,
+      sameSite: 'lax' as const,
+    });
+    res.clearCookie('refreshToken', {
+      path: '/',
+      domain: '.bemftunesa.org',
+      secure: true,
+      sameSite: 'lax' as const,
+    });
 
     return { success: true, data: null, message: 'Logged out successfully' };
   }

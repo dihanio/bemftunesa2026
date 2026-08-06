@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
-import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone } from "lucide-react";
+import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, Trophy } from "lucide-react";
 
 interface UserProfile {
   id: string;
@@ -17,9 +17,23 @@ interface UserProfile {
   isOnboarded?: boolean;
 }
 
+interface NotifItem {
+  _id: string;
+  title: string;
+  content: string;
+  isPriority?: boolean;
+  createdAt: string;
+  isRead: boolean;
+}
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<{ user: UserProfile } | null>(null);
   const [status, setStatus] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
+  const [now, setNow] = useState(new Date());
+  const [notif, setNotif] = useState<{ unreadCount: number; items: NotifItem[] }>({ unreadCount: 0, items: [] });
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -49,6 +63,60 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, []);
 
   useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const fetchNotif = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/v1/pkkmb/dashboard/maba/announcements/notifications`, { credentials: "include" });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success) setNotif({ unreadCount: json.data.unreadCount, items: json.data.items });
+        }
+      } catch {}
+    };
+    fetchNotif();
+    const t = setInterval(fetchNotif, 60000);
+    return () => clearInterval(t);
+  }, [status]);
+
+  const markRead = async (ids?: string[]) => {
+    setNotif((prev) => {
+      if (ids && ids.length > 0) {
+        const idSet = new Set(ids);
+        return {
+          unreadCount: prev.items.filter((i) => idSet.has(i._id) && !i.isRead).length
+            ? prev.unreadCount - prev.items.filter((i) => idSet.has(i._id) && !i.isRead).length
+            : prev.unreadCount,
+          items: prev.items.map((i) => (idSet.has(i._id) ? { ...i, isRead: true } : i)),
+        };
+      }
+      return { unreadCount: 0, items: prev.items.map((i) => ({ ...i, isRead: true })) };
+    });
+    try {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/dashboard/maba/announcements/read`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(ids && ids.length > 0 ? { announcementIds: ids } : {}),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) setNotif((prev) => ({ ...prev, unreadCount: json.data.unreadCount }));
+      }
+    } catch {}
+  };
+
+  const openNotification = (item: NotifItem) => {
+    setNotifOpen(false);
+    if (!item.isRead) markRead([item._id]);
+    router.push("/dashboard");
+  };
+
+  useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
     } else if (status === "authenticated" && session) {
@@ -64,16 +132,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [status, session, router]);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setConfirmLogout(true);
+    setProfileOpen(false);
+  };
+
+  const doLogout = async () => {
+    setConfirmLogout(false);
     try {
       await fetch(`${API_URL}/api/v1/auth/logout`, {
         method: "POST",
         credentials: "include"
       });
-      router.push("/login");
     } catch {
-      router.push("/login");
+      /* tetap arahkan ke login */
     }
+    router.push("/login");
   };
 
   const menus = useMemo(() => {
@@ -92,9 +166,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (isMaba) {
       return [
         { label: "Maba Hub", href: "/dashboard", icon: <Home className="w-5 h-5" />, active: pathname === "/dashboard" },
-        { label: "Profil & ID Card", href: "/dashboard/profil", icon: <User className="w-5 h-5" />, active: pathname === "/dashboard/profil" },
         { label: "Penugasan", href: "/dashboard/tugas", icon: <FileText className="w-5 h-5" />, active: pathname === "/dashboard/tugas" },
         { label: "Presensi", href: "/dashboard/presensi", icon: <CheckSquare className="w-5 h-5" />, active: pathname === "/dashboard/presensi" },
+        { label: "Skor Keaktifan", href: "/dashboard/poin", icon: <Trophy className="w-5 h-5" />, active: pathname === "/dashboard/poin" },
       ];
     } else {
       // Panitia / Admin / Evaluator
@@ -175,16 +249,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
           ))}
         </nav>
-
-        <div className="p-4 border-t border-white/5">
-          <button 
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-400 hover:bg-red-500/10 transition-colors font-body text-sm font-bold"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-            Keluar Sistem
-          </button>
-        </div>
       </aside>
 
       {/* Main Content */}
@@ -211,20 +275,131 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }
           </h1>
           
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <div className="font-body font-bold text-sm">{session.user?.name || "Maba Adrata"}</div>
-              <div className="font-body text-xs text-white/40">
-                {typeof session.user?.role === 'object' ? session.user.role.name : (session.user?.role || "MABA")}
-              </div>
+          <div className="flex items-center gap-6">
+            {/* Live Clock */}
+            <div className="hidden md:block text-right">
+              <div className="font-body font-bold text-sm text-white">{now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+              <div className="font-body text-xs text-white/40 tabular-nums">{now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB</div>
             </div>
-            <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden border-2 border-gold-500/30">
-              {session.user?.avatar || session.user?.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={(session.user.avatar || session.user.image)?.startsWith('/') ? `${API_URL}${session.user.avatar || session.user.image}` : (session.user.avatar || session.user.image)} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gold-500 font-bold">
-                  {session.user?.name?.charAt(0) || "M"}
+            {/* Announcement Bell Dropdown */}
+            <div className="relative">
+              {notifOpen && <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />}
+              <button
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="relative p-2 rounded-xl hover:bg-white/10 transition-colors"
+              >
+                <Bell className="w-5 h-5 text-white/70" />
+                {notif.unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-gold-500 text-black text-[10px] font-black rounded-full">
+                    {notif.unreadCount > 9 ? '9+' : notif.unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 mt-2 w-80 z-50 bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+                    <h3 className="font-bold text-sm text-white">Notifikasi</h3>
+                    {notif.unreadCount > 0 && (
+                      <button onClick={() => markRead()} className="text-xs text-gold-500 hover:text-gold-400 font-semibold">
+                        Tandai semua dibaca
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notif.items.length === 0 ? (
+                      <div className="px-4 py-10 text-center">
+                        <p className="text-white/40 text-sm">Belum ada pengumuman</p>
+                      </div>
+                    ) : (
+                      notif.items.map((item) => (
+                        <div
+                          key={item._id}
+                          onClick={() => openNotification(item)}
+                          className={`px-4 py-3 border-b border-white/5 cursor-pointer transition-colors hover:bg-white/[0.04] ${item.isRead ? '' : 'bg-gold-500/5'}`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${item.isRead ? 'bg-white/15' : 'bg-gold-500'}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-semibold text-white truncate">{item.title}</p>
+                                {item.isPriority && (
+                                  <span className="bg-red-500/20 text-red-400 text-[10px] px-1.5 py-0.5 rounded font-bold border border-red-500/30 shrink-0">Penting</span>
+                                )}
+                              </div>
+                              <p className="text-xs text-white/50 line-clamp-2 mt-1">{item.content}</p>
+                              <div className="flex items-center justify-between mt-1.5">
+                                <span className="text-[10px] text-white/40">
+                                  {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                </span>
+                                {!item.isRead && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); markRead([item._id]); }}
+                                    className="text-[10px] text-gold-500 hover:text-gold-400 font-semibold"
+                                  >
+                                    Tandai dibaca
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  {notif.items.length > 0 && (
+                    <Link href="/dashboard" onClick={() => setNotifOpen(false)} className="block px-4 py-3 text-center text-xs text-gold-500 hover:text-gold-400 font-semibold border-t border-white/5">
+                      Lihat Semua Pengumuman
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              {profileOpen && <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />}
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/10 transition-colors"
+              >
+                <div className="text-right hidden sm:block">
+                  <div className="font-body font-bold text-sm">{session.user?.name || "Maba Adrata"}</div>
+                  <div className="font-body text-xs text-white/40">
+                    {typeof session.user?.role === 'object' ? session.user.role.name : (session.user?.role || "MABA")}
+                  </div>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden border-2 border-gold-500/30 shrink-0">
+                  {session.user?.avatar || session.user?.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={(session.user.avatar || session.user.image)?.startsWith('/') ? `${API_URL}${session.user.avatar || session.user.image}` : (session.user.avatar || session.user.image)} alt="Avatar" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gold-500 font-bold">
+                      {session.user?.name?.charAt(0) || "M"}
+                    </div>
+                  )}
+                </div>
+              </button>
+
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-52 z-50 bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-white/5">
+                    <p className="text-sm font-bold text-white truncate">{session.user?.name || "Maba Adrata"}</p>
+                    <p className="text-xs text-white/40 truncate">{session.user?.role && typeof session.user.role === 'object' ? session.user.role.name : ''}</p>
+                  </div>
+                  <Link
+                    href="/dashboard/profil"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-colors"
+                  >
+                    <User className="w-4 h-4 text-gold-400" />
+                    Profil & ID Card
+                  </Link>
+                  <button
+                    onClick={() => { setProfileOpen(false); handleLogout(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Keluar Sistem
+                  </button>
                 </div>
               )}
             </div>
@@ -254,15 +429,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="text-[10px] mt-1">{menu.label.split(" ")[0]}</span>
             </Link>
           ))}
-          <button
-            onClick={handleLogout}
-            className="flex flex-col items-center justify-center p-2 rounded-xl text-red-400 hover:text-red-300 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-            <span className="text-[10px] mt-1">Keluar</span>
-          </button>
         </div>
       </nav>
+
+      {/* Confirm Logout Modal */}
+      {confirmLogout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setConfirmLogout(false)} />
+          <div className="bg-[#111] border border-white/10 p-6 md:p-8 rounded-3xl w-full max-w-md relative z-10 shadow-2xl">
+            <h2 className="font-display font-bold text-xl text-white mb-2">Keluar Sistem?</h2>
+            <p className="text-sm text-white/60 mb-6">Anda akan keluar dari Portal. Pastikan data sudah tersimpan sebelum melanjutkan.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmLogout(false)}
+                className="flex-1 py-3 bg-white/10 hover:bg-white/15 text-white rounded-xl font-bold transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={doLogout}
+                className="flex-1 py-3 bg-red-500 hover:bg-red-400 text-white rounded-xl font-bold transition-colors"
+              >
+                Ya, Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -88,27 +88,42 @@ export default function PresensiMabaPage() {
         // GPS gagal, tetap lanjut tanpa koordinat
       }
 
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/checkin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          sessionId: selectedSessionId,
-          method: "SELF_CHECKIN",
-          ...(lat !== undefined && { lat, lng })
-        }),
+      const body = JSON.stringify({
+        sessionId: selectedSessionId,
+        method: "SELF_CHECKIN",
+        ...(lat !== undefined && { lat, lng })
       });
-      
-      const json = await res.json();
-      
-      if (!res.ok || !json.success) {
-        throw new Error(json.message || "Gagal melakukan presensi");
+
+      // Retry 3x utk gagal jaringan/5xx, backoff 1s/2s/3s
+      const maxAttempts = 3;
+      let lastErr: Error | null = null;
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/checkin`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body,
+          });
+          const json = await res.json();
+          if (!res.ok || !json.success) {
+            throw new Error(json.message || "Gagal melakukan presensi");
+          }
+          toast.success("Berhasil presensi!");
+          fetchData();
+          return;
+        } catch (error: unknown) {
+          // 4xx = kesalahan validasi/otorisasi, jangan retry
+          if (error instanceof Error && /^(Pilih|Sesi|Lokasi|QR|Anda berada|Data peserta)/.test(error.message)) {
+            throw error;
+          }
+          lastErr = error as Error;
+          if (attempt < maxAttempts) {
+            await new Promise((r) => setTimeout(r, attempt * 1000));
+          }
+        }
       }
-      
-      toast.success("Berhasil presensi!");
-      fetchData();
+      throw lastErr || new Error("Gagal melakukan presensi");
     } catch (error: unknown) {
       toast.error((error as Error).message);
     } finally {
@@ -124,71 +139,146 @@ export default function PresensiMabaPage() {
     );
   }
 
+  const recap = history.reduce(
+    (acc, r) => {
+      const s = r.status || "";
+      if (s === "HADIR") acc.hadir++;
+      else if (s === "TERLAMBAT") acc.late++;
+      else if (s === "IZIN" || s === "SAKIT") acc.izin++;
+      else if (s === "ALPHA" || s === "TIDAK_HADIR") acc.alpha++;
+      else acc.other++;
+      return acc;
+    },
+    { hadir: 0, late: 0, izin: 0, alpha: 0, other: 0 }
+  );
+  const totalRecords = history.length;
+  const hadirPct = totalRecords ? Math.round((recap.hadir / totalRecords) * 100) : 0;
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-3xl font-display font-bold mb-2">Presensi Kehadiran</h1>
-        <p className="text-white/60">Lakukan presensi mandiri dan lihat rekapitulasi kehadiran Anda.</p>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
+        <div>
+          <h1 className="text-3xl font-display font-bold mb-1">Presensi Kehadiran</h1>
+          <p className="text-white/60">Lakukan presensi mandiri dan pantau rekapitulasi kehadiran Anda.</p>
+        </div>
+        {totalRecords > 0 && (
+          <div className="flex items-center gap-2 text-sm text-white/60">
+            <span>Total sesi dihadiri</span>
+            <span className="px-3 py-1 bg-gold-500/10 border border-gold-500/20 text-gold-400 rounded-full font-bold">{totalRecords}</span>
+          </div>
+        )}
       </div>
 
       {/* Form Check-In Mandiri */}
-      <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-gold-500/10 rounded-xl text-gold-400">
+      <div className="bg-gradient-to-br from-gold-500/[0.06] to-transparent border border-white/10 rounded-3xl p-6 md:p-8">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="p-3 bg-gold-500/15 rounded-2xl text-gold-400 shadow-[0_0_20px_rgba(234,179,8,0.15)]">
             <Fingerprint className="w-6 h-6" />
           </div>
           <div>
             <h2 className="text-xl font-bold font-display">Check-In Mandiri</h2>
-            <p className="text-sm text-white/50">Pilih sesi lalu klik Hadir untuk presensi mandiri.</p>
+            <p className="text-sm text-white/50">Pilih sesi yang sedang berlangsung, lalu tekan Hadir.</p>
           </div>
         </div>
         
         {sessions.length === 0 ? (
           <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl text-white/60">
-            <AlertCircle className="w-5 h-5" />
+            <AlertCircle className="w-5 h-5 text-gold-400" />
             <p className="text-sm">Saat ini tidak ada sesi presensi yang sedang berlangsung.</p>
           </div>
         ) : (
-          <form onSubmit={handleCheckIn} className="flex flex-col md:flex-row gap-4 items-end">
-            <div className="flex-1 w-full space-y-2">
-              <label className="text-sm font-semibold text-white/70">Pilih Sesi Acara</label>
-              <div className="space-y-2">
-                {sessions.map(s => (
+          <form onSubmit={handleCheckIn} className="space-y-4">
+            <label className="text-sm font-semibold text-white/70">Pilih Sesi Acara</label>
+            <div className="space-y-3">
+              {sessions.map(s => {
+                const isSelected = selectedSessionId === s._id;
+                return (
                   <label
                     key={s._id}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-all ${
-                      selectedSessionId === s._id
-                        ? 'bg-gold-500/10 border-gold-500/40 text-white'
+                    className={`flex items-center gap-4 px-4 py-4 rounded-2xl border cursor-pointer transition-all ${
+                      isSelected
+                        ? 'bg-gold-500/10 border-gold-500/40 text-white shadow-[0_0_20px_rgba(234,179,8,0.1)]'
                         : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/[0.08]'
                     }`}
                   >
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                      selectedSessionId === s._id ? 'border-gold-500' : 'border-white/30'
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                      isSelected ? 'border-gold-500' : 'border-white/30'
                     }`}>
-                      {selectedSessionId === s._id && <div className="w-2 h-2 rounded-full bg-gold-500" />}
+                      {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-gold-500" />}
                     </div>
-                    <span className="text-sm font-medium">{s.title}</span>
-                    <input type="radio" name="session" value={s._id} checked={selectedSessionId === s._id} onChange={() => setSelectedSessionId(s._id)} className="sr-only" />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-white/80'}`}>{s.title}</p>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-white/40">
+                        <span className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" />
+                          {new Date(s.startTime).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
+                          {new Date(s.startTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                        </span>
+                        {s.location && (
+                          <span className="flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5" />
+                            {s.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <input type="radio" name="session" value={s._id} checked={isSelected} onChange={() => setSelectedSessionId(s._id)} className="sr-only" />
                   </label>
-                ))}
-              </div>
+                );
+              })}
             </div>
-            
+
             <button
               type="submit"
               disabled={submitting}
-              className="w-full md:w-auto px-8 py-3 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center min-h-[50px]"
+              className="w-full px-8 py-4 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-base shadow-[0_0_20px_rgba(234,179,8,0.25)] hover:shadow-[0_0_30px_rgba(234,179,8,0.4)] active:scale-[0.99]"
             >
               {submitting ? (
-                <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                <>
+                  <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                  Memproses...
+                </>
               ) : (
-                "Hadir"
+                <>
+                  <CheckCircle2 className="w-5 h-5" />
+                  Hadir Sekarang
+                </>
               )}
             </button>
           </form>
         )}
       </div>
 
+      {/* Rekap Kehadiran */}
+      {totalRecords > 0 && (
+        <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-3xl p-6 md:p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-display font-bold">Rekapitulasi Kehadiran</h3>
+            <span className={`text-lg font-display font-black ${hadirPct >= 75 ? 'text-green-400' : hadirPct >= 50 ? 'text-gold-400' : 'text-red-400'}`}>
+              {hadirPct}%
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: "Hadir", value: recap.hadir, color: "text-green-400", bar: "bg-green-500", pct: totalRecords ? Math.round((recap.hadir / totalRecords) * 100) : 0 },
+              { label: "Terlambat", value: recap.late, color: "text-yellow-400", bar: "bg-yellow-500", pct: totalRecords ? Math.round((recap.late / totalRecords) * 100) : 0 },
+              { label: "Izin / Sakit", value: recap.izin, color: "text-blue-400", bar: "bg-blue-500", pct: totalRecords ? Math.round((recap.izin / totalRecords) * 100) : 0 },
+              { label: "Tidak Hadir", value: recap.alpha, color: "text-red-400", bar: "bg-red-500", pct: totalRecords ? Math.round((recap.alpha / totalRecords) * 100) : 0 },
+            ].map((item) => (
+              <div key={item.label} className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+                <p className="text-white/40 text-xs uppercase tracking-wider font-semibold mb-2">{item.label}</p>
+                <p className={`font-display text-3xl font-black ${item.color}`}>{item.value}</p>
+                <div className="w-full bg-white/5 rounded-full h-1.5 mt-3 overflow-hidden">
+                  <div className={`${item.bar} h-1.5 rounded-full transition-all duration-700`} style={{ width: `${item.pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Riwayat Presensi */}
       <div>
         <h3 className="text-xl font-display font-bold mb-6">Riwayat Presensi</h3>
         
@@ -202,42 +292,42 @@ export default function PresensiMabaPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {history.map((record) => {
               const isPresent = record.status === "HADIR";
-              
               return (
-                <div key={record._id} className="bg-black/40 backdrop-blur-md border border-white/10 rounded-3xl p-6 flex flex-col hover:border-white/20 transition-colors">
+                <div key={record._id} className="bg-black/40 backdrop-blur-md border border-white/10 rounded-3xl p-6 flex flex-col hover:border-white/20 transition-colors group">
                   <div className="flex justify-between items-start mb-4">
-                    <div className={`px-3 py-1 text-xs font-bold rounded-lg border flex items-center gap-1.5
+                    <span className={`px-3 py-1 text-xs font-bold rounded-lg border flex items-center gap-1.5
                       ${isPresent ? 'bg-green-500/10 border-green-500/20 text-green-300' : 'bg-red-500/10 border-red-500/20 text-red-300'}
                     `}>
                       <CheckCircle2 className="w-3 h-3" />
-                      <span className="capitalize">{record.status}</span>
-                    </div>
+                      <span className="capitalize">{record.status.toLowerCase()}</span>
+                    </span>
+                    <span className="text-[10px] text-white/40 font-mono">
+                      {new Date(record.checkInTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
 
-                  <h3 className="font-display font-bold text-lg leading-tight mb-2">{record.session.title}</h3>
+                  <h3 className="font-display font-bold text-lg leading-tight mb-4">{record.session.title}</h3>
                   
                   <div className="space-y-2 mb-6">
                     <div className="flex items-center gap-2 text-sm text-white/50">
-                      <Clock className="w-4 h-4 text-gold-400/70" />
+                      <Clock className="w-4 h-4 text-gold-400/70 shrink-0" />
                       <span>
                         {new Date(record.session.date).toLocaleDateString("id-ID", { dateStyle: "medium" })}
                         {" • "}
-                        {new Date(record.session.startTime).toLocaleTimeString("id-ID", { timeStyle: "short" })}
+                        {new Date(record.session.startTime).toLocaleTimeString("id-ID", { timeStyle: "short" })} WIB
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-white/50">
-                      <MapPin className="w-4 h-4 text-gold-400/70" />
+                      <MapPin className="w-4 h-4 text-gold-400/70 shrink-0" />
                       <span className="truncate">{record.session.location || "Lokasi Belum Ditentukan"}</span>
                     </div>
                   </div>
 
-                  <div className="mt-auto pt-4 border-t border-white/5 flex justify-between items-center">
-                    <div className="flex justify-between items-center text-xs flex-1">
-                      <span className="text-white/40">Waktu Scan:</span>
-                      <span className="text-white font-mono bg-white/10 px-2 py-1 rounded">
-                        {new Date(record.checkInTime).toLocaleTimeString("id-ID", { timeStyle: "medium" })}
-                      </span>
-                    </div>
+                  <div className="mt-auto pt-3 border-t border-white/5 flex items-center justify-between text-xs">
+                    <span className="text-white/40">Metode</span>
+                    <span className="text-white/70 font-medium capitalize">
+                      {record.attendanceMethod === "SELF_CHECKIN" ? "Self Check-in" : "Manual"}
+                    </span>
                   </div>
                 </div>
               );

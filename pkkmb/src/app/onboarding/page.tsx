@@ -5,9 +5,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Info, CheckCircle2, LogOut } from "lucide-react";
+import { ArrowRight, Info, CheckCircle2, LogOut, ScanLine } from "lucide-react";
 
 import PhotoCropDialog from "@/components/onboarding/PhotoCropDialog";
+
+// Decode QR dari file gambar (jpg/png) via jsQR.
+async function decodeQrFromImage(file: File): Promise<string | null> {
+  const jsQR = (await import("jsqr")).default;
+  const bitmap = await createImageBitmap(file);
+  const width = bitmap.width;
+  const height = bitmap.height;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(bitmap, 0, 0);
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const code = jsQR(imageData.data, width, height);
+  return code ? code.data : null;
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -17,6 +34,9 @@ export default function OnboardingPage() {
   const [croppedAvatarUrl, setCroppedAvatarUrl] = useState<string | null>(null);
   const [ktmFile, setKtmFile] = useState<File | null>(null);
   const [ktmPreviewUrl, setKtmPreviewUrl] = useState<string | null>(null);
+  const [qrResult, setQrResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const [qrScanning, setQrScanning] = useState(false);
+  const [onboardedGroup, setOnboardedGroup] = useState<{ nomor: number; name: string } | null>(null);
 
   const handleImageCropped = (blob: Blob, url: string) => {
     setCroppedAvatarBlob(blob);
@@ -147,25 +167,23 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   
   const departments = [
-    "S1 Teknik Elektro",
-    "S1 Pendidikan Teknik Elektro",
-    "S1 Teknik Informatika", 
-    "S1 Sistem Informasi", 
-    "S1 Pendidikan Teknologi Informasi", 
-    "S1 Teknik Mesin", 
     "S1 Pendidikan Teknik Mesin",
     "S1 Pendidikan Vokasional Teknologi Otomotif",
-    "S1 Teknik Sipil", 
-    "S1 Pendidikan Teknik Bangunan",
-    "S1 Teknik Pertambangan",
+    "S1 Teknik Mesin",
     "S1 Teknik Metalurgi",
+    "S1 Teknik Pertambangan",
+    "S1 Pendidikan Teknik Elektro",
+    "S1 Teknik Elektro",
+    "S1 Pendidikan Teknologi Informasi",
+    "S1 Teknik Informatika",
+    "S1 Sistem Informasi",
+    "S1 Pendidikan Teknik Bangunan",
+    "S1 Teknik Sipil",
     "S1 Perencanaan Wilayah dan Kota",
     "S1 Pendidikan Tata Boga",
     "S1 Pendidikan Tata Busana",
     "S1 Pendidikan Tata Rias",
-    "S1 Gizi",
-    "S1 Pariwisata",
-    "S1 Pendidikan Kesejahteraan Keluarga"
+    "S1 Pariwisata"
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -245,6 +263,9 @@ export default function OnboardingPage() {
         localStorage.removeItem('onboardingAvatarBase64');
         localStorage.removeItem('onboardingKtmBase64');
         localStorage.removeItem('onboardingStep');
+        const resp = await res.json();
+        const group = resp?.data?.pkkmbGroup;
+        setOnboardedGroup(group && group._id ? { nomor: group.nomor, name: group.name } : null);
         setStep(4);
       } else {
         const errorData = await res.json();
@@ -636,11 +657,29 @@ export default function OnboardingPage() {
                       <input 
                         type="file" 
                         accept="image/*,application/pdf"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
                             setKtmFile(file);
                             setKtmPreviewUrl(URL.createObjectURL(file));
+                            // Coba decode QR otomatis untuk file gambar
+                            if (file.type.startsWith('image/')) {
+                              setQrScanning(true);
+                              try {
+                                const text = await decodeQrFromImage(file);
+                                const nimMatch = text?.match(/\b\d{8,12}\b/);
+                                if (nimMatch) {
+                                  setFormData((f) => ({ ...f, nim: nimMatch[0] }));
+                                  setQrResult({ ok: true, text: nimMatch[0] });
+                                } else {
+                                  setQrResult({ ok: false, text: text || 'Tidak ada QR terdeteksi' });
+                                }
+                              } catch {
+                                setQrResult({ ok: false, text: 'Gagal membaca QR' });
+                              } finally {
+                                setQrScanning(false);
+                              }
+                            }
                           }
                         }}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -668,6 +707,20 @@ export default function OnboardingPage() {
                           <CheckCircle2 className="w-5 h-5" />
                           File KTM Dipilih
                         </p>
+                        {qrScanning && (
+                          <p className="mt-2 text-sm text-gold-400 flex items-center gap-2">
+                            <ScanLine className="w-4 h-4 animate-pulse" />
+                            Membaca QR Code...
+                          </p>
+                        )}
+                        {!qrScanning && qrResult && (
+                          <p className={`mt-2 text-sm flex items-center gap-2 ${qrResult.ok ? 'text-green-400' : 'text-yellow-400'}`}>
+                            <ScanLine className="w-4 h-4" />
+                            {qrResult.ok
+                              ? `QR terbaca: NIM ${qrResult.text} (periksa kembali)`
+                              : `QR: ${qrResult.text}`}
+                          </p>
+                        )}
                       </div>
                       
                       <div className="flex justify-center">
@@ -722,9 +775,16 @@ export default function OnboardingPage() {
                 
                 <div className="p-6 rounded-2xl bg-gradient-to-b from-gold-500/10 to-transparent border border-gold-500/20 inline-block mb-10 max-w-sm w-full relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-500 to-transparent opacity-50" />
-                  <p className="text-gold-500/80 text-xs font-bold uppercase tracking-wider mb-2">Status Gugus Adrista</p>
-                  <p className="text-2xl font-bold text-gold-400 mb-3 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">Sedang Diproses</p>
-                  <p className="text-xs text-gold-200/50 leading-relaxed">Sistem Panitia sedang mengalokasikan kelompok gugus. Silakan pantau Dashboard Anda secara berkala.</p>
+                  <p className="text-gold-500/80 text-xs font-bold uppercase tracking-wider mb-2">Gugus Adrista Kamu</p>
+                  {onboardedGroup ? (
+                    <>
+                      <p className="text-2xl font-bold text-gold-400 mb-1 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">Gugus {String(onboardedGroup.nomor).padStart(2, "0")}</p>
+                      <p className="text-gold-200/80 font-semibold mb-3">{onboardedGroup.name}</p>
+                      <p className="text-xs text-gold-200/50 leading-relaxed">Selamat! Kamu sudah tergabung dalam gugus. Selengkapnya bisa dilihat di Dashboard.</p>
+                    </>
+                  ) : (
+                    <p className="text-2xl font-bold text-gold-400 mb-3 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">Sedang Diproses</p>
+                  )}
                 </div>
                 
                 <button 

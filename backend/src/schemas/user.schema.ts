@@ -78,6 +78,12 @@ export class User {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'PkkmbGroup' })
   pkkmbGroup?: import('mongoose').Types.ObjectId;
 
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'PkkmbAnnouncement' }],
+    default: [],
+  })
+  announcementsRead?: import('mongoose').Types.ObjectId[];
+
   @Prop({ default: false })
   isKetuaGugus?: boolean;
 
