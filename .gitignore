@@ -86,3 +86,10 @@ docker-compose.override.yml
 # (uncomment to ignore agent states)
 # .agent/
 # .gemini/
+
+# opencode / graphify tooling
+.opencode/
+opencode.json
+AGENTS.md
+graphify-out/
+backend/output.json
