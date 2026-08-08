@@ -48,6 +48,8 @@ import {
 
 import { PkkmbController } from './pkkmb.controller';
 import { PkkmbService } from './pkkmb.service';
+import { KtmsOcrController } from './ktms-ocr.controller';
+import { KtmsOcrService } from './ktms-ocr.service';
 
 @Module({
   imports: [
@@ -72,9 +74,10 @@ import { PkkmbService } from './pkkmb.service';
       { name: PkkmbPublishConfig.name, schema: PkkmbPublishConfigSchema },
     ]),
   ],
-  controllers: [PkkmbController],
+  controllers: [PkkmbController, KtmsOcrController],
   providers: [
     PkkmbService,
+    KtmsOcrService,
     {
       provide: 'REDIS_CLIENT',
       useFactory: (configService: ConfigService) => {
