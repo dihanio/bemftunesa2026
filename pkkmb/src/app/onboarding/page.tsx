@@ -196,6 +196,11 @@ export default function OnboardingPage() {
       setTimeout(() => setError(null), 4000);
       return;
     }
+    if (!ktmPreviewUrl && !ktmFile) {
+      setError("Mohon upload KTM/KTMS (PDF, JPG, atau PNG) sebelum melanjutkan.");
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
     setError(null);
     setStep(2);
     // Optionally also save the step index to local storage if desired, but form data is enough.
@@ -535,6 +540,47 @@ export default function OnboardingPage() {
                       No. Darurat (Ortu/Wali)
                     </label>
                   </div>
+                </div>
+
+                {/* Upload KTM / KTMS di langkah pertama */}
+                <div className="mt-2">
+                  <p className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">Unggah KTM / KTMS</p>
+                  {!ktmPreviewUrl ? (
+                    <div className="border-2 border-dashed border-white/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center bg-white/[0.02] hover:bg-white/[0.04] transition-colors relative">
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setKtmFile(file);
+                            setKtmPreviewUrl(URL.createObjectURL(file));
+                          }
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <svg className="w-10 h-10 text-white/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                      <p className="font-bold text-sm mb-1">Klik untuk upload KTM/KTMS</p>
+                      <p className="text-xs text-white/40">PDF, JPG, PNG (maks. 2MB)</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-4 bg-white/5 border border-white/10 rounded-2xl p-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{ktmFile?.name || "KTM/KTMS"}</p>
+                          <p className="text-xs text-white/40">File siap disimpan</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setKtmFile(null); setKtmPreviewUrl(null); }}
+                        className="px-4 py-2 rounded-full text-sm font-bold text-white/40 hover:text-white bg-white/5 hover:bg-white/10 transition-colors border border-white/5 shrink-0"
+                      >
+                        Ganti
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-8 mt-auto flex flex-col sm:flex-row gap-4 items-center justify-end">
