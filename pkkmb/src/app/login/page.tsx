@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Loader2, AlertCircle } from "lucide-react";
 
 function LoginContent() {
@@ -47,7 +48,9 @@ function LoginContent() {
   return (
     <div className="flex flex-col items-center text-center relative z-10">
       <div className="w-20 h-20 relative mb-6">
-        <Image src="/logo_adrata.png" alt="Logo Adrata" fill sizes="160px" priority className="object-contain drop-shadow-[0_0_15px_rgba(234,179,8,0.3)]" />
+        <Link href="/" aria-label="Kembali ke halaman utama">
+          <Image src="/logo_adrata.png" alt="Logo Adrata" fill sizes="160px" priority className="object-contain drop-shadow-[0_0_15px_rgba(234,179,8,0.3)] hover:scale-105 transition-transform" />
+        </Link>
       </div>
       
       <h1 className="font-display text-3xl font-bold text-white mb-2">Portal <span className="text-gold-500">Adrata</span></h1>
