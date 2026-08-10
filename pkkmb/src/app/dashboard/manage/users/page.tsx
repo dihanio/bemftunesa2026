@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Loader2, Plus, Edit, Trash2, Shield, Search } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Shield, Search, Info, Check } from "lucide-react";
 import { API_URL } from "@/lib/api";
 
 interface UserData {
@@ -18,6 +18,45 @@ interface UserData {
   division?: string;
   pkkmbGroup?: { _id: string; name: string };
 }
+
+// Deskripsi singkat per role untuk kartu pemilih role.
+const ROLE_DESCRIPTIONS: Record<string, string> = {
+  super_admin: "Akses penuh ke seluruh sistem",
+  admin_pkkmb: "Kelola penuh modul PKKMB",
+  panitia: "Panitia divisi — lengkapi divisi di bawah",
+  sekretaris: "Sekretariat pelaksana",
+  bendahara: "Pengelola keuangan pelaksana",
+  ketua_pelaksana: "Pimpinan pelaksana PKKMB",
+  pimpinan: "Pimpinan BEM & SC",
+  user: "Mahasiswa baru (peserta PKKMB)",
+  maba: "Mahasiswa baru (peserta PKKMB)",
+};
+
+// Preset divisi panitia — nilai diseragamkan ("Sie …") agar cocok dengan
+// pemeriksaan divisi di backend (case-insensitive keyword).
+const DIVISION_PRESETS: { value: string; label: string; desc: string }[] = [
+  { value: "Sie KSK", label: "Sie KSK", desc: "Kesekretariatan — kelola presensi" },
+  { value: "Sie Pendamping", label: "Sie Pendamping", desc: "Mentor gugus" },
+  { value: "Sie Humas", label: "Sie Humas", desc: "Publikasi & hubungan masyarakat" },
+  { value: "Sie Acara", label: "Sie Acara", desc: "Acara & pemateri" },
+  { value: "Sie Perlengkapan", label: "Sie Perlengkapan", desc: "Logistik & sarana" },
+  { value: "Sie Pemateri", label: "Sie Pemateri", desc: "Materi & evaluasi" },
+  { value: "Sie Tata Tertib", label: "Sie Tata Tertib", desc: "Ketertiban & komdis" },
+  { value: "BPH (Inti)", label: "BPH (Inti)", desc: "Badan pengurus harian" },
+  { value: "Sekretaris", label: "Sekretaris", desc: "Sekretariat pelaksana" },
+  { value: "Bendahara", label: "Bendahara", desc: "Keuangan pelaksana" },
+];
+
+// Hint singkat yang muncul saat sebuah divisi dipilih.
+const DIVISION_HINTS: Record<string, string> = {
+  "Sie KSK": "Mengelola sesi presensi & memverifikasi izin mahasiswa.",
+  "Sie Pendamping": "Menjadi mentor gugus — melihat data maba & presensi gugusnya.",
+  "Sie Acara": "Akses pemateri/acara — ikut mengevaluasi penugasan.",
+  "Sie Pemateri": "Akses evaluasi penugasan mahasiswa.",
+  "Sie Tata Tertib": "Mencatat insiden ketertiban mahasiswa.",
+  "BPH (Inti)": "Level pimpinan (bph) — akses lebih luas.",
+  Sekretaris: "Level sekretaris — termasuk pengelolaan presensi.",
+};
 
 const AvatarImage = ({ src, name }: { src?: string; name: string }) => {
   const [error, setError] = useState(false);
@@ -82,6 +121,7 @@ export default function UserManagementPage() {
   });
 
   const [roles, setRoles] = useState<{_id: string, name: string, slug?: string}[]>([]);
+  const [divisionCustom, setDivisionCustom] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -224,6 +264,7 @@ export default function UserManagementPage() {
     setModalMode("CREATE");
     setFormError("");
     setFormData({ name: '', email: '', nim: '', role: '', password: '', division: '', pkkmbGroup: '' });
+    setDivisionCustom(false);
     setShowModal(true);
   };
 
@@ -240,6 +281,9 @@ export default function UserManagementPage() {
       division: user.division || '',
       pkkmbGroup: user.pkkmbGroup?._id || ''
     });
+    setDivisionCustom(
+      !!user.division && !DIVISION_PRESETS.some((p) => p.value === user.division),
+    );
     setShowModal(true);
   };
 
@@ -257,6 +301,11 @@ export default function UserManagementPage() {
     if (!formData.name.trim()) { setFormError("Nama lengkap harus diisi"); return; }
     if (!formData.email.trim()) { setFormError("Email harus diisi"); return; }
     if (!formData.role) { setFormError("Role harus dipilih"); return; }
+    const selectedRoleSlug = roles.find(r => r._id === formData.role)?.slug;
+    if (selectedRoleSlug === "panitia" && !formData.division.trim()) {
+      setFormError("Divisi wajib diisi untuk role Panitia");
+      return;
+    }
     if (modalMode === "CREATE" && !formData.password) { setFormError("Password wajib diisi untuk user baru"); return; }
 
     setIsSubmitting(true);
@@ -573,20 +622,113 @@ export default function UserManagementPage() {
 
               <div>
                 <label className="text-xs font-bold text-white/50">Role (Hak Akses) *</label>
-                <select required value={formData.role} onChange={e => {setFormData({...formData, role: e.target.value}); setFormError("");}} className={`w-full bg-white/5 border ${formError.includes("Role") ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-2 mt-1 text-white focus:border-gold-500 outline-none`}>
-                  <option value="">Pilih Role...</option>
-                  {roles.map(r => (
-                    <option key={r._id} value={r._id}>{r.name}</option>
-                  ))}
-                </select>
+                {formError.includes("Role") && (
+                  <p className="text-xs text-red-400 mt-1">Role harus dipilih</p>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                  {roles.map(r => {
+                    const selected = formData.role === r._id;
+                    const desc = ROLE_DESCRIPTIONS[r.slug || ''] || 'Akses sesuai hak yang diberikan';
+                    return (
+                      <button
+                        type="button"
+                        key={r._id}
+                        onClick={() => { setFormData({...formData, role: r._id}); setFormError(""); }}
+                        className={`text-left px-3 py-2.5 rounded-xl border transition-all duration-200 ${
+                          selected
+                            ? "border-gold-500 bg-gold-500/10 shadow-[0_0_12px_rgba(234,179,8,0.15)]"
+                            : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <div className={`flex items-center justify-between gap-2 text-sm font-bold ${selected ? "text-gold-400" : "text-white/90"}`}>
+                          {r.name}
+                          {selected && <Check className="w-4 h-4 shrink-0 text-gold-400" />}
+                        </div>
+                        <div className="text-[11px] text-white/40 mt-0.5 leading-snug">{desc}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-white/35 mt-2 flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 shrink-0" />
+                  Perubahan role/divisi berlaku setelah user login ulang.
+                </p>
               </div>
 
-              {roles.find(r => r._id === formData.role)?.slug !== 'maba' && (
-                <div>
-                  <label className="text-xs font-bold text-white/50">Divisi / Sie (Bila Panitia)</label>
-                  <input type="text" placeholder="Contoh: pendamping, tata tertib, pemateri" value={formData.division} onChange={e => setFormData({...formData, division: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 mt-1 text-white focus:border-gold-500 outline-none" />
-                </div>
-              )}
+              {(() => {
+                const selectedRoleSlug = roles.find(r => r._id === formData.role)?.slug;
+                if (selectedRoleSlug === 'maba') return null;
+                // Panitia: pilih divisi via chip preset (nilai sudah diseragamkan)
+                if (selectedRoleSlug === 'panitia') {
+                  return (
+                    <div>
+                      <label className="text-xs font-bold text-white/50">Divisi / Sie *</label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {DIVISION_PRESETS.map(p => {
+                          const active = !divisionCustom && formData.division === p.value;
+                          return (
+                            <button
+                              type="button"
+                              key={p.value}
+                              title={p.desc}
+                              onClick={() => { setFormData({...formData, division: p.value}); setDivisionCustom(false); setFormError(""); }}
+                              className={`px-3 py-1.5 rounded-full border text-xs font-bold transition-all duration-200 ${
+                                active
+                                  ? "border-gold-500 bg-gold-500/15 text-gold-400"
+                                  : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:text-white"
+                              }`}
+                            >
+                              {p.label}
+                            </button>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => { setDivisionCustom(v => !v); setFormError(""); }}
+                          className={`px-3 py-1.5 rounded-full border text-xs font-bold transition-all duration-200 ${
+                            divisionCustom
+                              ? "border-gold-500 bg-gold-500/15 text-gold-400"
+                              : "border-white/10 bg-white/5 text-white/60 hover:border-white/25 hover:text-white"
+                          }`}
+                        >
+                          {divisionCustom ? "✕ Kustom" : "Lainnya…"}
+                        </button>
+                      </div>
+                      {divisionCustom ? (
+                        <input
+                          type="text"
+                          placeholder="Tulis nama divisi kustom…"
+                          value={formData.division}
+                          onChange={e => setFormData({...formData, division: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 mt-2 text-white focus:border-gold-500 outline-none"
+                        />
+                      ) : (
+                        formData.division && !DIVISION_PRESETS.some(p => p.value === formData.division) && (
+                          <input
+                            type="text"
+                            value={formData.division}
+                            onChange={e => setFormData({...formData, division: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 mt-2 text-white focus:border-gold-500 outline-none"
+                          />
+                        )
+                      )}
+                      {formData.division && DIVISION_HINTS[formData.division] && (
+                        <p className="text-[11px] text-gold-400/80 mt-2 flex items-center gap-1.5">
+                          <Info className="w-3.5 h-3.5 shrink-0" />
+                          {DIVISION_HINTS[formData.division]}
+                        </p>
+                      )}
+                    </div>
+                  );
+                }
+                // Role non-panitia lain: input teks biasa (perilaku lama)
+                return (
+                  <div>
+                    <label className="text-xs font-bold text-white/50">Divisi / Sie (Bila Perlu)</label>
+                    <input type="text" placeholder="Contoh: KSK, pendamping, sekretariat" value={formData.division} onChange={e => setFormData({...formData, division: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 mt-1 text-white focus:border-gold-500 outline-none" />
+                  </div>
+                );
+              })()}
 
               <div>
                 <label className="text-xs font-bold text-white/50">ID Gugus (Bila perlu)</label>
