@@ -77,6 +77,10 @@ jobs:
         if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.shared == 'true'
         run: npx turbo run test --filter=@bemft/backend
 
+      - name: Test Pkkmb
+        if: needs.changes.outputs.pkkmb == 'true' || needs.changes.outputs.shared == 'true'
+        run: npx turbo run test --filter=@bemft/pkkmb
+
   build-and-push:
     needs: [changes, lint-and-test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
