@@ -118,7 +118,11 @@ export class PkkmbAttendanceRecord {
     enum: ['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM', 'SELF_CHECKIN'],
     default: 'QR_CODE',
   })
-  attendanceMethod: 'QR_CODE' | 'MANUAL_OPERATOR' | 'SEARCH_NIM' | 'SELF_CHECKIN';
+  attendanceMethod:
+    | 'QR_CODE'
+    | 'MANUAL_OPERATOR'
+    | 'SEARCH_NIM'
+    | 'SELF_CHECKIN';
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   operator?: Types.ObjectId; // Operator performing manual check-in

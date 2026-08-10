@@ -145,6 +145,7 @@ export default function OnboardingPage() {
         // Step 5/6 (persetujuan/selesai) bersifat transient — buang progres,
         // user harus mulai dari awal (mis. setelah reset akun).
         if (saved.step && saved.step < 5) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- restore progres dari localStorage sekali saat mount (pola hydration)
           setStep(saved.step);
           if (saved.formData) {
             setFormData((f) => ({ ...f, ...saved.formData }));
@@ -214,6 +215,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     const savedAvatar = localStorage.getItem("onboardingAvatarBase64");
     if (savedAvatar) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restore pasfoto dari localStorage sekali saat mount (pola hydration)
       setCroppedAvatarUrl(savedAvatar);
       const mime = savedAvatar.split(";")[0]?.replace("data:", "") || "image/jpeg";
       try {

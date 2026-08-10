@@ -41,13 +41,13 @@ export default function CreateAssignmentPage() {
   const [link, setLink] = useState("");
 
   const [quizzes, setQuizzes] = useState<QuizOption[]>([]);
-  const [selectedQuiz, setSelectedQuiz] = useState<QuizOption | null>(null);
-  const [loadingQuiz, setLoadingQuiz] = useState(false);
+  // true di awal: fetch quiz hanya sekali saat mount (spinner tampil tanpa
+  // setState sinkron dalam effect — react-hooks/set-state-in-effect).
+  const [loadingQuiz, setLoadingQuiz] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState(!!editId);
 
   useEffect(() => {
-    setLoadingQuiz(true);
     (async () => {
       try {
         const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz`, {
@@ -104,10 +104,8 @@ export default function CreateAssignmentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId]);
 
-  useEffect(() => {
-    const found = quizzes.find((q) => q._id === quizId) || null;
-    setSelectedQuiz(found);
-  }, [quizId, quizzes]);
+  // Derive di render (bukan setState dalam effect — react-hooks/set-state-in-effect).
+  const selectedQuiz = quizzes.find((q) => q._id === quizId) || null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

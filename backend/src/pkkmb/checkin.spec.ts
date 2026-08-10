@@ -39,7 +39,6 @@ function buildService(overrides: {
 
   const roleModel = { findOne: jest.fn().mockResolvedValue(null) } as never;
   const groupModel = {} as never;
-  const pointLogModel = { create: jest.fn().mockResolvedValue({}) } as never;
   const redis = { incr: jest.fn().mockResolvedValue(1) } as never;
 
   const svc = new PkkmbService(
@@ -61,7 +60,7 @@ function buildService(overrides: {
     {} as never,
     redis,
   );
-  return svc as PkkmbService;
+  return svc;
 }
 
 const WIB = (s: string) => new Date(`${s}+07:00`);

@@ -509,7 +509,7 @@ export default function PresensiMabaPage() {
                 <>
                   <div className="aspect-[4/3] bg-black rounded-2xl overflow-hidden border border-white/10 relative">
                     <video ref={videoRef} className="w-full h-full object-cover" playsInline muted autoPlay />
-                    {!streamRef.current && (
+                    {!cameraOpen && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/40">
                         <Camera className="w-10 h-10" />
                         <p className="text-sm">Menyiapkan kamera...</p>

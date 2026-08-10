@@ -117,13 +117,14 @@ export default function QuizPlayerPage() {
   // BUKAN deteksi AI yang mutlak & BUKAN security boundary. Frontend hanya
   // mengirim event type + (opsional) questionId; risk/violationCount dihitung
   // backend. Tidak ada auto-punishment, tidak ada penyimpanan data sensitif.
-  const lastViolationCount = useRef(0);
-
-  const reportViolationRef = useRef<
-    ((type: QuizViolationType, questionId?: string) => void) | null
-  >(null);
-  if (!reportViolationRef.current) {
-    reportViolationRef.current = makeViolationReporter(
+  // Reporter dibuat SEKALI per mount via lazy useState initializer (stable) —
+  // menghindari baca/tulis ref selama render (react-hooks/refs). Debounce
+  // window & lastSent internal di-maintain oleh makeViolationReporter.
+  const [reportViolation] = useState(() => {
+    // Counter warning toast — internal reporter (plain variable, bukan ref:
+    // tidak pernah dibaca saat render).
+    let lastViolationCount = 0;
+    return makeViolationReporter(
       async (type: QuizViolationType, questionId?: string) => {
         try {
           const res = await fetch(
@@ -140,8 +141,8 @@ export default function QuizPlayerPage() {
           const count = json?.data?.violationCount as number | undefined;
           if (typeof count !== "number") return;
           const msg = warningMessageForCount(count);
-          if (msg && count > lastViolationCount.current) {
-            lastViolationCount.current = count;
+          if (msg && count > lastViolationCount) {
+            lastViolationCount = count;
             toast(msg, { icon: "⚠️" });
           }
         } catch {
@@ -149,8 +150,7 @@ export default function QuizPlayerPage() {
         }
       },
     );
-  }
-  const reportViolation = reportViolationRef.current;
+  });
 
   useEffect(() => {
     if (!monitoringActive) return;

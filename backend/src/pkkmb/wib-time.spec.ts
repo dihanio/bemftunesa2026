@@ -28,23 +28,33 @@ describe('wib-time', () => {
     const end = parseWibDate('2026-08-11T23:59'); // 16:59Z
 
     it('BEFORE ketika sebelum start', () => {
-      expect(isWithinPeriod(parseWibDate('2026-08-11T07:59'), start, end)).toBe('BEFORE');
+      expect(isWithinPeriod(parseWibDate('2026-08-11T07:59'), start, end)).toBe(
+        'BEFORE',
+      );
     });
 
     it('ACTIVE tepat di start (inclusive)', () => {
-      expect(isWithinPeriod(parseWibDate('2026-08-11T08:00'), start, end)).toBe('ACTIVE');
+      expect(isWithinPeriod(parseWibDate('2026-08-11T08:00'), start, end)).toBe(
+        'ACTIVE',
+      );
     });
 
     it('ACTIVE di tengah periode', () => {
-      expect(isWithinPeriod(parseWibDate('2026-08-11T12:00'), start, end)).toBe('ACTIVE');
+      expect(isWithinPeriod(parseWibDate('2026-08-11T12:00'), start, end)).toBe(
+        'ACTIVE',
+      );
     });
 
     it('ACTIVE tepat di end (inclusive)', () => {
-      expect(isWithinPeriod(parseWibDate('2026-08-11T23:59'), start, end)).toBe('ACTIVE');
+      expect(isWithinPeriod(parseWibDate('2026-08-11T23:59'), start, end)).toBe(
+        'ACTIVE',
+      );
     });
 
     it('AFTER setelah end', () => {
-      expect(isWithinPeriod(parseWibDate('2026-08-12T00:00'), start, end)).toBe('AFTER');
+      expect(isWithinPeriod(parseWibDate('2026-08-12T00:00'), start, end)).toBe(
+        'AFTER',
+      );
     });
   });
 });

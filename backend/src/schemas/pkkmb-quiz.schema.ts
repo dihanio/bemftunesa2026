@@ -225,7 +225,10 @@ export class PkkmbQuizAttempt {
 
   // Monitoring anti-cheat: hanya event metadata (type + waktu server),
   // TIDAK menyimpan isi clipboard/layar/ketikan/data sensitif.
-  @Prop({ type: QuizAntiCheat, default: () => ({ violationCount: 0, violations: [], riskLevel: 'LOW' }) })
+  @Prop({
+    type: QuizAntiCheat,
+    default: () => ({ violationCount: 0, violations: [], riskLevel: 'LOW' }),
+  })
   antiCheat: QuizAntiCheat;
 
   @Prop()

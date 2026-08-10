@@ -19,7 +19,7 @@ const HEADER = [...QUIZ_TEMPLATE_HEADERS];
 function makeWorkbookBuffer(rows: unknown[][], sheetName = 'SOAL'): Buffer {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), sheetName);
-  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
 }
 
 const IDX: Record<string, number> = {
@@ -56,7 +56,11 @@ function makeQ(n: number): QuizQuestionShape {
 
 describe('Quiz Import/Export — parsing & validasi', () => {
   test('1. excel valid → semua baris valid', () => {
-    const buf = makeWorkbookBuffer([HEADER, validRow(), validRow({ question: 'Q2' })]);
+    const buf = makeWorkbookBuffer([
+      HEADER,
+      validRow(),
+      validRow({ question: 'Q2' }),
+    ]);
     const result = parseQuizExcel(buf);
     expect(result.success).toBe(true);
     expect(result.rows).toHaveLength(2);
@@ -65,7 +69,16 @@ describe('Quiz Import/Export — parsing & validasi', () => {
 
   test('2. header salah → import ditolak dengan kolom yang hilang', () => {
     const buf = makeWorkbookBuffer([
-      ['question', 'option_a', 'option_b', 'option_c', 'option_d', 'x', 'y', 'z'],
+      [
+        'question',
+        'option_a',
+        'option_b',
+        'option_c',
+        'option_d',
+        'x',
+        'y',
+        'z',
+      ],
       validRow(),
     ]);
     const result = parseQuizExcel(buf);
@@ -116,7 +129,8 @@ describe('Quiz Import/Export — parsing & validasi', () => {
 
   test('14. banyak baris valid', () => {
     const rows: unknown[][] = [HEADER];
-    for (let i = 1; i <= 5; i++) rows.push(validRow({ question: `Q${i}`, order: i }));
+    for (let i = 1; i <= 5; i++)
+      rows.push(validRow({ question: `Q${i}`, order: i }));
     const result = parseQuizExcel(bufOf(rows));
     expect(result.success).toBe(true);
     expect(result.validCount).toBe(5);
@@ -146,9 +160,7 @@ describe('Quiz Import/Export — parsing & validasi', () => {
   });
 
   test('duplikat dengan soal existing = WARNING (row tetap valid, bukan error)', () => {
-    const existing: QuizQuestionShape[] = [
-      { ...makeQ(1), question: 'Q?' },
-    ];
+    const existing: QuizQuestionShape[] = [{ ...makeQ(1), question: 'Q?' }];
     const buf = makeWorkbookBuffer([HEADER, validRow()]); // 'Q?' sama dgn existing
     const result = parseQuizExcel(buf, existing);
     expect(result.success).toBe(true);
@@ -196,7 +208,9 @@ describe('Quiz Import/Export — template & export', () => {
     const buf = buildTemplateBuffer();
     const wb = XLSX.read(buf, { type: 'buffer' });
     expect(wb.SheetNames.some((n) => n.toUpperCase() === 'SOAL')).toBe(true);
-    expect(wb.SheetNames.some((n) => n.toUpperCase() === 'PETUNJUK')).toBe(true);
+    expect(wb.SheetNames.some((n) => n.toUpperCase() === 'PETUNJUK')).toBe(
+      true,
+    );
     const result = parseQuizExcel(buf);
     expect(result.success).toBe(true);
     expect(result.validCount).toBe(1); // baris contoh valid
@@ -238,12 +252,16 @@ describe('Quiz Import/Export — template & export', () => {
 
   test('formula injection disanitasi saat export', () => {
     const buf = buildExportBuffer([
-      { ...makeQ(1), question: '=SUM(A1:A2)', options: [
-        { id: 'A', text: '+danger' },
-        { id: 'B', text: '-hmm' },
-        { id: 'C', text: '@import' },
-        { id: 'D', text: 'aman' },
-      ] },
+      {
+        ...makeQ(1),
+        question: '=SUM(A1:A2)',
+        options: [
+          { id: 'A', text: '+danger' },
+          { id: 'B', text: '-hmm' },
+          { id: 'C', text: '@import' },
+          { id: 'D', text: 'aman' },
+        ],
+      },
     ]);
     const result = parseQuizExcel(buf);
     expect(result.success).toBe(true);
@@ -276,7 +294,9 @@ describe('Quiz Import/Export — RBAC endpoint metadata', () => {
       | undefined;
 
   test('template & validate-import butuh permission QUIZ_CREATE', () => {
-    expect(perms('downloadQuizTemplate')).toContain(PkkmbPermission.QUIZ_CREATE);
+    expect(perms('downloadQuizTemplate')).toContain(
+      PkkmbPermission.QUIZ_CREATE,
+    );
     expect(perms('previewQuizImport')).toContain(PkkmbPermission.QUIZ_CREATE);
   });
 

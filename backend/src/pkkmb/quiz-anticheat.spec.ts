@@ -66,11 +66,13 @@ function makeQuiz(over: Record<string, unknown> = {}) {
   };
 }
 
-function buildService(opts: {
-  quiz?: ReturnType<typeof makeQuiz> | null;
-  attemptById?: ReturnType<typeof makeAttempt> | null;
-  attempts?: ReturnType<typeof makeAttempt>[];
-} = {}) {
+function buildService(
+  opts: {
+    quiz?: ReturnType<typeof makeQuiz> | null;
+    attemptById?: ReturnType<typeof makeAttempt> | null;
+    attempts?: ReturnType<typeof makeAttempt>[];
+  } = {},
+) {
   const { quiz = makeQuiz(), attemptById = null, attempts = [] } = opts;
 
   const execQuiz = jest.fn().mockResolvedValue(quiz);
@@ -82,23 +84,23 @@ function buildService(opts: {
   };
 
   const quizAttemptModel = {
-    findOne: jest.fn().mockImplementation((filter?: Record<string, unknown>) => {
-      if (filter && filter._id) {
-        return { exec: jest.fn().mockResolvedValue(attemptById) };
-      }
-      return { exec: jest.fn().mockResolvedValue(null) };
-    }),
-    find: jest
+    findOne: jest
       .fn()
-      .mockReturnValue({
-        populate: jest.fn().mockReturnValue({
-          sort: jest.fn().mockReturnValue({
-            lean: jest.fn().mockReturnValue({
-              exec: jest.fn().mockResolvedValue(attempts),
-            }),
+      .mockImplementation((filter?: Record<string, unknown>) => {
+        if (filter && filter._id) {
+          return { exec: jest.fn().mockResolvedValue(attemptById) };
+        }
+        return { exec: jest.fn().mockResolvedValue(null) };
+      }),
+    find: jest.fn().mockReturnValue({
+      populate: jest.fn().mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          lean: jest.fn().mockReturnValue({
+            exec: jest.fn().mockResolvedValue(attempts),
           }),
         }),
       }),
+    }),
   };
 
   // 17 arg constructor: user, role, group, session, log, task, submission,
@@ -123,7 +125,7 @@ function buildService(opts: {
     {} as never,
     {} as never,
   );
-  return { svc: svc as PkkmbService, quizModel, quizAttemptModel };
+  return { svc: svc, quizModel, quizAttemptModel };
 }
 
 // ─── Pure module (quiz-anticheat.ts) ───────────────────────────────────────
@@ -167,12 +169,13 @@ describe('quiz-anticheat (pure)', () => {
       occurredAt: new Date(now.getTime() - 1000),
     };
     expect(shouldDedupeViolation(last, 'TAB_HIDDEN', now)).toBe(true);
-    expect(
-      shouldDedupeViolation(last, 'WINDOW_BLUR', now),
-    ).toBe(false); // beda tipe
+    expect(shouldDedupeViolation(last, 'WINDOW_BLUR', now)).toBe(false); // beda tipe
     expect(
       shouldDedupeViolation(
-        { type: 'TAB_HIDDEN' as const, occurredAt: new Date(now.getTime() - 6000) },
+        {
+          type: 'TAB_HIDDEN' as const,
+          occurredAt: new Date(now.getTime() - 6000),
+        },
         'TAB_HIDDEN',
         now,
       ),
@@ -241,10 +244,13 @@ describe('PkkmbService — reportViolation', () => {
   });
 
   test('rate limit: >30 event dalam 60 dtk → di-ignore (tidak error)', async () => {
-    const violations = Array.from({ length: QUIZ_VIOLATION_RATE_LIMIT }, (_, i) => ({
-      type: 'COPY' as const,
-      occurredAt: new Date(Date.now() - i * 1000),
-    }));
+    const violations = Array.from(
+      { length: QUIZ_VIOLATION_RATE_LIMIT },
+      (_, i) => ({
+        type: 'COPY' as const,
+        occurredAt: new Date(Date.now() - i * 1000),
+      }),
+    );
     const attempt = makeAttempt({
       antiCheat: {
         violationCount: QUIZ_VIOLATION_RATE_LIMIT,
@@ -387,19 +393,25 @@ describe('PkkmbService — reportQuizEvents (batch)', () => {
 
   test('lebih dari 50 event per request → 400', async () => {
     const { svc } = buildService({ attemptById: makeAttempt() });
-    const events = Array.from({ length: QUIZ_EVENTS_MAX_PER_REQUEST + 1 }, () => ({
-      type: 'COPY' as const,
-    }));
+    const events = Array.from(
+      { length: QUIZ_EVENTS_MAX_PER_REQUEST + 1 },
+      () => ({
+        type: 'COPY' as const,
+      }),
+    );
     await expect(
-      svc.reportQuizEvents(QUIZ_ID, ATTEMPT_ID, USER_ID, { events } as never),
+      svc.reportQuizEvents(QUIZ_ID, ATTEMPT_ID, USER_ID, { events }),
     ).rejects.toThrow(BadRequestException);
   });
 
   test('rate limit tetap berlaku DI DALAM batch: 30 pertama tercatat, sisanya di-ignore', async () => {
-    const violations = Array.from({ length: QUIZ_VIOLATION_RATE_LIMIT }, (_, i) => ({
-      type: 'COPY' as const,
-      occurredAt: new Date(Date.now() - i * 1000),
-    }));
+    const violations = Array.from(
+      { length: QUIZ_VIOLATION_RATE_LIMIT },
+      (_, i) => ({
+        type: 'COPY' as const,
+        occurredAt: new Date(Date.now() - i * 1000),
+      }),
+    );
     const attempt = makeAttempt({
       antiCheat: {
         violationCount: QUIZ_VIOLATION_RATE_LIMIT,
@@ -443,10 +455,7 @@ describe('PkkmbService — reportQuizEvents (batch)', () => {
     const { svc } = buildService({ attemptById: attempt });
     await expect(
       svc.reportQuizEvents(QUIZ_ID, ATTEMPT_ID, USER_ID, {
-        events: [
-          { type: 'COPY' },
-          { type: 'NOT_A_TYPE' },
-        ],
+        events: [{ type: 'COPY' }, { type: 'NOT_A_TYPE' }],
       } as never),
     ).rejects.toThrow(BadRequestException);
     expect(attempt.save).not.toHaveBeenCalled();

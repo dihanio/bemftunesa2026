@@ -493,8 +493,7 @@ export class PkkmbController {
   ) {
     const roleSlug = user?.role?.slug;
     const isPanitia = roleSlug !== 'user' && roleSlug !== 'maba';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await this.pkkmbService.listAssignments(
+    const data = await this.pkkmbService.listAssignments(
       user?.userId as string,
       query,
       isPanitia,
@@ -510,9 +509,8 @@ export class PkkmbController {
   async getAssignmentDetail(
     @CurrentUser() user: { userId: string },
     @Param('id') assignmentId: string,
-  ) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await this.pkkmbService.getAssignmentDetail(
+  ): Promise<{ success: boolean; data: Record<string, unknown> }> {
+    const data = await this.pkkmbService.getAssignmentDetail(
       assignmentId,
       user.userId,
     );
@@ -540,14 +538,9 @@ export class PkkmbController {
   })
   async updateAssignment(
     @Param('id') assignmentId: string,
-    @CurrentUser() user: { userId: string },
     @Body() dto: CreateTaskDto,
   ) {
-    const data = await this.pkkmbService.updateAssignment(
-      assignmentId,
-      dto,
-      user.userId,
-    );
+    const data = await this.pkkmbService.updateAssignment(assignmentId, dto);
     return { success: true, message: 'Penugasan berhasil diperbarui', data };
   }
   @Get('maba/points/summary')
@@ -684,12 +677,8 @@ export class PkkmbController {
   @Patch('quiz/:id')
   @RequiredPermissions(PkkmbPermission.QUIZ_UPDATE)
   @ApiOperation({ summary: 'Mengubah quiz' })
-  async updateQuiz(
-    @Param('id') quizId: string,
-    @CurrentUser() user: { userId: string },
-    @Body() dto: CreateQuizDto,
-  ) {
-    const data = await this.pkkmbService.updateQuiz(quizId, dto, user.userId);
+  async updateQuiz(@Param('id') quizId: string, @Body() dto: CreateQuizDto) {
+    const data = await this.pkkmbService.updateQuiz(quizId, dto);
     return { success: true, message: 'Quiz berhasil diperbarui', data };
   }
 

@@ -586,11 +586,7 @@ describe('PkkmbService — updateAssignment (PATCH parsial aman)', () => {
   test('PATCH parsial tidak me-reset targetIds yang tidak dikirim', async () => {
     const assignment = makeAssignment();
     const { svc } = buildService({ assignment: assignment as never });
-    await svc.updateAssignment(
-      ASSIGNMENT_ID,
-      { title: 'Baru' } as never,
-      USER_ID,
-    );
+    await svc.updateAssignment(ASSIGNMENT_ID, { title: 'Baru' } as never);
     expect(assignment.title).toBe('Baru');
     expect(assignment.targetType).toBe('GROUP');
     expect(assignment.targetIds).toHaveLength(1);
@@ -603,11 +599,10 @@ describe('PkkmbService — updateAssignment (PATCH parsial aman)', () => {
       quizId: { toString: () => QUIZ_ID },
     });
     const { svc } = buildService({ assignment: assignment as never });
-    await svc.updateAssignment(
-      ASSIGNMENT_ID,
-      { assignmentType: 'TASK', type: 'individu' } as never,
-      USER_ID,
-    );
+    await svc.updateAssignment(ASSIGNMENT_ID, {
+      assignmentType: 'TASK',
+      type: 'individu',
+    } as never);
     expect(assignment.quizId).toBeNull();
     expect(assignment.assignmentType).toBe('TASK');
   });
@@ -619,11 +614,7 @@ describe('PkkmbService — updateAssignment (PATCH parsial aman)', () => {
     });
     const { svc } = buildService({ assignment: assignment as never });
     await expect(
-      svc.updateAssignment(
-        ASSIGNMENT_ID,
-        { quizId: OTHER_QUIZ } as never,
-        USER_ID,
-      ),
+      svc.updateAssignment(ASSIGNMENT_ID, { quizId: OTHER_QUIZ } as never),
     ).rejects.toThrow(BadRequestException);
   });
 });

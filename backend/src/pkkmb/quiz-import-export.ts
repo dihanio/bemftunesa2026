@@ -77,7 +77,15 @@ export interface QuizExcelParseResult {
 
 /** Cegah formula injection (Excel/CSV): nilai diawali = + - @ → text polos. */
 export function sanitizeCell(raw: unknown): string {
-  const s = String(raw ?? '').trim();
+  // Hanya primitive yang aman di-stringify (hindari '[object Object]' dari
+  // nilai object tak terduga saat parsing Excel).
+  const primitive =
+    typeof raw === 'string' ||
+    typeof raw === 'number' ||
+    typeof raw === 'boolean' ||
+    raw instanceof Date;
+  if (!primitive) return '';
+  const s = String(raw).trim();
   if (!s) return s;
   if (/^[=+@]/.test(s)) return `'${s}`;
   if (/^-(?!\d)/.test(s)) return `'${s}`;
@@ -108,7 +116,8 @@ function buildRows(
   errors: ImportRowError[];
   duplicatesWithExisting: DuplicateWithExisting[];
 } {
-  const colIndex = (name: string) => QUIZ_TEMPLATE_HEADERS.indexOf(name as never);
+  const colIndex = (name: string) =>
+    QUIZ_TEMPLATE_HEADERS.indexOf(name as never);
 
   const rows: ImportedQuestion[] = [];
   const errors: ImportRowError[] = [];
@@ -356,7 +365,7 @@ export function buildTemplateBuffer(): Buffer {
   ]);
   XLSX.utils.book_append_sheet(wb, petunjuk, 'PETUNJUK');
 
-  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
 }
 
 /** Export soal quiz → workbook (selalu berisi header; boleh tanpa data). */
@@ -382,7 +391,7 @@ export function buildExportBuffer(questions: QuizQuestionShape[]): Buffer {
   const sheet = XLSX.utils.aoa_to_sheet(aoaToSanitizedRows(rows));
   XLSX.utils.book_append_sheet(wb, sheet, 'SOAL');
 
-  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
 }
 
 // ─── MAPPING + APPEND ───────────────────────────────────────────────────────

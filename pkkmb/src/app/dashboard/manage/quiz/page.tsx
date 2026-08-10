@@ -239,7 +239,7 @@ export default function ManageQuizPage() {
               <AlertTriangle className="w-5 h-5 text-red-400" /> Hapus Quiz?
             </h2>
             <p className="text-sm text-white/60 mb-4">
-              <span className="font-semibold">"{deleteTarget.title}"</span> akan dihapus dari daftar aktif.
+              <span className="font-semibold">&ldquo;{deleteTarget.title}&rdquo;</span> akan dihapus dari daftar aktif.
             </p>
             <div className="grid grid-cols-3 gap-2 mb-4 text-sm">
               <div className="bg-white/5 border border-white/10 rounded-xl p-3">

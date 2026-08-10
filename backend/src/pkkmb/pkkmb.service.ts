@@ -2032,8 +2032,7 @@ export class PkkmbService {
     userId: string,
     paginationDto: PaginationDto,
     isPanitia?: boolean,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
+  ) {
     const page = parseInt(paginationDto.page || '1', 10);
     const limit = parseInt(paginationDto.limit || '50', 10);
     const skip = (page - 1) * limit;
@@ -2159,8 +2158,7 @@ export class PkkmbService {
   async getAssignmentDetail(
     assignmentId: string,
     userId: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
+  ): Promise<Record<string, unknown>> {
     const assignment = await this.taskModel
       .findOne({ _id: assignmentId, deletedAt: null, status: 'PUBLISHED' })
       .select(
@@ -2574,11 +2572,7 @@ export class PkkmbService {
 
   // Update assignment (TASK / QUIZ). Untuk QUIZ, quizId tidak boleh diubah
   // jika assignment sudah punya referensi (gunakan assignment baru).
-  async updateAssignment(
-    assignmentId: string,
-    dto: CreateTaskDto,
-    userId: string,
-  ) {
+  async updateAssignment(assignmentId: string, dto: CreateTaskDto) {
     const assignment = await this.taskModel
       .findOne({ _id: assignmentId, deletedAt: null })
       .exec();
@@ -3967,7 +3961,7 @@ export class PkkmbService {
     });
   }
 
-  async updateQuiz(quizId: string, dto: CreateQuizDto, userId: string) {
+  async updateQuiz(quizId: string, dto: CreateQuizDto) {
     const quiz = await this.quizModel
       .findOne({ _id: quizId, deletedAt: null })
       .exec();
@@ -4186,7 +4180,7 @@ export class PkkmbService {
       let isInProgress = false;
       // Attempt IN_PROGRESS milik user (belum expired) — dipakai card list
       // utk tombol "Lanjutkan pengerjaan" langsung ke player tanpa /start.
-      let activeAttemptId: unknown = null;
+      let activeAttemptId: Types.ObjectId | null = null;
       let best: {
         status: string;
         score?: number;
@@ -4229,7 +4223,7 @@ export class PkkmbService {
         maxAttempts: q.maxAttempts,
         passingScore: q.passingScore,
         isInProgress,
-        activeAttemptId: activeAttemptId ? String(activeAttemptId) : null,
+        activeAttemptId: activeAttemptId ? activeAttemptId.toString() : null,
         bestAttempt: best,
       };
     });
@@ -4892,7 +4886,7 @@ export class PkkmbService {
     for (const ev of dto.events) {
       if (!isQuizViolationType(ev.type)) {
         throw new BadRequestException(
-          `Tipe pelanggaran tidak valid: ${ev.type}`,
+          `Tipe pelanggaran tidak valid: ${String(ev.type)}`,
         );
       }
     }
@@ -4964,9 +4958,7 @@ export class PkkmbService {
     // oleh Mongoose untuk field bertipe embedded/mixed.
     attempt.antiCheat = {
       violationCount: ac.violationCount ?? 0,
-      violations: (Array.isArray(ac.violations)
-        ? ac.violations
-        : []) as unknown as typeof attempt.antiCheat.violations,
+      violations: Array.isArray(ac.violations) ? ac.violations : [],
       riskLevel: ac.riskLevel ?? 'LOW',
       lastHeartbeatAt: new Date(),
     };
@@ -5117,6 +5109,9 @@ export class PkkmbService {
     });
   }
 
+  // async tetap dipertahankan: controller & test memanggil dengan await /
+  // .rejects (Promise API), meski implementasinya sinkron saat ini.
+  // eslint-disable-next-line @typescript-eslint/require-await
   async getQuizTemplateBuffer(): Promise<Buffer> {
     return buildTemplateBuffer();
   }
@@ -5148,6 +5143,9 @@ export class PkkmbService {
    * Validasi + parse file import TANPA mengubah database (untuk preview &
    * alur create — soal dipegang di Question Builder, disimpan saat Save Quiz).
    */
+  // async wajib: controller `await` hasilnya & test memakai .rejects (throw
+  // sinkron akan merusak kontrak Promise). Implementasi kebetulan sinkron.
+  // eslint-disable-next-line @typescript-eslint/require-await
   async previewQuizImport(file?: Express.Multer.File) {
     const parsed = this.parseImportOrThrow(file);
     return { total: parsed.validCount, rows: parsed.rows };
@@ -5185,7 +5183,7 @@ export class PkkmbService {
 
     const incoming = toQuizQuestions(parsed.rows);
     const merged = appendQuestions(existing, incoming);
-    quiz.questions = merged as typeof quiz.questions;
+    quiz.questions = merged;
     await quiz.save();
 
     return {

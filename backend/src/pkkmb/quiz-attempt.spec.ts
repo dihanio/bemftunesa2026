@@ -116,11 +116,9 @@ function buildService(
         if (filter && filter.status === 'IN_PROGRESS') {
           // startQuiz: attempt aktif milik user
           return {
-            sort: jest
-              .fn()
-              .mockReturnValue({
-                exec: jest.fn().mockResolvedValue(activeAttempt),
-              }),
+            sort: jest.fn().mockReturnValue({
+              exec: jest.fn().mockResolvedValue(activeAttempt),
+            }),
           };
         }
         if (filter && filter._id) {
@@ -210,7 +208,7 @@ function buildService(
     {} as never,
   );
   return {
-    svc: svc as PkkmbService,
+    svc: svc,
     quizModel,
     quizAttemptModel,
     userModel,
@@ -593,9 +591,10 @@ describe('PkkmbService — getQuizDetail', () => {
 
   test('dispatcher: maba → getStudentQuizDetail, management → penuh', async () => {
     const { svc } = buildService({});
+    const canStart: unknown = expect.any(Boolean);
     await expect(
       svc.getQuizDetail(QUIZ_ID, USER_ID, 'user'),
-    ).resolves.toMatchObject({ canStart: expect.any(Boolean) });
+    ).resolves.toMatchObject({ canStart });
     const mgmt = (await svc.getQuizDetail(QUIZ_ID, USER_ID, 'sekretaris')) as {
       questions?: unknown;
     };

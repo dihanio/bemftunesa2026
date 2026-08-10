@@ -16,21 +16,14 @@ const HEADER = [...QUIZ_TEMPLATE_HEADERS];
 function makeBuffer(rows: unknown[][]): Buffer {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), 'SOAL');
-  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  return XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
 }
 
-const validRow = (q: string): unknown[] => [
-  q,
-  'A',
-  'B',
-  'C',
-  'D',
-  'A',
-  10,
-  1,
-];
+const validRow = (q: string): unknown[] => [q, 'A', 'B', 'C', 'D', 'A', 10, 1];
 
-function makeFile(over: Partial<Express.Multer.File> = {}): Express.Multer.File {
+function makeFile(
+  over: Partial<Express.Multer.File> = {},
+): Express.Multer.File {
   const buf = makeBuffer([HEADER, validRow('Q1'), validRow('Q2')]);
   return {
     originalname: 'test.xlsx',
@@ -85,7 +78,7 @@ function buildService(quizOverrides: {
     {} as never,
     {} as never,
   );
-  return { svc: svc as PkkmbService, quizModel };
+  return { svc: svc, quizModel };
 }
 
 describe('PkkmbService — previewQuizImport', () => {
@@ -159,9 +152,16 @@ describe('PkkmbService — importQuizQuestions (APPEND existing)', () => {
   test('invalid → 422 dan quiz TIDAK tersentuh', async () => {
     const quiz = makeQuizDoc(existing);
     const { svc } = buildService({ quiz });
-    const bad = makeBuffer([HEADER, validRow('Q1'), ['', 'A', 'B', 'C', 'D', 'A', 10, 1]]);
+    const bad = makeBuffer([
+      HEADER,
+      validRow('Q1'),
+      ['', 'A', 'B', 'C', 'D', 'A', 10, 1],
+    ]);
     await expect(
-      svc.importQuizQuestions('quiz123abc', makeFile({ buffer: bad, size: bad.length })),
+      svc.importQuizQuestions(
+        'quiz123abc',
+        makeFile({ buffer: bad, size: bad.length }),
+      ),
     ).rejects.toThrow(UnprocessableEntityException);
     expect(quiz.save).not.toHaveBeenCalled();
     expect(quiz.questions).toHaveLength(3);
@@ -170,11 +170,7 @@ describe('PkkmbService — importQuizQuestions (APPEND existing)', () => {
   test('duplikat dgn soal existing → 422 + daftar duplicates, quiz TIDAK berubah', async () => {
     const quiz = makeQuizDoc([existing[0]]); // existing berisi 'Old1'
     const { svc } = buildService({ quiz });
-    const dup = makeBuffer([
-      HEADER,
-      validRow('Old1'),
-      validRow('Q2'),
-    ]);
+    const dup = makeBuffer([HEADER, validRow('Old1'), validRow('Q2')]);
     const file = makeFile({ buffer: dup, size: dup.length });
     try {
       await svc.importQuizQuestions('quiz123abc', file);
@@ -215,7 +211,10 @@ describe('PkkmbService — importQuizQuestions (APPEND existing)', () => {
     const { svc } = buildService({ quiz });
     const big = Buffer.alloc(6 * 1024 * 1024);
     await expect(
-      svc.importQuizQuestions('quiz123abc', makeFile({ buffer: big, size: big.length })),
+      svc.importQuizQuestions(
+        'quiz123abc',
+        makeFile({ buffer: big, size: big.length }),
+      ),
     ).rejects.toThrow(BadRequestException);
     expect(quiz.save).not.toHaveBeenCalled();
   });
@@ -233,9 +232,7 @@ describe('PkkmbService — exportQuizQuestions', () => {
     const quiz = makeQuizDoc(existing());
     const { svc } = buildService({ quiz });
     const result = await svc.exportQuizQuestions('quiz123abc');
-    expect(result.filename).toMatch(
-      /^quiz-Quiz-Test-123abc-questions\.xlsx$/,
-    );
+    expect(result.filename).toMatch(/^quiz-Quiz-Test-123abc-questions\.xlsx$/);
     const wb = XLSX.read(result.buffer, { type: 'buffer' });
     expect(wb.SheetNames.some((n) => n.toUpperCase() === 'SOAL')).toBe(true);
   });
