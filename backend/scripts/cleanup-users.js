@@ -201,20 +201,36 @@ async function main() {
       console.log(`  ⚠️  ${name}: orphan cleanup skip (${e.message.slice(0, 70)})`);
     }
   }
-  // gugus: pendampingId selain keep → null
+  // Referensi struktural → null. Field bisa tersimpan sebagai STRING atau ObjectId
+  // (lihat data gugus: pendampingId string), jadi query kedua tipe sekaligus.
+  const nullOrphanRef = async (col, field, set) => {
+    const coll = db.collection(col);
+    const docs = await coll.find({ [field]: { $exists: true, $ne: null } }, { projection: { [field]: 1 } }).toArray();
+    const refs = [...new Set(docs.map((d) => String(d[field])).filter((v) => v !== String(keepId)))];
+    if (refs.length === 0) return 0;
+    const byString = { [field]: { $in: refs } };
+    const byOid = { [field]: { $in: refs.map((r) => new ObjectId(r)) } };
+    let r = await coll.updateMany(byString, { $set: set });
+    const r2 = await coll.updateMany(byOid, { $set: set });
+    return r.modifiedCount + r2.modifiedCount;
+  };
+
   try {
-    const coll = db.collection('pkkmb_gugus');
-    const docs = await coll.find({ pendampingId: { $exists: true, $ne: null } }, { projection: { pendampingId: 1 } }).toArray();
-    const refs = [...new Set(docs.map((d) => String(d.pendampingId)).filter((v) => v !== String(keepId)))];
-    if (refs.length > 0) {
-      const r = await coll.updateMany(
-        { pendampingId: { $in: refs.map((r2) => new ObjectId(r2)) } },
-        { $set: { pendampingId: null, pendampingEmail: null, pendampingName: null, pendampingWhatsApp: null } },
-      );
-      if (r.modifiedCount > 0) console.log(`  🧹 pkkmb_gugus: ${r.modifiedCount} pendamping orphan → null`);
-    }
+    const n = await nullOrphanRef('pkkmb_gugus', 'pendampingId', {
+      pendampingId: null,
+      pendampingEmail: null,
+      pendampingName: null,
+      pendampingWhatsApp: null,
+    });
+    if (n > 0) console.log(`  🧹 pkkmb_gugus: ${n} pendamping orphan → null`);
   } catch (e) {
     console.log(`  ⚠️  pkkmb_gugus: ${e.message.slice(0, 70)}`);
+  }
+  try {
+    const n = await nullOrphanRef('pkkmb_attendance_sessions', 'createdBy', { createdBy: null });
+    if (n > 0) console.log(`  🧹 pkkmb_attendance_sessions: ${n} createdBy orphan → null`);
+  } catch (e) {
+    console.log(`  ⚠️  pkkmb_attendance_sessions: ${e.message.slice(0, 70)}`);
   }
 
   const remain = await db.collection('users').find({}).toArray();
