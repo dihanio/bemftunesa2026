@@ -411,7 +411,7 @@ export default function StorySection() {
                 className="relative mb-12 last:mb-0 pl-8 group"
               >
                 <div className="absolute left-[17px] top-2 w-4 h-4 rounded-full bg-black border-2 border-gold-500 z-10 group-hover:bg-gold-500 transition-colors" />
-                <div className="bg-white/5 border border-white/10 p-6 rounded-xl">
+                <div className="border-l border-gold-500/25 pl-5">
                   <span className="text-gold-400 font-display text-xs font-bold tracking-widest uppercase mb-1 block">
                     {event.phase}
                   </span>

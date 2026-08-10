@@ -50,7 +50,7 @@ export default function HeroSection() {
           alt="Gedung Fakultas Teknik Universitas Negeri Surabaya"
           fill
           priority
-          quality={90}
+          quality={75}
           className="object-cover object-center"
           sizes="100vw"
         />
