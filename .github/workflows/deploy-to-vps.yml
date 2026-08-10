@@ -58,6 +58,11 @@ jobs:
             echo "=> remote: invoke vps_deploy.sh"
             GITHUB_SHA="$DEPLOY_SHA" GITHUB_REF=${{ github.ref }} ./scripts/deploy/vps_deploy.sh "$DEPLOY_SHA"
 
+            echo "=> remote: seed RBAC (idempotent) — sync permission quiz & role"
+            docker compose -f docker-compose.yml exec -T api \
+              node dist/src/database/seeders/seed-rbac.js || \
+              echo "WARN: seed:rbac gagal — jalankan manual di VPS (npm run seed:rbac)"
+
       - name: Fetch remote logs (last 2000 lines)
         uses: appleboy/ssh-action@v0.1.8
         with:
