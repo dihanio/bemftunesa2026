@@ -93,15 +93,17 @@ interface TimelineEvent {
   period: string;
   description: string;
   comingSoon?: boolean;
+  completed?: boolean;
 }
 
 const TIMELINE: TimelineEvent[] = [
   {
     phase: "Pra-PKKMB FT",
     title: "Technical Meeting",
-    period: "Coming Soon",
-    description: "Pengarahan teknis, pembagian kelompok, persiapan atribut tingkat Fakultas, serta aktivasi portal mahasiswa. Tanggal pelaksanaan akan diumumkan segera.",
-    comingSoon: true,
+    period: "7 Agustus 2026",
+    description:
+      "Pengarahan teknis, pembagian kelompok, persiapan atribut tingkat Fakultas, serta aktivasi portal mahasiswa.",
+    completed: true,
   },
   {
     phase: "Pra-PKKMB Univ",
@@ -396,6 +398,12 @@ export default function StorySection() {
                           Coming Soon
                         </span>
                       )}
+                      {event.completed && (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-white/15 bg-white/5 text-white/50 text-[10px] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                          Selesai
+                        </span>
+                      )}
                     </span>
                     <h4 className="font-display text-xl xl:text-3xl text-white font-bold group-hover:text-gold-300 transition-colors whitespace-pre-line">
                       {event.title}
@@ -440,6 +448,12 @@ export default function StorySection() {
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-[9px] font-bold">
                         <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
                         Coming Soon
+                      </span>
+                    )}
+                    {event.completed && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-white/15 bg-white/5 text-white/50 text-[9px] font-bold">
+                        <span className="w-1 h-1 rounded-full bg-white/30" />
+                        Selesai
                       </span>
                     )}
                   </span>
