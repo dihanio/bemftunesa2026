@@ -71,6 +71,21 @@ export class UpsertHealthProfileDto {
   @IsBoolean()
   hasMedicalHistory: boolean;
 
+  @ApiPropertyOptional({
+    description: 'Merupakan mahasiswa dengan disabilitas? (default false)',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isDisabled?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Jenis/keterangan disabilitas (wajib jika isDisabled=true)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  disabilityDescription?: string;
+
   @ApiPropertyOptional({ description: 'Nomor BPJS (11-13 digit)' })
   @IsOptional()
   @IsString()

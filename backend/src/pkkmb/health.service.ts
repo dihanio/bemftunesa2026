@@ -103,6 +103,8 @@ export class HealthService {
 
     return {
       hasMedicalHistory: profile?.hasMedicalHistory ?? false,
+      isDisabled: profile?.isDisabled ?? false,
+      disabilityDescription: profile?.disabilityDescription ?? null,
       bpjsNumber: profile?.bpjsNumber ?? null,
       bpjsStatus: profile?.bpjsStatus ?? null,
       emergencyContact: profile
@@ -140,6 +142,11 @@ export class HealthService {
   }
 
   async upsertProfile(userId: string, dto: UpsertHealthProfileDto) {
+    if (dto.isDisabled && !dto.disabilityDescription?.trim()) {
+      throw new BadRequestException(
+        'Keterangan jenis disabilitas wajib diisi.',
+      );
+    }
     const profile = await this.profileModel.findOne({ studentId: userId });
 
     // Resolve each record to a master condition id.
@@ -186,6 +193,10 @@ export class HealthService {
     const payload = {
       studentId: new Types.ObjectId(userId),
       hasMedicalHistory: dto.hasMedicalHistory,
+      isDisabled: dto.isDisabled ?? false,
+      disabilityDescription: dto.isDisabled
+        ? dto.disabilityDescription || undefined
+        : undefined,
       bpjsNumber: dto.bpjsNumber || undefined,
       bpjsStatus: dto.bpjsStatus || undefined,
       emergencyContactName: dto.emergencyContactName,

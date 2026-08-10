@@ -54,6 +54,7 @@ export default function ConsentStep({
     recordsCount: number;
     emergencyContactName: string;
     emergencyContactRelation: string;
+    disability: string;
     healthReady: boolean;
   }>({
     overallRiskLevel: "-",
@@ -61,6 +62,7 @@ export default function ConsentStep({
     recordsCount: 0,
     emergencyContactName: "-",
     emergencyContactRelation: "-",
+    disability: "Tidak",
     healthReady: true,
   });
 
@@ -76,6 +78,7 @@ export default function ConsentStep({
           recordsCount: (p.records || []).length,
           emergencyContactName: p.emergencyContact?.name || "-",
           emergencyContactRelation: p.emergencyContact?.relation || "-",
+          disability: p.isDisabled ? "Ya" + (p.disabilityDescription ? ` — ${p.disabilityDescription}` : "") : "Tidak",
           healthReady: p.hasMedicalHistory === false || (p.records || []).length > 0 || p.hasMedicalHistory !== undefined,
         });
       })
@@ -143,6 +146,7 @@ export default function ConsentStep({
         <SummaryRow label="Program Studi" value={summary.studyProgram} />
         <SummaryRow label="No. WhatsApp" value={summary.phone} />
         <SummaryRow label="Kontak Darurat" value={health.emergencyContactName !== "-" ? `${health.emergencyContactName} (${health.emergencyContactRelation})` : "-"} />
+        <SummaryRow label="Disabilitas" value={health.disability} />
         <SummaryRow label="Data Kesehatan" value={`${health.recordsCount} riwayat · risiko ${health.overallRiskLevel} · BPJS ${health.bpjs}`} />
         <SummaryRow label="Pasfoto" value={summary.pasfotoReady ? "Sudah diunggah" : "Belum"} />
       </div>

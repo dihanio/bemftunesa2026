@@ -27,6 +27,12 @@ export class HealthProfile {
   @Prop({ default: false })
   hasMedicalHistory: boolean;
 
+  @Prop({ default: false })
+  isDisabled: boolean;
+
+  @Prop()
+  disabilityDescription?: string;
+
   @Prop()
   bpjsNumber?: string;
 

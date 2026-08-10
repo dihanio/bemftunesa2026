@@ -59,6 +59,10 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
   const [records, setRecords] = useState<HealthRecord[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
+  // Disabilitas
+  const [disability, setDisability] = useState<"yes" | "no" | null>(null);
+  const [disabilityDesc, setDisabilityDesc] = useState("");
+
   // BPJS
   const [bpjs, setBpjs] = useState<"yes" | "no" | null>(null);
   const [bpjsNumber, setBpjsNumber] = useState("");
@@ -81,6 +85,8 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
         const d = JSON.parse(raw);
         if (d.hasHistory) setHasHistory(d.hasHistory);
         if (Array.isArray(d.records)) setRecords(d.records);
+        if (d.disability) setDisability(d.disability);
+        if (typeof d.disabilityDesc === "string") setDisabilityDesc(d.disabilityDesc);
         if (d.bpjs) setBpjs(d.bpjs);
         if (typeof d.bpjsNumber === "string") setBpjsNumber(d.bpjsNumber);
         if (typeof d.bpjsStatus === "string") setBpjsStatus(d.bpjsStatus);
@@ -100,6 +106,8 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
         JSON.stringify({
           hasHistory,
           records,
+          disability,
+          disabilityDesc,
           bpjs,
           bpjsNumber,
           bpjsStatus,
@@ -109,7 +117,7 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
         }),
       );
     } catch {}
-  }, [hasHistory, records, bpjs, bpjsNumber, bpjsStatus, emergencyName, emergencyRelation, emergencyPhone, hydrated]);
+  }, [hasHistory, records, disability, disabilityDesc, bpjs, bpjsNumber, bpjsStatus, emergencyName, emergencyRelation, emergencyPhone, hydrated]);
 
   useEffect(() => {
     if (!relOpen) return;
@@ -194,6 +202,21 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
       setTimeout(() => setError(null), 4000);
       return;
     }
+    if (!disability) {
+      setError("Pilih status disabilitas terlebih dahulu.");
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
+    if (disability === "yes" && !disabilityDesc.trim()) {
+      setError("Lengkapi keterangan jenis disabilitas.");
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
+    if (disability === "yes" && disabilityDesc.trim().length > 300) {
+      setError("Keterangan disabilitas maksimal 300 karakter.");
+      setTimeout(() => setError(null), 4000);
+      return;
+    }
     if (bpjs === "yes") {
       const digits = bpjsNumber.replace(/\D/g, "");
       if (digits.length < 11 || digits.length > 13) {
@@ -207,6 +230,8 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
     try {
       const payload = {
         hasMedicalHistory: hasHistory === "yes",
+        isDisabled: disability === "yes",
+        disabilityDescription: disability === "yes" ? disabilityDesc.trim() : undefined,
         bpjsNumber: bpjs === "yes" ? digits(bpjsNumber) : undefined,
         bpjsStatus: bpjs === "yes" ? bpjsStatus || "Aktif" : undefined,
         emergencyContactName: emergencyName,
@@ -361,6 +386,41 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
         )}
       </div>
 
+      {/* Disabilitas */}
+      <div className="space-y-3">
+        <p className="font-bold text-white">Apakah Anda merupakan mahasiswa dengan disabilitas?</p>
+        <p className="text-xs text-white/40">
+          Informasi ini digunakan panitia untuk menyediakan akomodasi yang sesuai selama kegiatan PKKMB (misal: prioritas tempat duduk, pendamping khusus). Hanya tim yang berwenang yang dapat mengaksesnya.
+        </p>
+        <div className="flex gap-3">
+          {(["yes", "no"] as const).map((opt) => (
+            <label key={opt} className={`flex-1 flex items-center gap-2 border rounded-xl px-5 py-3 cursor-pointer transition-all ${disability === opt ? "bg-gold-500/10 border-gold-500 text-gold-400 font-bold" : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10"}`}>
+              <input type="radio" name="disability" checked={disability === opt} onChange={() => setDisability(opt)} className="accent-gold-500" />
+              {opt === "yes" ? "Ya" : "Tidak"}
+            </label>
+          ))}
+        </div>
+        {disability === "yes" && (
+          <div>
+            <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">Jenis / Keterangan Disabilitas</label>
+            <input
+              type="text"
+              value={disabilityDesc}
+              onChange={(e) => setDisabilityDesc(e.target.value)}
+              maxLength={300}
+              className="w-full px-4 py-2.5 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500"
+              placeholder="cth. Disabilitas fisik (kursi roda), tuna netra, tuna rungu, dll."
+            />
+          </div>
+        )}
+        {disability === "no" && (
+          <div className="flex items-center gap-2 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>Anda menyatakan bukan mahasiswa dengan disabilitas.</span>
+          </div>
+        )}
+      </div>
+
       {/* BPJS */}
       <div className="space-y-3">
         <p className="font-bold text-white">Apakah Anda memiliki BPJS Kesehatan?</p>
@@ -452,6 +512,7 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
       {/* Ringkasan & klasifikasi risiko */}
       <div className="p-5 rounded-2xl bg-gradient-to-b from-gold-500/10 to-transparent border border-gold-500/20 space-y-2">
         <p className="font-bold text-white">Ringkasan Profil Kesehatan</p>
+        <p className="text-sm text-white/60">Disabilitas: <strong className="text-white">{disability === "yes" ? "Ya" + (disabilityDesc ? ` — ${disabilityDesc}` : "") : disability === "no" ? "Tidak" : "Tidak diisi"}</strong></p>
         <p className="text-sm text-white/60">Jumlah riwayat penyakit: <strong className="text-white">{records.length}</strong></p>
         <p className="text-sm text-white/60">Status risiko (otomatis): <strong className={riskColor(riskLabel)}>{riskLabel}</strong></p>
         <p className="text-sm text-white/60">BPJS: <strong className="text-white">{bpjs === "yes" ? "Terdaftar" : bpjs === "no" ? "Tidak memiliki" : "Tidak diisi"}</strong></p>
