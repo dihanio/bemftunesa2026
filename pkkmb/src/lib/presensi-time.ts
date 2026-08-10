@@ -8,9 +8,15 @@ export function formatWIB(
   iso: string | number | Date,
   opts: Intl.DateTimeFormatOptions = {}
 ): string {
+  // ECMA-402: timeZoneName tidak boleh digabung dengan dateStyle/timeStyle
+  // (RangeError: Invalid option). Hanya sertakan timeZoneName untuk opsi
+  // field-by-field (hour/minute/day dst) — style dateStyle/timeStyle berjalan
+  // tanpa timeZoneName.
+  const hasStyle =
+    "dateStyle" in opts || "timeStyle" in opts;
   return new Intl.DateTimeFormat("id-ID", {
     timeZone: WIB_TZ,
-    timeZoneName: "short",
+    ...(hasStyle ? {} : { timeZoneName: "short" }),
     ...opts,
   }).format(new Date(iso));
 }
