@@ -21,7 +21,7 @@ const FAQ_DATA: FaqItem[] = [
     id: "faq-2",
     question: "Bagaimana sistem presensi harian bekerja?",
     answer:
-      "Presensi dilakukan secara mandiri (self-check-in) melalui Portal Maba menggunakan sistem validasi lokasi (GPS Geofencing). Anda hanya perlu menekan tombol 'Absen' saat berada di dalam radius 50 meter dari titik kumpul yang ditentukan panitia, tanpa perlu melakukan scan QR Code.",
+      "Presensi dilakukan secara mandiri (self-check-in) melalui Portal Maba. Anda memilih sesi yang sedang berlangsung, lalu mengambil selfie untuk verifikasi kehadiran, tanpa perlu scan QR Code.",
   },
   {
     id: "faq-3",

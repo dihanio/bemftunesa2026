@@ -1,0 +1,10 @@
+const { MongoClient } = require('/home/nio/Proyek/Pribadi/bemft-unesa-web/node_modules/mongodb');
+const uri='mongodb://admin:password@localhost:27017/bemft-cms?authSource=admin';
+(async()=>{ const c=new MongoClient(uri); await c.connect(); const db=c.db('bemft-cms');
+  const a=await db.collection('users').findOne({email:'test.qmabaa@mhs.unesa.ac.id'});
+  const atts=await db.collection('pkkmb_quiz_attempts').find({userId:a._id}).toArray();
+  console.log('attempts MABA_A:', atts.length);
+  for(const at of atts) console.log('  quiz', at.quizId, 'status', at.status, 'num', at.attemptNumber, 'created', new Date(at.createdAt).toISOString());
+  const quizzes=await db.collection('pkkmb_quizzes').find({}).project({title:1,status:1}).toArray();
+  console.log('quizzes:', quizzes.map(q=>`${q.title}:${q.status}`).join(' | '));
+  await c.close(); })();

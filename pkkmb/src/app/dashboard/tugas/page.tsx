@@ -88,6 +88,8 @@ export default function TugasMabaPage() {
 
   const isDeadlinePassed = (deadline: string) => new Date() > new Date(deadline);
 
+  const hasSubmittedForSelected = selectedTask ? !!getSubmissionForTask(selectedTask._id) : false;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask) return;
@@ -130,9 +132,10 @@ export default function TugasMabaPage() {
     }
   };
 
-  const canSubmitTask = (task: Task) => {
+  const canSubmitTask = (task: Task, hasSubmitted: boolean) => {
     if (task.type === "kelompok" && !isKetuaGugus) return false;
-    if (isDeadlinePassed(task.deadline)) return false; // Hard deadline config needed, but assuming strict deadline for now
+    // Sudah submit: tidak boleh diubah setelah deadline lewat (backend juga menolak).
+    if (hasSubmitted && isDeadlinePassed(task.deadline)) return false;
     return true;
   };
 
@@ -170,6 +173,7 @@ export default function TugasMabaPage() {
           {tasks.map((task) => {
             const submission = getSubmissionForTask(task._id);
             const isLate = isDeadlinePassed(task.deadline) && !submission;
+            const isLateSubmitted = submission?.status === 'LATE';
             const hasSubmitted = !!submission;
             const isGraded = submission?.status === 'GRADED';
 
@@ -181,6 +185,10 @@ export default function TugasMabaPage() {
               statusColor = "bg-green-500/10 border-green-500/30 text-green-400";
               StatusIcon = CheckCircle2;
               statusText = `Dinilai (${submission.score}/100)`;
+            } else if (isLateSubmitted) {
+              statusColor = "bg-red-500/10 border-red-500/30 text-red-400";
+              StatusIcon = AlertTriangle;
+              statusText = "Terlambat";
             } else if (hasSubmitted) {
               statusColor = "bg-blue-500/10 border-blue-500/30 text-blue-400";
               StatusIcon = CheckCircle2;
@@ -231,9 +239,9 @@ export default function TugasMabaPage() {
                   {!isGraded && (
                     <button
                       onClick={() => setSelectedTask(task)}
-                      disabled={!canSubmitTask(task) && !hasSubmitted}
+                      disabled={!canSubmitTask(task, hasSubmitted)}
                       className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                        canSubmitTask(task) || hasSubmitted
+                        canSubmitTask(task, hasSubmitted) || hasSubmitted
                           ? "bg-gold-500 hover:bg-gold-400 text-black"
                           : "bg-white/10 text-white/30 cursor-not-allowed"
                       }`}
@@ -269,7 +277,7 @@ export default function TugasMabaPage() {
 
             <p className="text-sm text-white/70 mb-6 leading-relaxed whitespace-pre-wrap">{selectedTask.description}</p>
 
-            {(!canSubmitTask(selectedTask) && selectedTask.type === 'kelompok' && !isKetuaGugus) ? (
+            {(!canSubmitTask(selectedTask, hasSubmittedForSelected) && selectedTask.type === 'kelompok' && !isKetuaGugus) ? (
                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-sm mb-6">
                  Maaf, hanya Ketua Gugus yang dapat melakukan pengumpulan (submit) untuk tugas kelompok.
                </div>

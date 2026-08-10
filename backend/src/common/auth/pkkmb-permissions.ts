@@ -39,6 +39,14 @@ export enum PkkmbPermission {
   TASK_DELETE = 'pkkmb.task.delete',
   TASK_SUBMIT = 'pkkmb.task.submit',
 
+  // Quiz (Pretest/Posttest/Material)
+  QUIZ_READ = 'pkkmb.quiz.read',
+  QUIZ_CREATE = 'pkkmb.quiz.create',
+  QUIZ_UPDATE = 'pkkmb.quiz.update',
+  QUIZ_DELETE = 'pkkmb.quiz.delete',
+  QUIZ_SUBMIT = 'pkkmb.quiz.submit',
+  QUIZ_RESULT = 'pkkmb.quiz.result',
+
   // Groups & Mentoring (Sie Pendamping / Mentor)
   GROUP_READ_ALL = 'pkkmb.group.read_all',
   GROUP_READ_OWN = 'pkkmb.group.read_own',
@@ -46,7 +54,18 @@ export enum PkkmbPermission {
   GROUP_UPDATE = 'pkkmb.group.update',
   GROUP_ASSIGN_MENTOR = 'pkkmb.group.assign_mentor',
 
+  // Presensi (granular — bukan "manage" tunggal):
+  //   read     -> panitia/divisi (read-only)
+  //   session_create -> KSK/sekretaris/admin buat sesi
+  //   update    -> KSK/sekretaris/admin buka/tutup sesi, verifikasi izin
+  //   delete    -> ADMIN/SUPER_ADMIN saja (privilege sensitif)
+  //   export    -> KSK/admin (jika endpoint export tersedia)
+  //   checkin   -> maba & operator check-in
+  ATTENDANCE_READ = 'pkkmb.attendance.read',
   ATTENDANCE_SESSION_CREATE = 'pkkmb.attendance.session_create',
+  ATTENDANCE_UPDATE = 'pkkmb.attendance.update',
+  ATTENDANCE_DELETE = 'pkkmb.attendance.delete',
+  ATTENDANCE_EXPORT = 'pkkmb.attendance.export',
   ATTENDANCE_CHECKIN = 'pkkmb.attendance.checkin',
 
   // Registration & Operator
@@ -63,6 +82,17 @@ export enum PkkmbPermission {
   PROFILE_READ_OWN = 'pkkmb.profile.read_own',
   PROFILE_UPDATE_OWN = 'pkkmb.profile.update_own',
   PROFILE_READ_ALL = 'pkkmb.profile.read_all',
+
+  // Health data (sensitive — tim kesehatan / admin)
+  HEALTH_READ_OWN = 'pkkmb.health.read_own',
+  HEALTH_WRITE_OWN = 'pkkmb.health.write_own',
+  HEALTH_READ_ALL = 'pkkmb.health.read_all',
+  HEALTH_MANAGE = 'pkkmb.health.manage',
+
+  // Onboarding consent & signature
+  CONSENT_WRITE_OWN = 'pkkmb.consent.write_own',
+  CONSENT_READ_OWN = 'pkkmb.consent.read_own',
+  CONSENT_READ_ALL = 'pkkmb.consent.read_all',
 
   // Super Admin Wildcard Permission
   MANAGE_ALL = 'manage:all',

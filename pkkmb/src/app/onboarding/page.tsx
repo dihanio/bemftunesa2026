@@ -7,7 +7,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  Info,
   CheckCircle2,
   LogOut,
   ScanLine,
@@ -17,6 +16,8 @@ import {
 } from "lucide-react";
 
 import PhotoCropDialog from "@/components/onboarding/PhotoCropDialog";
+import HealthStep, { type HealthStepHandle } from "@/components/onboarding/HealthStep";
+import ConsentStep from "@/components/onboarding/ConsentStep";
 
 // Decode QR dari file gambar (jpg/png) via jsQR.
 async function decodeQrFromImage(file: File): Promise<string | null> {
@@ -74,10 +75,13 @@ export default function OnboardingPage() {
   // KTMS
   const [ktmFile, setKtmFile] = useState<File | null>(null);
   const [ktmPreviewUrl, setKtmPreviewUrl] = useState<string | null>(null);
+  const [ktmStored, setKtmStored] = useState<string | null>(null);
   const [ocrStatus, setOcrStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [qrResult, setQrResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [qrScanning, setQrScanning] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const healthRef = useRef<HealthStepHandle>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   // Pasfoto
   const [croppedAvatarBlob, setCroppedAvatarBlob] = useState<Blob | null>(null);
@@ -92,7 +96,6 @@ export default function OnboardingPage() {
     address: "",
     gender: "",
     phone: "",
-    emergencyContact: "",
   });
 
   const [onboardedGroup, setOnboardedGroup] = useState<{ nomor: number; name: string } | null>(null);
@@ -124,17 +127,102 @@ export default function OnboardingPage() {
     fetchProfile();
   }, [router]);
 
+  // Restore progres onboarding dari localStorage (auto-save saat refresh).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("onboardingProgress");
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          step?: number;
+          formData?: Partial<typeof formData>;
+          ocrStatus?: typeof ocrStatus;
+          ktmPreviewUrl?: string;
+          ktmFileName?: string;
+          ktmFileType?: string;
+          qrResult?: { ok: boolean; text: string } | null;
+          ktmStored?: string;
+        };
+        // Step 5/6 (persetujuan/selesai) bersifat transient — buang progres,
+        // user harus mulai dari awal (mis. setelah reset akun).
+        if (saved.step && saved.step < 5) {
+          setStep(saved.step);
+          if (saved.formData) {
+            setFormData((f) => ({ ...f, ...saved.formData }));
+            if (saved.formData.studyProgram) setSearchDept(saved.formData.studyProgram);
+          }
+          if (saved.ocrStatus) setOcrStatus(saved.ocrStatus);
+          if (saved.ktmStored) {
+            setKtmStored(saved.ktmStored);
+            setKtmPreviewUrl(saved.ktmStored);
+            setOcrStatus("done");
+            const mime =
+              saved.ktmStored.split(";")[0]?.replace("data:", "") ||
+              saved.ktmFileType ||
+              "image/jpeg";
+            const name = saved.ktmFileName || "ktm";
+            const ext = mime === "application/pdf" ? ".pdf" : ".jpg";
+            try {
+              const data = saved.ktmStored.split(",")[1] || "";
+              const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+              setKtmFile(new File([bytes], name.endsWith(".pdf") || name.endsWith(".jpg") ? name : name + ext, { type: mime }));
+            } catch {
+              setKtmFile(null);
+            }
+          } else if (saved.ktmPreviewUrl) {
+            setKtmPreviewUrl(saved.ktmPreviewUrl);
+          }
+          if (saved.qrResult) {
+            setQrResult(saved.qrResult);
+            // ponytail: QR berisi NIM; gabung ke formData (jangan menimpa field
+            // lain) agar step 1 bisa lanjut setelah refresh.
+            if (saved.qrResult.ok) {
+              setFormData((f) => ({ ...f, nim: saved.qrResult!.text || f.nim }));
+            }
+          }
+        }
+        // Sesi selesai → buang progres + pasfoto, mulai dari awal.
+        if (saved.step && saved.step >= 5) {
+          try { localStorage.removeItem("onboardingProgress"); } catch {}
+          try { localStorage.removeItem("onboardingAvatarBase64"); } catch {}
+        }
+      }
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  // Simpan progres ke localStorage setiap kali berubah.
+  useEffect(() => {
+    // jangan nimpa data tersimpan sebelum restore (hydration) selesai
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(
+        "onboardingProgress",
+        JSON.stringify({
+          step,
+          formData,
+          ocrStatus,
+          ktmStored,
+          ktmFileName: ktmFile?.name,
+          ktmFileType: ktmFile?.type,
+          qrResult,
+        }),
+      );
+    } catch {}
+  }, [step, formData, ocrStatus, ktmStored, ktmFile, qrResult, hydrated]);
+
   // Restore pasfoto dari localStorage.
   useEffect(() => {
     const savedAvatar = localStorage.getItem("onboardingAvatarBase64");
     if (savedAvatar) {
-      fetch(savedAvatar)
-        .then((r) => r.blob())
-        .then((blob) => {
-          setCroppedAvatarBlob(blob);
-          setCroppedAvatarUrl(savedAvatar);
-        })
-        .catch(console.error);
+      setCroppedAvatarUrl(savedAvatar);
+      const mime = savedAvatar.split(";")[0]?.replace("data:", "") || "image/jpeg";
+      try {
+        const data = savedAvatar.split(",")[1] || "";
+        const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+        setCroppedAvatarBlob(new Blob([bytes], { type: mime }));
+      } catch (e) {
+        console.error(e);
+      }
     }
   }, []);
 
@@ -146,9 +234,30 @@ export default function OnboardingPage() {
       reader.onerror = (err) => reject(err);
     });
 
+  // Kompres gambar (KTMS/pasfoto) via canvas jadi JPEG agar hemat localStorage.
+  const compressImage = (file: File, maxSize = 1600, quality = 0.7) =>
+    new Promise<string>((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new window.Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = (err) => {
+        URL.revokeObjectURL(url);
+        reject(err);
+      };
+      img.src = url;
+    });
+
   useEffect(() => {
     if (croppedAvatarBlob) {
-      toBase64(croppedAvatarBlob)
+      compressImage(new File([croppedAvatarBlob], "avatar.jpg", { type: croppedAvatarBlob.type || "image/jpeg" }), 800, 0.75)
         .then((b64) => {
           try {
             localStorage.setItem("onboardingAvatarBase64", b64);
@@ -172,6 +281,19 @@ export default function OnboardingPage() {
     setOcrStatus("loading");
     setError(null);
     setQrResult(null);
+
+    // Simpan file KTMS (terkompresi utk gambar) ke localStorage agar bisa
+    // di-download ulang setelah refresh. PDF disimpan apa adanya (blob: tidak
+    // persist, jadi konversi base64).
+    try {
+      const stored =
+        file.type.startsWith("image/") && !file.type.includes("svg")
+          ? await compressImage(file)
+          : await toBase64(file);
+      setKtmStored(stored);
+    } catch {
+      setKtmStored(null);
+    }
 
     // Coba decode QR untuk NIM (opsional, tambahan).
     if (file.type.startsWith("image/")) {
@@ -239,26 +361,20 @@ export default function OnboardingPage() {
     setStep(2);
   };
 
-  // ── STEP 2: Konfirmasi data OCR ──────────────────────────
+  // ── STEP 2: Konfirmasi data OCR + Data tambahan → STEP 3 (Kesehatan) ──
   const goToStep3 = () => {
     if (!formData.name || !formData.nim || !formData.studyProgram) {
       setError("Nama, NIM, dan Program Studi wajib diisi.");
       setTimeout(() => setError(null), 4000);
       return;
     }
-    setError(null);
-    setStep(3);
-  };
-
-  // ── STEP 3: Data tambahan ────────────────────────────────
-  const goToStep4 = () => {
-    if (!formData.gender || !formData.phone || !formData.emergencyContact) {
-      setError("Lengkapi jenis kelamin, No. WhatsApp, dan No. Darurat.");
+    if (!formData.gender || !formData.phone) {
+      setError("Lengkapi jenis kelamin dan No. WhatsApp aktif.");
       setTimeout(() => setError(null), 4000);
       return;
     }
     setError(null);
-    setStep(4);
+    setStep(3);
   };
 
   // ── STEP 4: Pasfoto ──────────────────────────────────────
@@ -314,7 +430,6 @@ export default function OnboardingPage() {
         department: formData.studyProgram,
         gender: formData.gender,
         phone: formData.phone,
-        emergencyContact: formData.emergencyContact,
         avatarObjectKey: finalAvatarKey,
         ktmObjectKey: finalKtmKey,
       };
@@ -327,9 +442,7 @@ export default function OnboardingPage() {
       });
 
       if (res.ok) {
-        const resp = await res.json();
-        const group = resp?.data?.pkkmbGroup;
-        setOnboardedGroup(group && group._id ? { nomor: group.nomor, name: group.name } : null);
+        await res.json();
         setStep(5);
       } else {
         const errorData = await res.json();
@@ -352,9 +465,10 @@ export default function OnboardingPage() {
   const stepLabels = [
     { n: 1, t: "Upload KTMS", d: "OCR data identitas" },
     { n: 2, t: "Konfirmasi Data", d: "Periksa hasil OCR" },
-    { n: 3, t: "Data Tambahan", d: "Kontak & jenis kelamin" },
+    { n: 3, t: "Data Kesehatan", d: "Riwayat & risiko" },
     { n: 4, t: "Pasfoto Resmi", d: "Unggah pasfoto 3x4" },
-    { n: 5, t: "Penetapan Adrista", d: "Sistem membagi gugus" },
+    { n: 5, t: "Persetujuan", d: "Tanda tangan digital" },
+    { n: 6, t: "Penetapan Adrista", d: "Sistem membagi gugus" },
   ];
 
   return (
@@ -373,7 +487,7 @@ export default function OnboardingPage() {
       {/* Main Container */}
       <div className="relative z-10 w-full max-w-5xl my-auto mx-auto flex flex-col lg:flex-row bg-white/[0.02] backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden">
         {/* Left Pane */}
-        <div className="w-full lg:w-[40%] p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-white/5 bg-gradient-to-br from-white/[0.05] to-transparent relative">
+        <div className="w-full lg:w-[40%] p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-white/5 bg-gradient-to-br from-white/[0.05] to-transparent relative flex flex-col overflow-y-auto custom-scrollbar" data-lenis-prevent>
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gold-500 to-transparent" />
           <div className="flex flex-col items-center text-center">
             <div className="w-20 h-20 relative mb-6">
@@ -389,8 +503,20 @@ export default function OnboardingPage() {
           </div>
 
           <div className="space-y-8 relative before:absolute before:inset-0 before:ml-[15px] before:-translate-x-px before:h-full before:w-[2px] before:bg-white/10">
-            {stepLabels.map((s) => (
-              <div key={s.n} className={`relative flex items-start gap-5 transition-all duration-500 ${step >= s.n ? "opacity-100" : "opacity-40 grayscale"}`}>
+            <AnimatePresence mode="popLayout" initial={false}>
+            {stepLabels.filter((s) => {
+              const lower = Math.max(1, Math.min(step - 2, 3));
+              return s.n >= lower && s.n <= lower + 4;
+            }).map((s) => (
+              <motion.div
+                key={s.n}
+                layout
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -24 }}
+                transition={{ duration: 0.25 }}
+                className={`relative flex items-start gap-5 ${step >= s.n ? "opacity-100" : "opacity-40 grayscale"}`}
+              >
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 z-10 transition-colors duration-500 ${step > s.n ? "bg-gold-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]" : step === s.n ? "bg-black border-2 border-gold-500 text-gold-500" : "bg-black border-2 border-white/20 text-white/40"}`}>
                   {step > s.n ? <CheckCircle2 className="w-5 h-5" /> : s.n}
                 </div>
@@ -398,16 +524,13 @@ export default function OnboardingPage() {
                   <h3 className={`font-bold transition-colors ${step >= s.n ? "text-white" : "text-white/40"}`}>{s.t}</h3>
                   <p className="text-xs text-white/40 mt-1">{s.d}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
+          </AnimatePresence>
+
           </div>
 
-          <div className="mt-12 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex gap-3 text-sm text-blue-200">
-            <Info className="w-5 h-5 shrink-0 text-blue-400" />
-            <p className="leading-relaxed text-xs">Data hasil OCR tetap bisa Anda perbaiki sebelum disimpan. Pastikan sesuai KTM asli.</p>
-          </div>
-
-          <div className="mt-6 flex justify-center lg:justify-start">
+          <div className="mt-6 flex justify-center lg:justify-start mt-auto">
             <button onClick={handleLogout} className="text-white/40 hover:text-red-400 text-xs font-semibold flex items-center gap-2 transition-colors px-4 py-2 rounded-lg hover:bg-white/5">
               <LogOut className="w-4 h-4" /> Keluar dari Akun
             </button>
@@ -415,23 +538,25 @@ export default function OnboardingPage() {
         </div>
 
         {/* Right Pane */}
-        <div className="w-full lg:w-[60%] p-8 lg:p-12 relative overflow-y-auto custom-scrollbar max-h-[85vh]">
+        <div className="w-full lg:w-[60%] p-8 lg:p-12 relative flex flex-col h-[88vh]">
           <div className="flex lg:hidden justify-between items-center mb-8">
-            <div className="text-sm font-bold text-gold-500">Langkah {step} dari 5</div>
+            <div className="text-sm font-bold text-gold-500">Langkah {step} dari 6</div>
             <button onClick={handleLogout} className="text-white/40 hover:text-red-400 text-xs font-semibold flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5">
               <LogOut className="w-4 h-4" /> Keluar
             </button>
           </div>
 
+          <div className="flex-1 overflow-y-auto custom-scrollbar" data-lenis-prevent>
           <AnimatePresence mode="wait">
             {/* STEP 1: Upload KTMS */}
             {step === 1 && (
-              <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col h-full">
+              <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col flex-1 min-h-full">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">Verifikasi Identitas Mahasiswa</h2>
                   <p className="text-white/50 text-sm mb-6">Silakan unggah foto KTMS/KTM Sementara Anda. Sistem akan membaca data identitas secara otomatis (OCR).</p>
                 </div>
 
+                <div className="flex-1 flex flex-col justify-center space-y-6">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -483,13 +608,7 @@ export default function OnboardingPage() {
                       </div>
                     )}
 
-                    {ocrStatus === "error" && error && (
-                      <div className="flex items-start gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
-                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>{error}</span>
-                      </div>
-                    )}
-
+                  
                     {!qrScanning && qrResult && (
                       <p className={`text-sm flex items-center gap-2 ${qrResult.ok ? "text-green-400" : "text-yellow-400"}`}>
                         <ScanLine className="w-4 h-4" />
@@ -508,26 +627,13 @@ export default function OnboardingPage() {
                   </div>
                 )}
 
-                {error && ocrStatus === "error" && (
-                  <p className="text-sm text-red-400">{error}</p>
-                )}
-
-                <div className="pt-6 flex justify-end mt-auto">
-                  <button
-                    onClick={goToStep2}
-                    disabled={!ktmPreviewUrl || ocrStatus === "loading"}
-                    className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-400"
-                  >
-                    Lanjut ke Konfirmasi Data
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                  </button>
-                </div>
+                                </div>
               </motion.div>
             )}
 
             {/* STEP 2: Konfirmasi Data OCR */}
             {step === 2 && (
-              <motion.div key="s2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col h-full">
+              <motion.div key="s2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col flex-1 min-h-full">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">Konfirmasi Data Identitas</h2>
                   <p className="text-white/50 text-sm mb-2">Data berikut diambil dari KTMS via OCR. Perbaiki bila ada yang salah.</p>
@@ -537,6 +643,8 @@ export default function OnboardingPage() {
                     </p>
                   )}
                 </div>
+
+                <div className="flex-1 flex flex-col justify-start space-y-6">
 
                 <div className="space-y-5">
                   <div>
@@ -569,7 +677,7 @@ export default function OnboardingPage() {
                     <AnimatePresence>
                       {isDeptDropdownOpen && (
                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.15 }} className="absolute top-full left-0 right-0 mt-1 z-50 bg-[#111] border border-white/10 rounded-xl overflow-hidden shadow-2xl">
-                          <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                          <div className="max-h-60 overflow-y-auto custom-scrollbar" data-lenis-prevent>
                             {departments.filter((d) => d.toLowerCase().includes(searchDept.toLowerCase())).map((dept, idx) => (
                               <div key={idx} onClick={() => { setFormData({ ...formData, studyProgram: dept }); setSearchDept(dept); setIsDeptDropdownOpen(false); }} className={`px-5 py-3 cursor-pointer transition-colors flex items-center justify-between ${formData.studyProgram === dept ? "bg-gold-500/10 text-gold-500 font-bold" : "text-white/70 hover:bg-white/5 hover:text-white"}`}>
                                 {dept}
@@ -588,26 +696,6 @@ export default function OnboardingPage() {
                     <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">Alamat</label>
                     <input type="text" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-5 py-3 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500 focus:bg-white/10 transition-all" />
                   </div>
-                </div>
-
-                {error && step === 2 && <p className="text-sm text-red-400">{error}</p>}
-
-                <div className="pt-6 flex justify-between items-center mt-auto">
-                  <button onClick={() => setStep(1)} className="flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-white/40 hover:text-white transition-colors">Kembali</button>
-                  <button onClick={goToStep3} className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 hover:bg-gold-400">
-                    Data Sesuai, Lanjut
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* STEP 3: Data Tambahan */}
-            {step === 3 && (
-              <motion.div key="s3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col h-full">
-                <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">Lengkapi Data Tambahan</h2>
-                  <p className="text-white/50 text-sm mb-6">Data akademik sudah terisi dari KTMS. Lengkapi informasi kontak berikut.</p>
                 </div>
 
                 <div className="space-y-5">
@@ -629,27 +717,25 @@ export default function OnboardingPage() {
                     <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">No. WhatsApp Aktif</label>
                     <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-5 py-3 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500 focus:bg-white/10 transition-all" placeholder="08xxxxxxxxxx" />
                   </div>
-                  <div>
-                    <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">No. Darurat (Ortu/Wali)</label>
-                    <input type="tel" value={formData.emergencyContact} onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })} className="w-full px-5 py-3 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500 focus:bg-white/10 transition-all" placeholder="08xxxxxxxxxx" />
-                  </div>
                 </div>
 
-                {error && step === 3 && <p className="text-sm text-red-400">{error}</p>}
-
-                <div className="pt-6 flex justify-between items-center mt-auto">
-                  <button onClick={() => setStep(2)} className="flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-white/40 hover:text-white transition-colors">Kembali</button>
-                  <button onClick={goToStep4} className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 hover:bg-gold-400">
-                    Lanjut ke Pasfoto
-                    <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                  </button>
                 </div>
               </motion.div>
             )}
 
+            {/* STEP 3: Data Kesehatan */}
+            {step === 3 && (
+              <HealthStep
+                ref={healthRef}
+                apiUrl={API_URL}
+                onBack={() => setStep(2)}
+                onComplete={() => setStep(4)}
+              />
+            )}
+
             {/* STEP 4: Pasfoto */}
             {step === 4 && (
-              <motion.div key="s4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col h-full">
+              <motion.div key="s5" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col flex-1 min-h-full">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">Unggah Pasfoto 3x4</h2>
                   <p className="text-white/50 text-sm mb-4">Pasfoto ini digunakan untuk ID Card Maba dan administrasi fakultas.</p>
@@ -684,21 +770,34 @@ export default function OnboardingPage() {
                   )}
                 </div>
 
-                {error && step === 4 && <p className="text-sm text-red-400">{error}</p>}
-
-                <div className="pt-6 flex justify-between items-center mt-auto">
-                  <button onClick={() => setStep(3)} className="flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-white/40 hover:text-white transition-colors">Kembali</button>
-                  <button onClick={handleSaveAndContinue} disabled={isLoading} className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-400">
-                    {isLoading ? "Menyimpan..." : "Simpan & Daftarkan"}
-                    {!isLoading && <ArrowRight className="w-5 h-5" />}
-                  </button>
-                </div>
               </motion.div>
             )}
 
-            {/* STEP 5: Penetapan Gugus */}
+            {/* STEP 5: Persetujuan */}
             {step === 5 && (
-              <motion.div key="s5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center text-center h-full min-h-[400px]">
+              <ConsentStep
+                apiUrl={API_URL}
+                onBack={() => setStep(4)}
+                onDone={(group) => {
+                  setOnboardedGroup(group);
+                  setStep(6);
+                  ["onboardingProgress", "onboardingHealth", "onboardingAvatarBase64"].forEach((k) => { try { localStorage.removeItem(k); } catch {} });
+                }}
+                summary={{
+                  name: formData.name,
+                  nim: formData.nim,
+                  faculty: formData.faculty,
+                  studyProgram: formData.studyProgram,
+                  phone: formData.phone,
+                  healthReady: true,
+                  pasfotoReady: !!croppedAvatarUrl,
+                }}
+              />
+            )}
+
+            {/* STEP 6: Penetapan Gugus */}
+            {step === 6 && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center text-center h-full min-h-[400px]">
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", damping: 12, delay: 0.1 }} className="w-24 h-24 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500 mb-8 shadow-[0_0_50px_rgba(34,197,94,0.2)]">
                   <CheckCircle2 className="w-12 h-12" />
                 </motion.div>
@@ -730,8 +829,78 @@ export default function OnboardingPage() {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
+
+          {/* Fixed Nav Footer */}
+          <div className="pt-6 mt-6 border-t border-white/10 flex items-center justify-between">
+            <div>
+              {step > 1 && step <= 6 && (
+                <button
+                  onClick={() => setStep(step - 1)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-white/40 hover:text-white transition-colors"
+                >
+                  Kembali
+                </button>
+              )}
+            </div>
+            <div>
+              {step === 1 && (
+                <button
+                  onClick={goToStep2}
+                  disabled={!ktmPreviewUrl || ocrStatus === "loading"}
+                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-400"
+                >
+                  Lanjut ke Konfirmasi Data
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </button>
+              )}
+              {step === 2 && (
+                <button
+                  onClick={goToStep3}
+                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 hover:bg-gold-400"
+                >
+                  Data Sesuai, Lanjut
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </button>
+              )}
+              {step === 3 && (
+                <button
+                  onClick={() => healthRef.current?.submit()}
+                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 hover:bg-gold-400"
+                >
+                  Lanjut ke Pasfoto
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                </button>
+              )}
+              {step === 4 && (
+                <button
+                  onClick={handleSaveAndContinue}
+                  disabled={isLoading}
+                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-400"
+                >
+                  {isLoading ? "Menyimpan..." : "Simpan & Lanjut"}
+                  {!isLoading && <ArrowRight className="w-5 h-5" />}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Error toast */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-5 py-3 bg-[#1a0a0a] border border-red-500/30 text-red-300 text-sm rounded-2xl shadow-2xl"
+          >
+            <AlertCircle className="w-5 h-5 shrink-0 text-red-400" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

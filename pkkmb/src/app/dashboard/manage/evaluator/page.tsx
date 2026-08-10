@@ -38,7 +38,7 @@ export default function EvaluatorPage() {
         if (json.success) {
           setSubmissions(json.data);
 
-          const pending = (json.data as Submission[]).filter((s) => s.status === 'SUBMITTED').length;
+          const pending = (json.data as Submission[]).filter((s) => s.status !== 'GRADED').length;
           const graded = (json.data as Submission[]).filter((s) => s.status === 'GRADED').length;
           setStats({ pending, graded, total: json.data.length });
         }

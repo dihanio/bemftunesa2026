@@ -1,0 +1,17 @@
+{
+  "groups": {
+    "g01": "6a76b9a3b4494feaabd0f54b",
+    "g02": "6a76b9a3b4494feaabd0f54e",
+    "g03": "6a76b9a3b4494feaabd0f551",
+    "g04": "6a76b9a3b4494feaabd0f554"
+  },
+  "maba": {
+    "A": "6a76b9a3b4494feaabd0f557",
+    "B": "6a76b9b8b4494feaabd0f587",
+    "C": "6a76b9b8b4494feaabd0f58a",
+    "D": "6a76b9b8b4494feaabd0f58d"
+  },
+  "spOther": "6a76b992b4494feaabd0f52d",
+  "spTI": "6a64b0a4fc408e5afd366795",
+  "spTE": "6a64b0a4fc408e5afd366791"
+}

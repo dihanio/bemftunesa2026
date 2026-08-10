@@ -12,24 +12,62 @@ export class PkkmbTask {
   @Prop({ required: true })
   description: string;
 
+  @Prop()
+  startTime?: Date;
+
   @Prop({ required: true })
   deadline: Date;
 
+  // Tipe ASSIGNMENT (Google Classroom-like): TASK = tugas biasa (submission),
+  // QUIZ = quiz existing dijadikan penugasan (assignment = container/entry point
+  // saja; soal/attempt/timer/scoring tetap milik Quiz Core). Backward
+  // compatible: data lama tanpa assignmentType dianggap TASK.
   @Prop({
-    required: true,
+    enum: ['TASK', 'QUIZ'],
+    default: 'TASK',
+  })
+  assignmentType: string;
+
+  // Wajib diisi jika assignmentType = 'QUIZ' (ref ke PkkmbQuiz). NULL utk TASK.
+  // Nullable: saat assignment QUIZ dikonversi ke TASK (PATCH), quizId di-unset
+  // menjadi null (prompt §3: TASK → quizId harus kosong).
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'PkkmbQuiz' })
+  quizId?: Types.ObjectId | null;
+
+  // Tipe SUBMISSION utk TASK (legacy: individu/kelompok). Dipakai hanya utk TASK.
+  @Prop({
     enum: ['individu', 'kelompok', 'INDIVIDU', 'KELOMPOK'],
   })
   type: string;
 
+  @Prop()
+  attachment?: string; // URL lampiran (TASK/MATERIAL)
+
+  @Prop()
+  link?: string; // URL link (MATERIAL/LINK)
+
   @Prop({
     required: true,
-    enum: ['PUBLISHED', 'DRAFT'],
+    enum: ['PUBLISHED', 'DRAFT', 'CLOSED'],
     default: 'PUBLISHED',
   })
   status: string;
 
+  @Prop({
+    enum: ['ALL', 'FACULTY', 'STUDY_PROGRAM', 'GROUP', 'INDIVIDUAL'],
+    default: 'ALL',
+  })
+  targetType: string;
+
+  // Mixed: ObjectId (PRODI/GROUP/INDIVIDUAL) atau string nama fakultas (FACULTY).
+  @Prop({ type: [MongooseSchema.Types.Mixed], default: [] })
+  targetIds: (Types.ObjectId | string)[];
+
   @Prop({ type: [String] })
   allowedFormats: string[]; // e.g. ['.pdf', '.zip']
+
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
+  createdBy?: Types.ObjectId;
 
   @Prop()
   deletedAt?: Date;
@@ -64,8 +102,8 @@ export class PkkmbSubmission {
 
   @Prop({
     required: true,
-    enum: ['Belum Submit', 'Sudah Submit', 'Terlambat', 'GRADED'],
-    default: 'Belum Submit',
+    enum: ['NOT_SUBMITTED', 'SUBMITTED', 'LATE', 'GRADED'],
+    default: 'NOT_SUBMITTED',
   })
   status: string;
 

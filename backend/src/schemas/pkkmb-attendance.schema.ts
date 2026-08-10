@@ -115,10 +115,10 @@ export class PkkmbAttendanceRecord {
 
   @Prop({
     required: true,
-    enum: ['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM'],
+    enum: ['QR_CODE', 'MANUAL_OPERATOR', 'SEARCH_NIM', 'SELF_CHECKIN'],
     default: 'QR_CODE',
   })
-  attendanceMethod: 'QR_CODE' | 'MANUAL_OPERATOR' | 'SEARCH_NIM';
+  attendanceMethod: 'QR_CODE' | 'MANUAL_OPERATOR' | 'SEARCH_NIM' | 'SELF_CHECKIN';
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   operator?: Types.ObjectId; // Operator performing manual check-in
@@ -137,6 +137,21 @@ export class PkkmbAttendanceRecord {
 
   @Prop()
   lng?: number;
+
+  @Prop({ trim: true })
+  photoUrl?: string; // URL selfie saat check-in
+
+  @Prop({ trim: true })
+  proofUrl?: string; // URL bukti (surat) saat mengajukan izin/sakit
+
+  @Prop({ trim: true })
+  reason?: string; // Alasan izin/sakit
+
+  @Prop({
+    enum: ['NONE', 'PENDING', 'APPROVED', 'REJECTED'],
+    default: 'NONE',
+  })
+  izinStatus?: 'NONE' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
   @Prop()
   deletedAt?: Date;

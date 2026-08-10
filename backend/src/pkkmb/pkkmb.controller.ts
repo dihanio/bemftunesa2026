@@ -10,7 +10,11 @@ import {
   BadRequestException,
   Query,
   Delete,
+  UseInterceptors,
+  UploadedFile,
+  StreamableFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
@@ -18,6 +22,8 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import type { Response, Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -27,6 +33,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PkkmbService } from './pkkmb.service';
 import type { UserDocument } from '../schemas/user.schema';
 import { PkkmbPermission } from '../common/auth/pkkmb-permissions';
+import { XLSX_MIME } from './quiz-import-export';
 import {
   MabaSubmitTaskDto,
   CreateAttendanceSessionDto,
@@ -42,6 +49,13 @@ import {
   AdminCreateUserDto,
   AdminUpdateUserDto,
   OnboardDto,
+  SubmitIzinDto,
+  VerifyIzinDto,
+  CreateQuizDto,
+  SubmitQuizDto,
+  SaveQuizAnswersDto,
+  ReportViolationDto,
+  ReportQuizEventsDto,
 } from './dto/pkkmb.dto';
 
 @ApiTags('pkkmb')
@@ -166,6 +180,27 @@ export class PkkmbController {
     return { success: true, data };
   }
 
+  @Get('gugus/pendamping')
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @ApiOperation({ summary: 'Daftar user panitia Sie Pendamping' })
+  async listPendamping() {
+    const data = await this.pkkmbService.listPendamping();
+    return { success: true, data };
+  }
+
+  @Post('gugus/:id/pendamping')
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @ApiOperation({ summary: 'Menetapkan pendamping ke gugus' })
+  async assignPendamping(
+    @Param('id') id: string,
+    @Body('pendampingId') pendampingId: string,
+  ) {
+    if (!pendampingId)
+      throw new BadRequestException('pendampingId wajib diisi');
+    const data = await this.pkkmbService.assignPendamping(id, pendampingId);
+    return { success: true, message: 'Pendamping ditetapkan', data };
+  }
+
   @Get('gugus/analytics')
   @RequiredPermissions(PkkmbPermission.MONITORING_READ)
   @ApiOperation({
@@ -276,7 +311,10 @@ export class PkkmbController {
   }
 
   @Post('attendance/sessions')
-  @RequiredPermissions(PkkmbPermission.ATTENDANCE_SESSION_CREATE)
+  // Gate panitia-level (semua panitia punya MONITORING_READ). Otorisasi akhir
+  // KSK (divisi Kesekretariatan)/sekretaris/admin dilakukan di service
+  // (assertAttendanceManager) — role & division diambil dari database.
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
   @ApiOperation({ summary: 'Membuat sesi presensi universal baru' })
   async createAttendanceSession(
     @CurrentUser() user: { userId: string },
@@ -294,17 +332,19 @@ export class PkkmbController {
   }
 
   @Patch('attendance/sessions/:id/status')
-  @RequiredPermissions(PkkmbPermission.ATTENDANCE_SESSION_CREATE)
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
   @ApiOperation({
     summary: 'Memperbarui status sesi presensi (DRAFT, PUBLISHED, CLOSED)',
   })
   async updateAttendanceSessionStatus(
     @Param('id') id: string,
     @Body('status') status: 'DRAFT' | 'PUBLISHED' | 'CLOSED',
+    @CurrentUser() user: { userId: string },
   ) {
     const data = await this.pkkmbService.updateAttendanceSessionStatus(
       id,
       status,
+      user.userId,
     );
     return {
       success: true,
@@ -334,20 +374,77 @@ export class PkkmbController {
       user.userId,
       ipAddress,
       userAgent,
-      user.role?.slug,
     );
     return { success: true, message: 'Presensi berhasil dicatat!', data };
   }
+
+  @Post('attendance/izin')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Mengajukan izin/sakit (Maba)' })
+  async submitIzin(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: SubmitIzinDto,
+  ) {
+    const data = await this.pkkmbService.submitIzin(user.userId, dto);
+    return {
+      success: true,
+      message: 'Izin/sakit diajukan. Menunggu verifikasi panitia.',
+      data,
+    };
+  }
+
+  @Get('attendance/izin/pending')
+  // READ: panitia/divisi boleh melihat daftar izin (read-only).
+  // MONITORING_READ dipertahankan agar role existing (pimpinan/bendahara)
+  // yang sudah memiliki akses monitoring tidak rusak.
+  @RequiredPermissions(
+    PkkmbPermission.ATTENDANCE_READ,
+    PkkmbPermission.MONITORING_READ,
+  )
+  @ApiOperation({
+    summary: 'Daftar izin/sakit menunggu verifikasi (read-only)',
+  })
+  async listPendingIzin() {
+    const data = await this.pkkmbService.listPendingIzin();
+    return { success: true, data };
+  }
+
+  @Post('attendance/izin/verify')
+  // Gate panitia-level; authority KSK/sekretaris/super-admin di service.
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Verifikasi izin/sakit (Approve/Reject)' })
+  async verifyIzin(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: VerifyIzinDto,
+  ) {
+    const data = await this.pkkmbService.verifyIzin(
+      dto.recordId,
+      dto.decision,
+      user.userId,
+    );
+    return { success: true, data };
+  }
+
   @Delete('attendance/records/:id')
-  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
-  @ApiOperation({ summary: 'Menghapus record presensi (Admin)' })
-  async deleteAttendanceRecord(@Param('id') id: string) {
-    await this.pkkmbService.deleteAttendanceRecord(id);
+  // Gate panitia-level; DELETE hanya ADMIN di service (deleteOp).
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Menghapus record presensi (Admin saja)' })
+  async deleteAttendanceRecord(
+    @Param('id') id: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    await this.pkkmbService.deleteAttendanceRecord(id, user.userId);
     return { success: true, message: 'Record presensi berhasil dihapus' };
   }
 
   @Get('attendance/monitoring')
-  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  // READ: panitia/divisi boleh monitoring (read-only); scope data per gugus
+  // tetap dibatasi service untuk non-admin. MONITORING_READ dipertahankan agar
+  // role existing (pimpinan/bendahara) tidak kehilangan akses monitoring.
+  @RequiredPermissions(
+    PkkmbPermission.ATTENDANCE_READ,
+    PkkmbPermission.MONITORING_READ,
+  )
   @ApiOperation({
     summary: 'Monitoring dashboard & laporan presensi real-time',
   })
@@ -373,13 +470,85 @@ export class PkkmbController {
   @RequiredPermissions(PkkmbPermission.TASK_READ)
   @ApiOperation({ summary: 'Melihat daftar tugas' })
   async getTasks(
-    @CurrentUser() user: { userId: string; role?: { slug?: string } },
+    @CurrentUser() user: { userId?: string; role?: { slug?: string } },
     @Query() query: PaginationDto,
   ) {
     const roleSlug = user?.role?.slug;
     const isPanitia = roleSlug !== 'user' && roleSlug !== 'maba';
-    const data = await this.pkkmbService.getTasks(query, isPanitia);
+    const data = await this.pkkmbService.getTasks(query, isPanitia, user);
     return { success: true, data };
+  }
+
+  // ─── ASSIGNMENTS (Google Classroom-like: TASK & QUIZ) ─────────────────────
+
+  @Get('assignments')
+  @RequiredPermissions(PkkmbPermission.TASK_READ)
+  @ApiOperation({
+    summary:
+      'Daftar penugasan (Google Classroom-like): TASK & QUIZ; status per student (NOT_STARTED/IN_PROGRESS/COMPLETED/OVERDUE) + activeAttemptId',
+  })
+  async getAssignments(
+    @CurrentUser() user: { userId?: string; role?: { slug?: string } },
+    @Query() query: PaginationDto,
+  ) {
+    const roleSlug = user?.role?.slug;
+    const isPanitia = roleSlug !== 'user' && roleSlug !== 'maba';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = await this.pkkmbService.listAssignments(
+      user?.userId as string,
+      query,
+      isPanitia,
+    );
+    return { success: true, ...data };
+  }
+
+  @Get('assignments/:id')
+  @RequiredPermissions(PkkmbPermission.TASK_READ)
+  @ApiOperation({
+    summary: 'Detail penugasan utk student (cek targeting assignment + quiz)',
+  })
+  async getAssignmentDetail(
+    @CurrentUser() user: { userId: string },
+    @Param('id') assignmentId: string,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = await this.pkkmbService.getAssignmentDetail(
+      assignmentId,
+      user.userId,
+    );
+    return { success: true, data };
+  }
+
+  @Post('assignments')
+  @RequiredPermissions(PkkmbPermission.TASK_CREATE)
+  @ApiOperation({
+    summary:
+      'Buat penugasan baru. type=QUIZ → wajib quizId (quiz existing, tidak dibuat otomatis); type=TASK → tipe submisi individu/kelompok.',
+  })
+  async createAssignment(
+    @CurrentUser() user: { userId?: string },
+    @Body() dto: CreateTaskDto,
+  ) {
+    const data = await this.pkkmbService.createTask(dto, user?.userId);
+    return { success: true, message: 'Penugasan berhasil dibuat', data };
+  }
+
+  @Patch('assignments/:id')
+  @RequiredPermissions(PkkmbPermission.TASK_UPDATE)
+  @ApiOperation({
+    summary: 'Ubah penugasan (quizId assignment Quiz tidak dapat diganti)',
+  })
+  async updateAssignment(
+    @Param('id') assignmentId: string,
+    @CurrentUser() user: { userId: string },
+    @Body() dto: CreateTaskDto,
+  ) {
+    const data = await this.pkkmbService.updateAssignment(
+      assignmentId,
+      dto,
+      user.userId,
+    );
+    return { success: true, message: 'Penugasan berhasil diperbarui', data };
   }
   @Get('maba/points/summary')
   @ApiOperation({ summary: 'Melihat total skor poin (MABA)' })
@@ -416,15 +585,17 @@ export class PkkmbController {
   })
   @ApiParam({ name: 'id', description: 'ID Tugas' })
   async submitTask(
-    @CurrentUser() user: UserDocument,
+    @CurrentUser() user: { userId?: string },
     @Param('id') taskId: string,
     @Body() dto: MabaSubmitTaskDto,
   ) {
-    if (!user.pkkmbGroup)
+    const userId = user?.userId as string;
+    const groupId = await this.pkkmbService.getUserGroupId(userId);
+    if (!groupId)
       throw new BadRequestException('Anda belum masuk ke kelompok manapun');
     const data = await this.pkkmbService.submitTask(
-      user._id.toString(),
-      user.pkkmbGroup.toString(),
+      userId,
+      groupId,
       taskId,
       dto,
     );
@@ -436,8 +607,11 @@ export class PkkmbController {
   @Post('pemateri/tasks')
   @RequiredPermissions(PkkmbPermission.TASK_CREATE)
   @ApiOperation({ summary: 'Membuat tugas baru (Draft / Published)' })
-  async createTask(@Body() dto: CreateTaskDto) {
-    const data = await this.pkkmbService.createTask(dto);
+  async createTask(
+    @CurrentUser() user: { userId?: string },
+    @Body() dto: CreateTaskDto,
+  ) {
+    const data = await this.pkkmbService.createTask(dto, user?.userId);
     return { success: true, message: 'Tugas berhasil dibuat', data };
   }
 
@@ -461,16 +635,332 @@ export class PkkmbController {
   @ApiOperation({ summary: 'Menilai dan memberi feedback pada tugas' })
   @ApiParam({ name: 'id', description: 'ID Pengumpulan Tugas (Submission)' })
   async gradeSubmission(
-    @CurrentUser() grader: { userId: string },
+    @CurrentUser()
+    grader: { userId: string; permissions?: string[] },
     @Param('id') submissionId: string,
     @Body() dto: GradeSubmissionDto,
   ) {
     const data = await this.pkkmbService.gradeSubmission(
       submissionId,
-      grader.userId,
+      { userId: grader.userId, permissions: grader.permissions || [] },
       dto,
     );
     return { success: true, message: 'Nilai tugas berhasil disimpan', data };
+  }
+
+  // ─── QUIZ ENDPOINTS ─────────────────────────────────────────────────────
+
+  @Get('quiz')
+  @RequiredPermissions(PkkmbPermission.QUIZ_READ)
+  @ApiOperation({ summary: 'Melihat daftar quiz' })
+  async getQuizzes(
+    @CurrentUser() user: { userId?: string; role?: { slug?: string } },
+    @Query() query: PaginationDto & { search?: string },
+  ) {
+    const roleSlug = user?.role?.slug;
+    const isMaba = roleSlug === 'user' || roleSlug === 'maba';
+    if (isMaba) {
+      const data = await this.pkkmbService.listStudentQuizzes(
+        user.userId as string,
+        query,
+      );
+      return { success: true, ...data };
+    }
+    const data = await this.pkkmbService.listAllQuizzes(query, query.search);
+    return { success: true, ...data };
+  }
+
+  @Post('quiz')
+  @RequiredPermissions(PkkmbPermission.QUIZ_CREATE)
+  @ApiOperation({ summary: 'Membuat quiz' })
+  async createQuiz(
+    @CurrentUser() user: { userId?: string },
+    @Body() dto: CreateQuizDto,
+  ) {
+    const data = await this.pkkmbService.createQuiz(dto, user?.userId);
+    return { success: true, message: 'Quiz berhasil dibuat', data };
+  }
+
+  @Patch('quiz/:id')
+  @RequiredPermissions(PkkmbPermission.QUIZ_UPDATE)
+  @ApiOperation({ summary: 'Mengubah quiz' })
+  async updateQuiz(
+    @Param('id') quizId: string,
+    @CurrentUser() user: { userId: string },
+    @Body() dto: CreateQuizDto,
+  ) {
+    const data = await this.pkkmbService.updateQuiz(quizId, dto, user.userId);
+    return { success: true, message: 'Quiz berhasil diperbarui', data };
+  }
+
+  @Get('quiz/:id/start')
+  @RequiredPermissions(PkkmbPermission.QUIZ_SUBMIT)
+  @ApiOperation({ summary: 'Memulai pengerjaan quiz (buat attempt)' })
+  async startQuiz(
+    @CurrentUser() user: { userId: string },
+    @Param('id') quizId: string,
+  ) {
+    const data = await this.pkkmbService.startQuiz(quizId, user.userId);
+    return { success: true, message: 'Quiz dimulai', data };
+  }
+
+  @Post('quiz/:id/attempt/:attemptId/submit')
+  @RequiredPermissions(PkkmbPermission.QUIZ_SUBMIT)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Mengumpulkan jawaban quiz (scoring backend)' })
+  async submitQuiz(
+    @CurrentUser() user: { userId: string },
+    @Param('id') quizId: string,
+    @Param('attemptId') attemptId: string,
+    @Body() dto: SubmitQuizDto,
+  ) {
+    const data = await this.pkkmbService.submitQuiz(
+      quizId,
+      attemptId,
+      user.userId,
+      dto,
+    );
+    return { success: true, message: 'Quiz berhasil dikumpulkan', data };
+  }
+
+  @Get('quiz/:id/attempt/:attemptId')
+  @RequiredPermissions(PkkmbPermission.QUIZ_SUBMIT)
+  @ApiOperation({
+    summary:
+      'Resume attempt milik user sendiri (soal + deadline dari server, tanpa correctAnswer)',
+  })
+  async resumeQuizAttempt(
+    @CurrentUser() user: { userId: string },
+    @Param('id') quizId: string,
+    @Param('attemptId') attemptId: string,
+  ) {
+    const data = await this.pkkmbService.resumeQuizAttempt(
+      quizId,
+      attemptId,
+      user.userId,
+    );
+    return { success: true, data };
+  }
+
+  @Patch('quiz/:id/attempt/:attemptId/answers')
+  @RequiredPermissions(PkkmbPermission.QUIZ_SUBMIT)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    summary:
+      'Simpan jawaban in-progress (attempt IN_PROGRESS) agar bisa dipulihkan setelah tab ditutup',
+  })
+  async saveQuizAnswers(
+    @CurrentUser() user: { userId: string },
+    @Param('id') quizId: string,
+    @Param('attemptId') attemptId: string,
+    @Body() dto: SaveQuizAnswersDto,
+  ) {
+    const data = await this.pkkmbService.saveQuizAnswers(
+      quizId,
+      attemptId,
+      user.userId,
+      dto,
+    );
+    return { success: true, data };
+  }
+
+  @Get('quiz/:id/result/:attemptId')
+  @RequiredPermissions(PkkmbPermission.QUIZ_RESULT)
+  @ApiOperation({ summary: 'Melihat hasil attempt quiz sendiri' })
+  async getQuizResult(
+    @CurrentUser() user: { userId: string },
+    @Param('attemptId') attemptId: string,
+  ) {
+    const data = await this.pkkmbService.getQuizResult(attemptId, user.userId);
+    return { success: true, data };
+  }
+
+  // ─── ANTI-CHEAT / ANTI-AI DETERRENCE (violation monitoring) ────────────────
+  // BUKAN deteksi AI yang mutlak & BUKAN security boundary — hanya indikator
+  // untuk keputusan panitia. Backend tetap authority untuk scoring/timer/
+  // ownership. Semua identity dari JWT; server time = timestamp utama.
+
+  @Post('quiz/:id/attempt/:attemptId/violation')
+  @RequiredPermissions(PkkmbPermission.QUIZ_SUBMIT)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    summary:
+      'Laporkan event pelanggaran anti-cheat (monitoring; server-time & risk dihitung backend)',
+  })
+  async reportViolation(
+    @CurrentUser() user: { userId: string },
+    @Param('id') quizId: string,
+    @Param('attemptId') attemptId: string,
+    @Body() dto: ReportViolationDto,
+  ) {
+    const data = await this.pkkmbService.reportViolation(
+      quizId,
+      attemptId,
+      user.userId,
+      dto,
+    );
+    return { success: true, data };
+  }
+
+  @Post('quiz/:id/attempt/:attemptId/events')
+  @RequiredPermissions(PkkmbPermission.QUIZ_SUBMIT)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @ApiOperation({
+    summary:
+      'Kirim batch event anti-cheat (maks 50 event/request — lebih = 400). Tiap event divalidasi; server-time & risk dihitung backend',
+  })
+  async reportQuizEvents(
+    @CurrentUser() user: { userId: string },
+    @Param('id') quizId: string,
+    @Param('attemptId') attemptId: string,
+    @Body() dto: ReportQuizEventsDto,
+  ) {
+    const data = await this.pkkmbService.reportQuizEvents(
+      quizId,
+      attemptId,
+      user.userId,
+      dto,
+    );
+    return { success: true, data };
+  }
+
+  @Post('quiz/:id/attempt/:attemptId/heartbeat')
+  @RequiredPermissions(PkkmbPermission.QUIZ_SUBMIT)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Heartbeat client selama attempt aktif (perbarui lastHeartbeatAt)',
+  })
+  async heartbeatAttempt(
+    @CurrentUser() user: { userId: string },
+    @Param('id') quizId: string,
+    @Param('attemptId') attemptId: string,
+  ) {
+    const data = await this.pkkmbService.heartbeatAttempt(
+      quizId,
+      attemptId,
+      user.userId,
+    );
+    return { success: true, data };
+  }
+
+  @Get('quiz/:id/attempts')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({
+    summary:
+      'Daftar attempt + aktivitas anti-cheat (management) — tabel + timeline',
+  })
+  async listQuizAttempts(@Param('id') quizId: string) {
+    const data = await this.pkkmbService.listQuizAttempts(quizId);
+    return { success: true, data };
+  }
+
+  @Delete('quiz/:id')
+  @RequiredPermissions(PkkmbPermission.QUIZ_DELETE)
+  @ApiOperation({ summary: 'Menghapus quiz (soft delete)' })
+  @ApiParam({ name: 'id', description: 'ID Quiz' })
+  async deleteQuiz(@Param('id') quizId: string) {
+    const data = await this.pkkmbService.deleteQuiz(quizId);
+    return { success: true, message: 'Quiz berhasil dihapus', data };
+  }
+
+  // ─── QUIZ IMPORT / EXPORT (EXCEL) ────────────────────────────────────────
+
+  @Get('quiz/template')
+  @RequiredPermissions(PkkmbPermission.QUIZ_CREATE)
+  @ApiOperation({ summary: 'Download template Excel soal quiz' })
+  async downloadQuizTemplate() {
+    const buffer = await this.pkkmbService.getQuizTemplateBuffer();
+    return new StreamableFile(buffer, {
+      type: XLSX_MIME,
+      disposition: 'attachment; filename="quiz-question-template.xlsx"',
+    });
+  }
+
+  @Get('quiz/:id')
+  @RequiredPermissions(PkkmbPermission.QUIZ_READ)
+  @ApiOperation({
+    summary:
+      'Detail quiz — student: metadata aman tanpa correctAnswer; management: detail penuh',
+  })
+  @ApiParam({ name: 'id', description: 'ID Quiz' })
+  async getQuizDetail(
+    @Param('id') quizId: string,
+    @CurrentUser() user: { userId?: string; role?: { slug?: string } },
+  ) {
+    const data = await this.pkkmbService.getQuizDetail(
+      quizId,
+      user.userId as string,
+      user?.role?.slug,
+    );
+    return { success: true, data };
+  }
+
+  @Post('quiz/import')
+  @RequiredPermissions(PkkmbPermission.QUIZ_CREATE)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOperation({
+    summary:
+      'Validasi & parse file soal Excel (tanpa simpan). 422 bila ada baris invalid.',
+  })
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
+  async previewQuizImport(@UploadedFile() file?: Express.Multer.File) {
+    const data = await this.pkkmbService.previewQuizImport(file);
+    return { success: true, message: `${data.total} soal valid.`, data };
+  }
+
+  @Post('quiz/:id/import')
+  @RequiredPermissions(PkkmbPermission.QUIZ_UPDATE)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOperation({
+    summary:
+      'Import soal ke quiz existing (APPEND + normalisasi order, tetap DRAFT)',
+  })
+  @ApiParam({ name: 'id', description: 'ID Quiz' })
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024 } }),
+  )
+  async importQuizQuestions(
+    @Param('id') quizId: string,
+    @Query('skipDuplicates') skipDuplicates?: string,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    const data = await this.pkkmbService.importQuizQuestions(
+      quizId,
+      file,
+      skipDuplicates === 'true',
+    );
+    return {
+      success: true,
+      message: `${data.imported} soal berhasil ditambahkan.`,
+      data,
+    };
+  }
+
+  @Get('quiz/:id/export')
+  @RequiredPermissions(PkkmbPermission.QUIZ_UPDATE)
+  @ApiOperation({ summary: 'Export soal quiz ke Excel (.xlsx)' })
+  @ApiParam({ name: 'id', description: 'ID Quiz' })
+  async exportQuizQuestions(@Param('id') quizId: string) {
+    const { buffer, filename } =
+      await this.pkkmbService.exportQuizQuestions(quizId);
+    return new StreamableFile(buffer, {
+      type: XLSX_MIME,
+      disposition: `attachment; filename="${filename}"`,
+    });
   }
 
   @Get('dashboard/panitia')

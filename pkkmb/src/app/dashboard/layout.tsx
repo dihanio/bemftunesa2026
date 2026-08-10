@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
-import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, Trophy } from "lucide-react";
+import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, Trophy, ClipboardList } from "lucide-react";
 
 interface UserProfile {
   id: string;
@@ -15,6 +15,7 @@ interface UserProfile {
   avatar?: string;
   division?: string;
   isOnboarded?: boolean;
+  permissions?: string[];
 }
 
 interface NotifItem {
@@ -166,7 +167,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (isMaba) {
       return [
         { label: "Maba Hub", href: "/dashboard", icon: <Home className="w-5 h-5" />, active: pathname === "/dashboard" },
-        { label: "Penugasan", href: "/dashboard/tugas", icon: <FileText className="w-5 h-5" />, active: pathname === "/dashboard/tugas" },
+        { label: "Penugasan", href: "/dashboard/assignments", icon: <FileText className="w-5 h-5" />, active: pathname.startsWith("/dashboard/assignments") },
+        { label: "Quiz", href: "/dashboard/quiz", icon: <ClipboardList className="w-5 h-5" />, active: pathname.startsWith("/dashboard/quiz") },
         { label: "Presensi", href: "/dashboard/presensi", icon: <CheckSquare className="w-5 h-5" />, active: pathname === "/dashboard/presensi" },
         { label: "Skor Keaktifan", href: "/dashboard/poin", icon: <Trophy className="w-5 h-5" />, active: pathname === "/dashboard/poin" },
       ];
@@ -192,7 +194,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         items.push({ label: "Evaluasi Penugasan", href: "/dashboard/manage/evaluator", icon: <FileText className="w-5 h-5" />, active: pathname === "/dashboard/manage/evaluator" });
       }
 
-      // Kontrol Presensi
+      // Manajemen Penugasan (TASK & QUIZ assignments)
+      if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || roleString === 'panitia' || isPendamping || isSekretaris || isPemateri) {
+        items.push({ label: "Manajemen Penugasan", href: "/dashboard/manage/assignments", icon: <FileText className="w-5 h-5" />, active: pathname.startsWith("/dashboard/manage/assignments") });
+      }
+
+      // Kontrol Presensi (menu tampil utk semua panitia; aksi management
+      // dibatasi oleh permission/division di halaman — backend tetap authority)
       if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || roleString === 'panitia' || isPendamping || isSekretaris || isBph) {
         items.push({ label: "Kontrol Presensi", href: "/dashboard/manage/attendance", icon: <CheckSquare className="w-5 h-5" />, active: pathname === "/dashboard/manage/attendance" });
       }
@@ -206,6 +214,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (roleString === 'super_admin') {
         items.push({ label: "Manajemen Gugus", href: "/dashboard/manage/groups", icon: <Users className="w-5 h-5" />, active: pathname === "/dashboard/manage/groups" });
         items.push({ label: "Manajemen Akun", href: "/dashboard/manage/users", icon: <User className="w-5 h-5" />, active: pathname === "/dashboard/manage/users" });
+      }
+
+      // Manajemen Quiz (permission-based, frontend visibility only)
+      const perms = Array.isArray(session.user.permissions) ? session.user.permissions : [];
+      const canManageQuiz = perms.includes('manage:all') || perms.includes('pkkmb.quiz.create') || perms.includes('pkkmb.quiz.update');
+      if (canManageQuiz) {
+        items.push({ label: "Manajemen Quiz", href: "/dashboard/manage/quiz", icon: <ClipboardList className="w-5 h-5" />, active: pathname.startsWith("/dashboard/manage/quiz") });
       }
 
       return items;

@@ -48,6 +48,25 @@ export class AuthController {
     // Initiates Google OAuth flow
   }
 
+  private cookieOptions() {
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+    return {
+      httpOnly: true,
+      // secure=true selalu: produksi lewat https; dev via http://localhost yang
+      // dianggap secure context oleh Chrome sehingga cookie tetap diterima.
+      // required karena sameSite='none' hanya valid bersama atribut Secure.
+      secure: true,
+      // cross-site di semua env: prod = subdomain berbeda (frontend vs api),
+      // dev = beda port (localhost:3002 vs localhost:4000). none wajib.
+      sameSite: 'none' as const,
+      path: '/',
+      // domain hanya di produksi agar token dibaca semua subdomain
+      // (.bemftunesa.org); di dev kosong (localhost, port-scoped).
+      ...(isProduction ? { domain: '.bemftunesa.org' } : {}),
+    };
+  }
+
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Get('google/callback')
   @UseGuards(GoogleOauthGuard)
@@ -72,24 +91,18 @@ export class AuthController {
 
       // Set httpOnly cookies for security (prevent XSS)
       // domain=.bemftunesa.org agar token dibaca semua subdomain (pkkmb/ims/www)
-      const cookieDomain = '.bemftunesa.org';
+      // hanya di produksi; di dev (localhost) tanpa domain agar cookie diterima
 
       res.cookie('accessToken', tokens.accessToken, {
-        httpOnly: true,
-        secure: true, // Always true - required by browsers for sameSite: 'none'
-        sameSite: isProduction ? 'lax' : 'none',
+        ...this.cookieOptions(),
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: '/',
-        ...(cookieDomain ? { domain: cookieDomain } : {}),
+        ...(isProduction ? { domain: '.bemftunesa.org' } : {}),
       });
 
       res.cookie('refreshToken', tokens.refreshToken, {
-        httpOnly: true,
-        secure: true, // Always true - required by browsers for sameSite: 'none'
-        sameSite: isProduction ? 'lax' : 'none',
+        ...this.cookieOptions(),
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        path: '/',
-        ...(cookieDomain ? { domain: cookieDomain } : {}),
+        ...(isProduction ? { domain: '.bemftunesa.org' } : {}),
       });
 
       const state = req.query.state as string;
@@ -177,23 +190,14 @@ export class AuthController {
     const user = await this.authService.validateMabaLogin(email, password);
     const tokens = await this.authService.generateTokensWithPermissions(user);
 
-    const isProduction =
-      this.configService.get<string>('NODE_ENV') === 'production';
-
     res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: isProduction ? 'lax' : 'none',
+      ...this.cookieOptions(),
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: isProduction ? 'lax' : 'none',
+      ...this.cookieOptions(),
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      path: '/',
     });
 
     return {
@@ -227,24 +231,15 @@ export class AuthController {
     }
     const tokens = await this.authService.refreshTokens(refreshToken);
 
-    const isProduction =
-      this.configService.get<string>('NODE_ENV') === 'production';
-
     // Set httpOnly cookies for the new tokens
     res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: true, // Always true - required by browsers for sameSite: 'none'
-      sameSite: isProduction ? 'lax' : 'none',
+      ...this.cookieOptions(),
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: true, // Always true - required by browsers for sameSite: 'none'
-      sameSite: isProduction ? 'lax' : 'none',
+      ...this.cookieOptions(),
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      path: '/',
     });
 
     return {
@@ -265,24 +260,15 @@ export class AuthController {
   ) {
     const tokens = await this.authService.switchRole(user.userId.toString());
 
-    const isProduction =
-      this.configService.get<string>('NODE_ENV') === 'production';
-
     // Set new tokens in httpOnly cookies
     res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: true, // Always true - required by browsers for sameSite: 'none'
-      sameSite: isProduction ? 'lax' : 'none',
+      ...this.cookieOptions(),
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
     });
 
     res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: true, // Always true - required by browsers for sameSite: 'none'
-      sameSite: isProduction ? 'lax' : 'none',
+      ...this.cookieOptions(),
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      path: '/',
     });
 
     return {
@@ -296,21 +282,10 @@ export class AuthController {
   }
 
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
   logout(@Res({ passthrough: true }) res: Response) {
-    // Clear authentication cookies (harus match domain & secure saat set)
-    res.clearCookie('accessToken', {
-      path: '/',
-      domain: '.bemftunesa.org',
-      secure: true,
-      sameSite: 'lax' as const,
-    });
-    res.clearCookie('refreshToken', {
-      path: '/',
-      domain: '.bemftunesa.org',
-      secure: true,
-      sameSite: 'lax' as const,
-    });
+    // Clear authentication cookies (harus match persis atribut saat set)
+    res.clearCookie('accessToken', this.cookieOptions());
+    res.clearCookie('refreshToken', this.cookieOptions());
 
     return { success: true, data: null, message: 'Logged out successfully' };
   }

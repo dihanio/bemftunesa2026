@@ -271,10 +271,10 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Presensi GPS Widget Shortcut */}
+            {/* Presensi Selfie Widget Shortcut */}
             <div className="bg-gradient-to-r from-gold-500/10 to-transparent border border-gold-500/20 rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6 justify-between">
                <div>
-                  <h3 className="font-bold text-lg text-white mb-1">Kehadiran (Live GPS)</h3>
+                  <h3 className="font-bold text-lg text-white mb-1">Kehadiran (Selfie)</h3>
                   <p className="text-white/60 text-sm">Absen mandiri saat sesi dibuka oleh Panitia di lokasi FT UNESA.</p>
                </div>
                <Link href="/dashboard/presensi" className="bg-gold-500 hover:bg-gold-400 text-black font-bold py-3 px-6 rounded-xl whitespace-nowrap transition-transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(234,179,8,0.3)]">
@@ -392,7 +392,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="font-bold text-sm text-white/90">{role === 'super_admin' || role === 'admin_pkkmb' ? 'Live Presensi' : 'Presensi Gugus'}</p>
-                <p className="text-xs text-white/50">Pantau absensi GPS real-time</p>
+                <p className="text-xs text-white/50">Pantau presensi selfie real-time</p>
               </div>
             </div>
           </Link>
@@ -454,7 +454,7 @@ export default function DashboardPage() {
               <h3 className="font-display text-xl font-bold text-white mb-1 group-hover:text-gold-400 transition-colors">
                 Tes Presensi
               </h3>
-              <p className="text-xs text-white/50">Buka mode mahasiswa untuk uji coba presensi GPS</p>
+              <p className="text-xs text-white/50">Buka mode mahasiswa untuk uji coba presensi selfie</p>
             </div>
             <div className="absolute top-6 right-6 text-white/20 group-hover:text-gold-400 group-hover:translate-x-1 transition-all">
               &rarr;

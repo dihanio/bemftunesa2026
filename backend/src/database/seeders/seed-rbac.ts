@@ -200,6 +200,44 @@ const PERMISSIONS_DATA = [
     description: 'Mengumpulkan tugas',
   },
 
+  // Quiz (Pretest/Posttest/Material)
+  {
+    name: 'pkkmb.quiz.read',
+    resource: 'quiz',
+    action: 'read',
+    description: 'Melihat daftar quiz',
+  },
+  {
+    name: 'pkkmb.quiz.create',
+    resource: 'quiz',
+    action: 'create',
+    description: 'Membuat quiz',
+  },
+  {
+    name: 'pkkmb.quiz.update',
+    resource: 'quiz',
+    action: 'update',
+    description: 'Mengubah quiz',
+  },
+  {
+    name: 'pkkmb.quiz.delete',
+    resource: 'quiz',
+    action: 'delete',
+    description: 'Menghapus quiz',
+  },
+  {
+    name: 'pkkmb.quiz.submit',
+    resource: 'quiz',
+    action: 'submit',
+    description: 'Mengerjakan/mengumpulkan quiz',
+  },
+  {
+    name: 'pkkmb.quiz.result',
+    resource: 'quiz',
+    action: 'result',
+    description: 'Melihat hasil quiz sendiri',
+  },
+
   // Groups & Pendampingan
   {
     name: 'pkkmb.group.read_all',
@@ -232,18 +270,37 @@ const PERMISSIONS_DATA = [
     description: 'Penetapan pendamping kelompok',
   },
 
-  // Universal Attendance
+  // Universal Attendance — permission GRANULAR (bukan manage tunggal):
+  // panitia/divisi = read-only; KSK = operasional; delete = admin saja.
   {
     name: 'pkkmb.attendance.read',
     resource: 'attendance',
     action: 'read',
-    description: 'Melihat laporan presensi',
+    description: 'Melihat laporan presensi (read-only)',
   },
   {
     name: 'pkkmb.attendance.session_create',
     resource: 'attendance',
     action: 'session_create',
     description: 'Membuat sesi presensi universal',
+  },
+  {
+    name: 'pkkmb.attendance.update',
+    resource: 'attendance',
+    action: 'update',
+    description: 'Membuka/menutup sesi & verifikasi izin presensi',
+  },
+  {
+    name: 'pkkmb.attendance.delete',
+    resource: 'attendance',
+    action: 'delete',
+    description: 'Menghapus record presensi (privilege admin)',
+  },
+  {
+    name: 'pkkmb.attendance.export',
+    resource: 'attendance',
+    action: 'export',
+    description: 'Export data presensi',
   },
   {
     name: 'pkkmb.attendance.checkin',
@@ -309,6 +366,52 @@ const PERMISSIONS_DATA = [
     action: 'read_all',
     description: 'Melihat seluruh data profil',
   },
+
+  // Health data (sensitive)
+  {
+    name: 'pkkmb.health.read_own',
+    resource: 'health',
+    action: 'read_own',
+    description: 'Melihat data kesehatan sendiri',
+  },
+  {
+    name: 'pkkmb.health.write_own',
+    resource: 'health',
+    action: 'write_own',
+    description: 'Mengisi data kesehatan sendiri',
+  },
+  {
+    name: 'pkkmb.health.read_all',
+    resource: 'health',
+    action: 'read_all',
+    description: 'Melihat data kesehatan semua mahasiswa (tim kesehatan/admin)',
+  },
+  {
+    name: 'pkkmb.health.manage',
+    resource: 'health',
+    action: 'manage',
+    description: 'Mengelola master data penyakit',
+  },
+
+  // Onboarding consent & signature
+  {
+    name: 'pkkmb.consent.read_own',
+    resource: 'consent',
+    action: 'read_own',
+    description: 'Melihat persetujuan sendiri',
+  },
+  {
+    name: 'pkkmb.consent.write_own',
+    resource: 'consent',
+    action: 'write_own',
+    description: 'Menandatangani persetujuan onboarding',
+  },
+  {
+    name: 'pkkmb.consent.read_all',
+    resource: 'consent',
+    action: 'read_all',
+    description: 'Melihat persetujuan semua mahasiswa (admin)',
+  },
 ];
 
 async function seed() {
@@ -361,7 +464,17 @@ async function seed() {
         'pkkmb.announcement.read',
         'pkkmb.schedule.read',
         'pkkmb.grading.read_all',
+        'pkkmb.grading.update',
         'pkkmb.group.read_all',
+        'pkkmb.task.read',
+        'pkkmb.task.create',
+        'pkkmb.task.update',
+        'pkkmb.quiz.read',
+        'pkkmb.quiz.create',
+        'pkkmb.quiz.update',
+        'pkkmb.quiz.delete',
+        'pkkmb.quiz.submit',
+        'pkkmb.quiz.result',
         'pkkmb.attendance.read',
         'pkkmb.profile.read_own',
         'pkkmb.profile.update_own',
@@ -378,7 +491,17 @@ async function seed() {
         'pkkmb.announcement.create',
         'pkkmb.schedule.read',
         'pkkmb.grading.read_all',
+        'pkkmb.grading.update',
         'pkkmb.group.read_all',
+        'pkkmb.task.read',
+        'pkkmb.task.create',
+        'pkkmb.task.update',
+        'pkkmb.quiz.read',
+        'pkkmb.quiz.create',
+        'pkkmb.quiz.update',
+        'pkkmb.quiz.delete',
+        'pkkmb.quiz.submit',
+        'pkkmb.quiz.result',
         'pkkmb.attendance.read',
         'pkkmb.profile.read_own',
         'pkkmb.profile.update_own',
@@ -403,6 +526,19 @@ async function seed() {
         'pkkmb.schedule.update',
         'pkkmb.attendance.read',
         'pkkmb.attendance.session_create',
+        'pkkmb.attendance.update',
+        'pkkmb.attendance.export',
+        'pkkmb.grading.read_all',
+        'pkkmb.grading.update',
+        'pkkmb.task.read',
+        'pkkmb.task.create',
+        'pkkmb.task.update',
+        'pkkmb.quiz.read',
+        'pkkmb.quiz.create',
+        'pkkmb.quiz.update',
+        'pkkmb.quiz.delete',
+        'pkkmb.quiz.submit',
+        'pkkmb.quiz.result',
         'pkkmb.profile.read_own',
         'pkkmb.profile.update_own',
         'pkkmb.registration.manage',
@@ -432,6 +568,19 @@ async function seed() {
         'pkkmb.group.read_own',
         'pkkmb.grading.read_own',
         'pkkmb.grading.create',
+        'pkkmb.grading.update',
+        'pkkmb.task.read',
+        'pkkmb.task.create',
+        'pkkmb.task.update',
+        'pkkmb.quiz.read',
+        'pkkmb.quiz.create',
+        'pkkmb.quiz.update',
+        'pkkmb.quiz.delete',
+        'pkkmb.quiz.submit',
+        'pkkmb.quiz.result',
+        // Presensi: READ-ONLY (boleh lihat & check-in manual gugus sendiri,
+        // TIDAK boleh create/update/delete/export sesi).
+        'pkkmb.attendance.read',
         'pkkmb.attendance.checkin',
         'pkkmb.profile.read_own',
         'pkkmb.profile.update_own',
@@ -448,9 +597,16 @@ async function seed() {
         'pkkmb.group.read_own',
         'pkkmb.task.read',
         'pkkmb.task.submit',
+        'pkkmb.quiz.read',
+        'pkkmb.quiz.submit',
+        'pkkmb.quiz.result',
         'pkkmb.attendance.checkin',
         'pkkmb.profile.read_own',
         'pkkmb.profile.update_own',
+        'pkkmb.health.read_own',
+        'pkkmb.health.write_own',
+        'pkkmb.consent.read_own',
+        'pkkmb.consent.write_own',
       ]),
     },
   ];
@@ -531,6 +687,19 @@ async function seed() {
       roleSlug: 'panitia',
       division: 'Sie Humas',
       position: 'Koordinator Sie Humas',
+    },
+    {
+      // KSK = Kesekretariatan, DIVISI dalam role panitia (bukan role terpisah).
+      // Nilai division diseragamkan dengan divisi lain: 'Sie KSK' (bukan 'KSK').
+      // Otorisasi management presensi ditetapkan via division check di service
+      // (role panitia + division 'Sie KSK', case-insensitive — backward
+      // compatible dengan nilai lama 'KSK' di database existing).
+      name: 'Koordinator Sie KSK',
+      email: 'koor.ksk@unesa.ac.id',
+      nim: '19051204009',
+      roleSlug: 'panitia',
+      division: 'Sie KSK',
+      position: 'Koordinator Sie KSK (Kesekretariatan — Pengelola Absensi)',
     },
     {
       name: 'Koordinator Sie Pendamping',

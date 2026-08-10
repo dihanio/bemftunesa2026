@@ -20,6 +20,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let status: number = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let errors: unknown = undefined;
+    // Passthrough tambahan: daftar duplikat soal (WARNING) dari import quiz.
+    let duplicates: unknown = undefined;
 
     let code = 'INTERNAL_SERVER_ERROR';
 
@@ -36,6 +38,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         const resp = exceptionResponse as Record<string, unknown>;
         message = (resp.message as string) || exception.message;
         errors = resp.errors;
+        duplicates = resp.duplicates;
         if (resp.code) code = resp.code as string;
       }
 
@@ -76,6 +79,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       code,
       message,
       ...(errors ? { errors } : {}),
+      ...(Array.isArray(duplicates) && duplicates.length > 0
+        ? { duplicates }
+        : {}),
       timestamp: new Date().toISOString(),
       path: request.url,
     });

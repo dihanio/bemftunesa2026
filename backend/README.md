@@ -37,6 +37,16 @@ NestJS REST API for the BEM FT UNESA Digital Ecosystem monorepo.
 ## Environment Variables
 See `.env.example` for the full list of required variables.
 
+> **Dua file `.env` (jangan tertukar):**
+> - `.env` di **root repo** → untuk **docker-compose** (`MONGODB_URI` memakai host `db` = nama service docker).
+> - `backend/.env` → untuk **dev lokal** (`MONGODB_URI` memakai `127.0.0.1:27017`).
+>
+> Karena dotenv tidak menimpa variabel yang sudah ada di environment shell, jika shell/root `.env`
+> mengekspor `MONGODB_URI` dengan host `db`, server lokal akan gagal connect (host tidak resolve di luar docker).
+> Script dev (`npm run start:dev` / `start:debug`) sudah otomatis me-`unset MONGODB_URI` & `REDIS_URL`
+> sehingga selalu memakai `backend/.env`. Script `start` / `start:prod` dan Dockerfile **tidak** diubah
+> (produksi memang memakai host `db` dari compose).
+
 ## API Base URL
 `/api/v1`
 

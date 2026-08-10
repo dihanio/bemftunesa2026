@@ -10,11 +10,12 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/src/main.js",
-    "start:dev": "lsof -ti:4000 | xargs -r kill -9 2>/dev/null || true && nest start --watch",
-    "start:debug": "nest start --debug --watch",
+    "start:dev": "lsof -ti:4000 | xargs -r kill -9 2>/dev/null || true && env -u MONGODB_URI -u REDIS_URL nest start --watch",
+    "start:debug": "env -u MONGODB_URI -u REDIS_URL nest start --debug --watch",
     "start:prod": "node dist/main.js",
     "seed:rbac": "ts-node src/database/seeders/seed-rbac.ts",
     "seed:gugus": "ts-node src/database/seeders/seed-gugus.ts",
+    "seed:pendamping": "ts-node src/database/seeders/seed-pendamping-50.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -61,7 +62,8 @@
     "rxjs": "^7.8.1",
     "sharp": "^0.34.5",
     "swagger-ui-express": "^5.0.1",
-    "tesseract.js": "^7.0.0"
+    "tesseract.js": "^7.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

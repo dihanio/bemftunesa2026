@@ -132,6 +132,13 @@ body {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ── Quiz: Print Protection (anti-cheat deterrence) ────────────── */
+@media print {
+  body {
+    display: none !important;
+  }
+}
+
 /* ── Webkit Autofill Override ───────────────────────────────── */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 

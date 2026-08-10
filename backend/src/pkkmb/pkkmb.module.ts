@@ -45,11 +45,35 @@ import {
   PkkmbPublishConfig,
   PkkmbPublishConfigSchema,
 } from '../schemas/pkkmb-publish-config.schema';
+import {
+  HealthCondition,
+  HealthConditionSchema,
+} from '../schemas/health-condition.schema';
+import {
+  HealthRecord,
+  HealthRecordSchema,
+} from '../schemas/health-record.schema';
+import {
+  HealthProfile,
+  HealthProfileSchema,
+} from '../schemas/health-profile.schema';
+import {
+  OnboardingConsent,
+  OnboardingConsentSchema,
+} from '../schemas/onboarding-consent.schema';
+import {
+  PkkmbQuiz,
+  PkkmbQuizSchema,
+  PkkmbQuizAttempt,
+  PkkmbQuizAttemptSchema,
+} from '../schemas/pkkmb-quiz.schema';
 
 import { PkkmbController } from './pkkmb.controller';
 import { PkkmbService } from './pkkmb.service';
 import { KtmsOcrController } from './ktms-ocr.controller';
 import { KtmsOcrService } from './ktms-ocr.service';
+import { HealthController } from './health.controller';
+import { HealthService } from './health.service';
 
 @Module({
   imports: [
@@ -72,12 +96,19 @@ import { KtmsOcrService } from './ktms-ocr.service';
       { name: Rumpun.name, schema: RumpunSchema },
       { name: StudyProgram.name, schema: StudyProgramSchema },
       { name: PkkmbPublishConfig.name, schema: PkkmbPublishConfigSchema },
+      { name: HealthCondition.name, schema: HealthConditionSchema },
+      { name: HealthRecord.name, schema: HealthRecordSchema },
+      { name: HealthProfile.name, schema: HealthProfileSchema },
+      { name: OnboardingConsent.name, schema: OnboardingConsentSchema },
+      { name: PkkmbQuiz.name, schema: PkkmbQuizSchema },
+      { name: PkkmbQuizAttempt.name, schema: PkkmbQuizAttemptSchema },
     ]),
   ],
-  controllers: [PkkmbController, KtmsOcrController],
+  controllers: [PkkmbController, KtmsOcrController, HealthController],
   providers: [
     PkkmbService,
     KtmsOcrService,
+    HealthService,
     {
       provide: 'REDIS_CLIENT',
       useFactory: (configService: ConfigService) => {

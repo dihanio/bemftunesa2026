@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsNumber,
   IsArray,
+  IsInt,
   Min,
   Max,
   IsEnum,
@@ -11,8 +12,16 @@ import {
   IsDateString,
   IsUrl,
   IsBoolean,
+  ArrayMaxSize,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  QUIZ_VIOLATION_TYPES,
+  QUIZ_EVENTS_MAX_PER_REQUEST,
+} from '../quiz-anticheat';
+import type { QuizViolationType } from '../quiz-anticheat';
 
 export class MabaSubmitTaskDto {
   @ApiProperty({
@@ -157,6 +166,45 @@ export class CheckInDto {
   @IsNumber()
   @IsOptional()
   lng?: number;
+
+  @ApiPropertyOptional({ description: 'URL selfie hasil kamera saat check-in' })
+  @IsString()
+  @IsOptional()
+  photoUrl?: string;
+}
+
+export class SubmitIzinDto {
+  @ApiProperty({ description: 'ID Sesi Presensi' })
+  @IsMongoId()
+  @IsNotEmpty()
+  sessionId: string;
+
+  @ApiProperty({ enum: ['Izin', 'Sakit'] })
+  @IsEnum(['Izin', 'Sakit'])
+  @IsNotEmpty()
+  izinType: 'Izin' | 'Sakit';
+
+  @ApiProperty({ description: 'Alasan izin/sakit' })
+  @IsString()
+  @IsNotEmpty()
+  reason: string;
+
+  @ApiPropertyOptional({ description: 'URL bukti (surat izin/surat sakit)' })
+  @IsString()
+  @IsOptional()
+  proofUrl?: string;
+}
+
+export class VerifyIzinDto {
+  @ApiProperty({ description: 'ID Record Presensi' })
+  @IsMongoId()
+  @IsNotEmpty()
+  recordId: string;
+
+  @ApiProperty({ enum: ['APPROVED', 'REJECTED'] })
+  @IsEnum(['APPROVED', 'REJECTED'])
+  @IsNotEmpty()
+  decision: 'APPROVED' | 'REJECTED';
 }
 
 export class PaginationDto {
@@ -227,6 +275,44 @@ export class CreateTaskDto {
   @IsNotEmpty()
   description: string;
 
+  @ApiPropertyOptional({
+    description: 'Tipe Assignment (Google Classroom-like)',
+    enum: ['TASK', 'QUIZ'],
+    default: 'TASK',
+  })
+  @IsEnum(['TASK', 'QUIZ'])
+  @IsOptional()
+  assignmentType?: 'TASK' | 'QUIZ';
+
+  @ApiPropertyOptional({
+    description:
+      'ID Quiz existing (wajib jika assignmentType=QUIZ). Quiz menjadi engine soal/attempt/timer/scoring; assignment hanya container.',
+    example: '507f1f77bcf86cd799439011',
+  })
+  @IsMongoId()
+  @IsOptional()
+  quizId?: string;
+
+  @ApiPropertyOptional({
+    description: 'URL lampiran (opsional, utk TASK/MATERIAL)',
+  })
+  @IsUrl()
+  @IsOptional()
+  attachment?: string;
+
+  @ApiPropertyOptional({ description: 'URL link (opsional)' })
+  @IsUrl()
+  @IsOptional()
+  link?: string;
+
+  @ApiPropertyOptional({
+    description: 'Waktu mulai tugas tersedia (opsional)',
+    example: '2026-08-11T01:00:00.000Z',
+  })
+  @IsDateString()
+  @IsOptional()
+  startTime?: string;
+
   @ApiProperty({
     description: 'Batas Waktu Pengumpulan',
     example: '2026-08-17T23:59:59Z',
@@ -235,18 +321,41 @@ export class CreateTaskDto {
   @IsNotEmpty()
   deadline: string;
 
-  @ApiProperty({ description: 'Tipe Tugas', enum: ['individu', 'kelompok'] })
+  @ApiPropertyOptional({
+    description:
+      'Tipe Submisi utk TASK (individu/kelompok) — wajib jika assignmentType=TASK',
+    enum: ['individu', 'kelompok'],
+  })
   @IsEnum(['individu', 'kelompok'])
-  @IsNotEmpty()
-  type: string;
+  @IsOptional()
+  type?: string;
 
   @ApiPropertyOptional({
     description: 'Status Tugas',
-    enum: ['PUBLISHED', 'DRAFT'],
+    enum: ['PUBLISHED', 'DRAFT', 'CLOSED'],
   })
-  @IsEnum(['PUBLISHED', 'DRAFT'])
+  @IsEnum(['PUBLISHED', 'DRAFT', 'CLOSED'])
   @IsOptional()
-  status?: 'PUBLISHED' | 'DRAFT';
+  status?: 'PUBLISHED' | 'DRAFT' | 'CLOSED';
+
+  @ApiPropertyOptional({
+    description:
+      'Target penugasan: ALL / FACULTY / STUDY_PROGRAM / GROUP / INDIVIDUAL',
+    enum: ['ALL', 'FACULTY', 'STUDY_PROGRAM', 'GROUP', 'INDIVIDUAL'],
+    default: 'ALL',
+  })
+  @IsEnum(['ALL', 'FACULTY', 'STUDY_PROGRAM', 'GROUP', 'INDIVIDUAL'])
+  @IsOptional()
+  targetType?: 'ALL' | 'FACULTY' | 'STUDY_PROGRAM' | 'GROUP' | 'INDIVIDUAL';
+
+  @ApiPropertyOptional({
+    description:
+      'ID target sesuai targetType (StudyProgram / Group / User id, atau nama Fakultas untuk FACULTY)',
+    example: [],
+  })
+  @IsArray()
+  @IsOptional()
+  targetIds?: string[];
 
   @ApiPropertyOptional({
     description: 'Format file yang diperbolehkan',
@@ -468,10 +577,13 @@ export class OnboardDto {
   @IsNotEmpty()
   phone: string;
 
-  @ApiProperty({ description: 'Nomor Darurat', example: '081234567890' })
+  @ApiPropertyOptional({
+    description: 'Nomor Darurat (ditangani via health/me)',
+    example: '081234567890',
+  })
   @IsString()
-  @IsNotEmpty()
-  emergencyContact: string;
+  @IsOptional()
+  emergencyContact?: string;
 
   @ApiPropertyOptional({ description: 'Object Key Avatar / URL' })
   @IsString()
@@ -542,4 +654,224 @@ export class AdminUpdateUserDto {
   @IsString()
   @IsOptional()
   pkkmbGroup?: string;
+}
+
+// ─── QUIZ DTO ────────────────────────────────────────────────────────────
+
+export class QuizQuestionDto {
+  @ApiProperty({ description: 'Pertanyaan', example: 'Manakah tujuan PKKMB?' })
+  @IsString()
+  @IsNotEmpty()
+  question: string;
+
+  @ApiProperty({
+    description: 'Opsi jawaban',
+    example: [
+      { id: 'A', text: 'Ops A' },
+      { id: 'B', text: 'Ops B' },
+      { id: 'C', text: 'Ops C' },
+      { id: 'D', text: 'Ops D' },
+    ],
+  })
+  @IsArray()
+  @IsNotEmpty()
+  options: { id: string; text: string }[];
+
+  @ApiProperty({ description: 'Jawaban benar (id opsi)', example: 'B' })
+  @IsString()
+  @IsNotEmpty()
+  correctAnswer: string;
+
+  @ApiPropertyOptional({ description: 'Poin', default: 1 })
+  @IsNumber()
+  @IsOptional()
+  points?: number;
+
+  @ApiPropertyOptional({ description: 'Urutan', default: 0 })
+  @IsNumber()
+  @IsOptional()
+  order?: number;
+}
+
+export class CreateQuizDto {
+  @ApiProperty({ description: 'Judul Quiz', example: 'Pretest Pra-PKKMB' })
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @ApiPropertyOptional({ description: 'Deskripsi' })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
+    description: 'Tipe Quiz',
+    enum: ['PRETEST', 'POSTTEST', 'MATERIAL'],
+  })
+  @IsEnum(['PRETEST', 'POSTTEST', 'MATERIAL'])
+  @IsNotEmpty()
+  type: 'PRETEST' | 'POSTTEST' | 'MATERIAL';
+
+  @ApiPropertyOptional({
+    description: 'Status',
+    enum: ['DRAFT', 'PUBLISHED', 'CLOSED'],
+    default: 'DRAFT',
+  })
+  @IsEnum(['DRAFT', 'PUBLISHED', 'CLOSED'])
+  @IsOptional()
+  status?: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
+
+  @ApiPropertyOptional({
+    description: 'Target',
+    enum: ['ALL', 'FACULTY', 'STUDY_PROGRAM', 'GROUP', 'INDIVIDUAL'],
+    default: 'ALL',
+  })
+  @IsEnum(['ALL', 'FACULTY', 'STUDY_PROGRAM', 'GROUP', 'INDIVIDUAL'])
+  @IsOptional()
+  targetType?: 'ALL' | 'FACULTY' | 'STUDY_PROGRAM' | 'GROUP' | 'INDIVIDUAL';
+
+  @ApiPropertyOptional({ description: 'ID target sesuai targetType' })
+  @IsArray()
+  @IsOptional()
+  targetIds?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Mulai (WIB)',
+    example: '2026-08-11T01:00:00.000Z',
+  })
+  @IsDateString()
+  @IsOptional()
+  startTime?: string;
+
+  @ApiPropertyOptional({
+    description: 'Selesai (WIB)',
+    example: '2026-08-11T16:59:00.000Z',
+  })
+  @IsDateString()
+  @IsOptional()
+  endTime?: string;
+
+  @ApiPropertyOptional({ description: 'Durasi (menit)', default: 30 })
+  @IsNumber()
+  @IsOptional()
+  durationMinutes?: number;
+
+  @ApiPropertyOptional({ description: 'Max attempts', default: 1 })
+  @IsNumber()
+  @IsOptional()
+  maxAttempts?: number;
+
+  // passingScore = PERSENTASE (0-100), bukan poin absolut.
+  // Lulus jika percentage >= passingScore.
+  @ApiPropertyOptional({
+    description: 'Nilai minimum kelulusan dalam persentase (0-100)',
+    example: 75,
+    default: 0,
+    minimum: 0,
+    maximum: 100,
+  })
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  passingScore?: number;
+
+  @ApiPropertyOptional({ description: 'Daftar pertanyaan' })
+  @IsArray()
+  @IsOptional()
+  questions?: QuizQuestionDto[];
+}
+
+export class QuizAnswerDto {
+  @ApiProperty({ description: 'Question ID / index', example: '0' })
+  @IsString()
+  @IsNotEmpty()
+  questionId: string;
+
+  @ApiProperty({ description: 'Opsi yang dipilih', example: 'B' })
+  @IsString()
+  @IsNotEmpty()
+  selectedAnswer: string;
+}
+
+export class SubmitQuizDto {
+  @ApiProperty({ description: 'Jawaban mahasiswa', type: [QuizAnswerDto] })
+  @IsArray()
+  @IsNotEmpty()
+  answers: QuizAnswerDto[];
+}
+
+// Simpan jawaban sementara saat attempt masih IN_PROGRESS (agar bisa
+// dipulihkan setelah tab ditutup). Hanya questionId + selectedAnswer;
+// isCorrect/points dihitung backend saat submit.
+export class SaveQuizAnswersDto {
+  @ApiProperty({
+    description: 'Jawaban sementara (in-progress)',
+    type: [QuizAnswerDto],
+  })
+  @IsArray()
+  @IsNotEmpty()
+  answers: QuizAnswerDto[];
+}
+
+// Lapor pelanggaran anti-cheat (deterrence/monitoring). Hanya event type +
+// metadata minimal; identity dari JWT; occurredAt ditentukan SERVER.
+// Frontend TIDAK boleh mengirim riskLevel/violationCount/userId/score.
+export class ReportViolationDto {
+  @ApiProperty({
+    enum: QUIZ_VIOLATION_TYPES,
+    example: 'TAB_HIDDEN',
+    description: 'Tipe pelanggaran (enum)',
+  })
+  @IsEnum(QUIZ_VIOLATION_TYPES)
+  @IsNotEmpty()
+  type: QuizViolationType;
+
+  @ApiPropertyOptional({
+    description: 'Pertanyaan yang sedang dikerjakan (metadata saja)',
+  })
+  @IsString()
+  @IsOptional()
+  questionId?: string;
+}
+
+// Satu event dalam batch. `timestamp` client HANYA metadata (opsional) —
+// occurredAt otoritatif tetap server time. Identity dari JWT, bukan body.
+export class QuizEventDto {
+  @ApiProperty({
+    enum: QUIZ_VIOLATION_TYPES,
+    example: 'TAB_HIDDEN',
+    description: 'Tipe event (enum)',
+  })
+  @IsEnum(QUIZ_VIOLATION_TYPES)
+  @IsNotEmpty()
+  type: QuizViolationType;
+
+  @ApiPropertyOptional({
+    description:
+      'Timestamp client (hanya metadata; server time tetap authority)',
+  })
+  @IsDateString()
+  @IsOptional()
+  timestamp?: string;
+
+  @ApiPropertyOptional({
+    description: 'Pertanyaan yang sedang dikerjakan (metadata saja)',
+  })
+  @IsString()
+  @IsOptional()
+  questionId?: string;
+}
+
+// Batch event anti-cheat — maksimal 50 event/request (diatasnya 400).
+export class ReportQuizEventsDto {
+  @ApiProperty({
+    description: 'Batch event anti-cheat (maks 50)',
+    type: [QuizEventDto],
+  })
+  @IsArray()
+  @ArrayMaxSize(QUIZ_EVENTS_MAX_PER_REQUEST)
+  @ValidateNested({ each: true })
+  @Type(() => QuizEventDto)
+  events: QuizEventDto[];
 }
