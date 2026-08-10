@@ -3452,9 +3452,7 @@ export class PkkmbService {
       currentUser?.permissions?.includes('pkkmb.health.read_all') ||
       currentUser?.permissions?.includes('manage:all');
     if (canSeeHealth) {
-      const studentIds = sanitizedData.map(
-        (u) => (u as { _id?: unknown })._id,
-      );
+      const studentIds = sanitizedData.map((u) => (u as { _id?: unknown })._id);
       const healthProfiles = studentIds.length
         ? await this.healthProfileModel
             .find({ studentId: { $in: studentIds } })
@@ -3463,7 +3461,10 @@ export class PkkmbService {
             .exec()
         : [];
       const profileByStudent = new Map(
-        healthProfiles.map((p) => [String(p.studentId), p]),
+        healthProfiles.map((p) => [
+          (p.studentId as { toString(): string }).toString(),
+          p,
+        ]),
       );
       for (const item of sanitizedData) {
         const profile = profileByStudent.get(
