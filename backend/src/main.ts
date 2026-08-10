@@ -19,6 +19,13 @@ async function bootstrap() {
   });
   const configService = app.get(ConfigService);
 
+  // Trust 1 reverse-proxy hop (Caddy di produksi). Tanpa ini req.ip = IP proxy
+  // untuk SEMUA user, sehingga rate limiter (login 10/menit, global 300/menit)
+  // diterapkan gabungan untuk seluruh pengguna — semua maba tampak 1 IP.
+  // Dengan trust proxy, req.ip diambil dari X-Forwarded-For (Caddy menimpa
+  // header ini dari client, jadi aman dari spoofing).
+  app.set('trust proxy', 1);
+
   // Serve static assets (local fallback uploads)
   app.useStaticAssets(join(process.cwd(), 'public', 'uploads'), {
     prefix: '/uploads/',

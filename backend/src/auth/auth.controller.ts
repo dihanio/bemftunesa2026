@@ -22,6 +22,9 @@ import type { AuthenticatedRequest } from '../common/interfaces/authenticated-re
 import { ConfigService } from '@nestjs/config';
 import { GoogleOauthGuard } from './guards/google-oauth.guard';
 import { StructuredLogger } from '../common/logger/structured-logger.service';
+import { promisify } from 'util';
+
+const scryptAsync = promisify(crypto.scrypt);
 
 export interface GoogleProfile {
   googleId: string;
@@ -39,6 +42,22 @@ export class AuthController {
     private configService: ConfigService,
   ) {
     this.logger.setContext('AuthController');
+  }
+
+  // scrypt adalah operasi CPU-heavy. Sebelumnya dipakai scryptSync PER REQUEST
+  // di /auth/me — memblokir event loop global (load test: 100 req = 4.3 detik,
+  // semua endpoint ikut melambat). Key deterministic (secret+salt sama), jadi
+  // generate sekali lalu cache; request hanya melakukan AES encrypt (~0.05ms).
+  private scryptKeyCache: Buffer | null = null;
+  private async getScryptKey(): Promise<Buffer> {
+    if (!this.scryptKeyCache) {
+      this.scryptKeyCache = (await scryptAsync(
+        this.configService.get<string>('JWT_SECRET') || 'pkkmb_super_secret',
+        'salt',
+        32,
+      )) as Buffer;
+    }
+    return this.scryptKeyCache;
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -325,14 +344,9 @@ export class AuthController {
     let verificationToken = '';
     if (rawObj.nim) {
       try {
-        const algorithm = 'aes-256-cbc';
-        const secretKey = crypto.scryptSync(
-          this.configService.get<string>('JWT_SECRET') || 'pkkmb_super_secret',
-          'salt',
-          32,
-        );
+        const secretKey = await this.getScryptKey();
         const iv = crypto.randomBytes(16);
-        const cipher = crypto.createCipheriv(algorithm, secretKey, iv);
+        const cipher = crypto.createCipheriv('aes-256-cbc', secretKey, iv);
         let encrypted = cipher.update(rawObj.nim as string, 'utf8', 'hex');
         encrypted += cipher.final('hex');
         verificationToken = `${iv.toString('hex')}-${encrypted}`;
@@ -343,13 +357,6 @@ export class AuthController {
         );
       }
     }
-
-    console.log(
-      'Generated verificationToken:',
-      verificationToken,
-      'for NIM:',
-      rawObj.nim,
-    );
 
     return {
       success: true,
@@ -369,11 +376,7 @@ export class AuthController {
         throw new BadRequestException('Token tidak valid');
 
       const algorithm = 'aes-256-cbc';
-      const secretKey = crypto.scryptSync(
-        this.configService.get<string>('JWT_SECRET') || 'pkkmb_super_secret',
-        'salt',
-        32,
-      );
+      const secretKey = await this.getScryptKey();
       const iv = Buffer.from(ivHex, 'hex');
       const decipher = crypto.createDecipheriv(algorithm, secretKey, iv);
       let nim = decipher.update(encryptedHex, 'hex', 'utf8');

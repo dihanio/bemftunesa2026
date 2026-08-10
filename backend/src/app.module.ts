@@ -53,6 +53,12 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
+        // maxPoolSize default mongoose = 5. Dengan ribuan maba konkuren
+        // (dashboard maba melakukan 5+ query paralel per user), pool 5
+        // menjadi antrian — naikkan agar DB query tidak jadi bottleneck.
+        maxPoolSize: 50,
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 10000,
       }),
       inject: [ConfigService],
     }),

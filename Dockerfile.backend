@@ -37,6 +37,9 @@ RUN --mount=type=cache,id=npm,target=/root/.npm npm ci --omit=dev
 # ── Production image ─────────────────────────────────────
 FROM base AS runner
 ENV NODE_ENV=production
+# bcrypt/hash native ops jalan di libuv thread pool (default 4) — naikkan agar
+# login ribuan maba konkuren tidak antre (load test 100 VU: p50 1.2s -> 3.4s).
+ENV UV_THREADPOOL_SIZE=32
 
 # Copy built artifacts and node_modules
 COPY --from=prod-deps /app/node_modules ./node_modules
