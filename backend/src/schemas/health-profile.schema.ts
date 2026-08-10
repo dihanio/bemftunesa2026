@@ -48,7 +48,13 @@ export class HealthProfile {
   @Prop()
   emergencyContactPhone?: string;
 
-  @Prop({ enum: ['RENDAH', 'SEDANG', 'TINGGI'], default: 'RENDAH' })
+  // type: String eksplisit — RiskLevel adalah union type yang tidak bisa
+  // di-infer mongoose (error: Cannot determine a type for the field).
+  @Prop({
+    type: String,
+    enum: ['RENDAH', 'SEDANG', 'TINGGI'],
+    default: 'RENDAH',
+  })
   overallRiskLevel: RiskLevel;
 }
 

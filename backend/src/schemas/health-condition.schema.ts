@@ -24,10 +24,12 @@ export class HealthCondition {
   @Prop({ required: true, trim: true })
   name: string;
 
-  @Prop({ required: true, enum: HEALTH_CATEGORIES })
+  // type: String eksplisit — HealthCategory/RiskLevel adalah union type yang
+  // tidak bisa di-infer mongoose (Cannot determine a type for the field).
+  @Prop({ type: String, required: true, enum: HEALTH_CATEGORIES })
   category: HealthCategory;
 
-  @Prop({ required: true, enum: RISK_LEVELS, default: 'RENDAH' })
+  @Prop({ type: String, required: true, enum: RISK_LEVELS, default: 'RENDAH' })
   riskLevel: RiskLevel;
 
   @Prop({ default: true })
