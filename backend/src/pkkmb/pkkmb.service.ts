@@ -58,6 +58,11 @@ import {
 } from '../schemas/study-program.schema';
 
 import {
+  HealthProfile,
+  HealthProfileDocument,
+} from '../schemas/health-profile.schema';
+
+import {
   PkkmbPublishConfig,
   PkkmbPublishConfigDocument,
 } from '../schemas/pkkmb-publish-config.schema';
@@ -239,6 +244,8 @@ export class PkkmbService {
     private rumpunModel: Model<RumpunDocument>,
     @InjectModel(StudyProgram.name)
     private studyProgramModel: Model<StudyProgramDocument>,
+    @InjectModel(HealthProfile.name)
+    private healthProfileModel: Model<HealthProfileDocument>,
     @InjectModel(PkkmbPublishConfig.name)
     private publishConfigModel: Model<PkkmbPublishConfigDocument>,
 
@@ -3436,6 +3443,38 @@ export class PkkmbService {
       );
       return obj;
     });
+
+    // Lampirkan info disabilitas dari profil kesehatan (batch query 1x,
+    // bukan N+1) agar panitia/tim kesehatan bisa menyiapkan akomodasi.
+    // HANYA untuk pemegang izin health.read_all/manage:all — data disabilitas
+    // bersifat sensitif & tidak boleh bocor ke pendamping/panitia read-only.
+    const canSeeHealth =
+      currentUser?.permissions?.includes('pkkmb.health.read_all') ||
+      currentUser?.permissions?.includes('manage:all');
+    if (canSeeHealth) {
+      const studentIds = sanitizedData.map(
+        (u) => (u as { _id?: unknown })._id,
+      );
+      const healthProfiles = studentIds.length
+        ? await this.healthProfileModel
+            .find({ studentId: { $in: studentIds } })
+            .select('studentId isDisabled disabilityDescription')
+            .lean()
+            .exec()
+        : [];
+      const profileByStudent = new Map(
+        healthProfiles.map((p) => [String(p.studentId), p]),
+      );
+      for (const item of sanitizedData) {
+        const profile = profileByStudent.get(
+          String((item as { _id?: unknown })._id),
+        );
+        (item as unknown as Record<string, unknown>).disability = {
+          isDisabled: profile?.isDisabled ?? false,
+          description: profile?.disabilityDescription ?? undefined,
+        };
+      }
+    }
 
     return buildPaginationResponse(sanitizedData, total, paginationDto);
   }

@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   LogOut,
   ScanLine,
@@ -519,7 +520,7 @@ export default function OnboardingPage() {
                 transition={{ duration: 0.25 }}
                 className={`relative flex items-start gap-5 ${step >= s.n ? "opacity-100" : "opacity-40 grayscale"}`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 z-10 transition-colors duration-500 ${step > s.n ? "bg-gold-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]" : step === s.n ? "bg-black border-2 border-gold-500 text-gold-500" : "bg-black border-2 border-white/20 text-white/40"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 z-10 transition-colors duration-500 ${step > s.n ? "bg-gold-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]" : step === s.n ? "bg-black border-2 border-gold-500 text-gold-500 shadow-[0_0_18px_rgba(234,179,8,0.35)]" : "bg-black border-2 border-white/20 text-white/40"}`}>
                   {step > s.n ? <CheckCircle2 className="w-5 h-5" /> : s.n}
                 </div>
                 <div className="pt-1">
@@ -541,8 +542,13 @@ export default function OnboardingPage() {
 
         {/* Right Pane */}
         <div className="w-full lg:w-[60%] p-8 lg:p-12 relative flex flex-col h-[88vh]">
-          <div className="flex lg:hidden justify-between items-center mb-8">
-            <div className="text-sm font-bold text-gold-500">Langkah {step} dari 6</div>
+          <div className="flex lg:hidden justify-between items-center mb-6">
+            <div className="flex-1 mr-6">
+              <div className="text-sm font-bold text-gold-500 mb-2">Langkah {step} dari 6</div>
+              <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-gold-500 to-amber-500 rounded-full transition-all duration-500" style={{ width: `${(step / 6) * 100}%` }} />
+              </div>
+            </div>
             <button onClick={handleLogout} className="text-white/40 hover:text-red-400 text-xs font-semibold flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5">
               <LogOut className="w-4 h-4" /> Keluar
             </button>
@@ -839,8 +845,9 @@ export default function OnboardingPage() {
               {step > 1 && step <= 6 && (
                 <button
                   onClick={() => setStep(step - 1)}
-                  className="flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-white/40 hover:text-white transition-colors"
+                  className="group flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-white/40 hover:text-white transition-colors"
                 >
+                  <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
                   Kembali
                 </button>
               )}
@@ -850,7 +857,7 @@ export default function OnboardingPage() {
                 <button
                   onClick={goToStep2}
                   disabled={!ktmPreviewUrl || ocrStatus === "loading"}
-                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-400"
+                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-400 active:scale-[0.98]"
                 >
                   Lanjut ke Konfirmasi Data
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -859,7 +866,7 @@ export default function OnboardingPage() {
               {step === 2 && (
                 <button
                   onClick={goToStep3}
-                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 hover:bg-gold-400"
+                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 hover:bg-gold-400 active:scale-[0.98]"
                 >
                   Data Sesuai, Lanjut
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -868,7 +875,7 @@ export default function OnboardingPage() {
               {step === 3 && (
                 <button
                   onClick={() => healthRef.current?.submit()}
-                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 hover:bg-gold-400"
+                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 hover:bg-gold-400 active:scale-[0.98]"
                 >
                   Lanjut ke Pasfoto
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -878,7 +885,7 @@ export default function OnboardingPage() {
                 <button
                   onClick={handleSaveAndContinue}
                   disabled={isLoading}
-                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-400"
+                  className="group flex items-center gap-2 bg-gold-500 text-black px-8 py-3.5 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gold-400 active:scale-[0.98]"
                 >
                   {isLoading ? "Menyimpan..." : "Simpan & Lanjut"}
                   {!isLoading && <ArrowRight className="w-5 h-5" />}

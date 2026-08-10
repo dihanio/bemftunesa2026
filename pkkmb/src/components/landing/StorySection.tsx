@@ -87,17 +87,26 @@ const LOGO_COLORS = [
   },
 ];
 
-const TIMELINE = [
+interface TimelineEvent {
+  phase: string;
+  title: string;
+  period: string;
+  description: string;
+  comingSoon?: boolean;
+}
+
+const TIMELINE: TimelineEvent[] = [
   {
     phase: "Pra-PKKMB FT",
     title: "Technical Meeting",
-    period: "7 Agustus 2026",
-    description: "Pengarahan teknis, pembagian kelompok, persiapan atribut tingkat Fakultas, serta aktivasi portal mahasiswa.",
+    period: "Coming Soon",
+    description: "Pengarahan teknis, pembagian kelompok, persiapan atribut tingkat Fakultas, serta aktivasi portal mahasiswa. Tanggal pelaksanaan akan diumumkan segera.",
+    comingSoon: true,
   },
   {
     phase: "Pra-PKKMB Univ",
     title: "Persiapan Universitas",
-    period: "13 Agustus 2026",
+    period: "14 Agustus 2026",
     description: "Persiapan teknis, gladi, dan administrasi menyambut PKKMB tingkat Universitas.",
   },
   {
@@ -377,8 +386,16 @@ export default function StorySection() {
                     <span className="text-gold-400 font-display text-sm font-bold tracking-widest uppercase mb-1 block">
                       {event.phase}
                     </span>
-                    <span className="text-[#9ca3af] font-body text-xs uppercase tracking-widest mb-2 block transition-all duration-500">
-                      {event.period}
+                    <span className="flex items-center gap-2 mb-2 transition-all duration-500">
+                      <span className="text-[#9ca3af] font-body text-xs uppercase tracking-widest block">
+                        {event.period}
+                      </span>
+                      {event.comingSoon && (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-[10px] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          Coming Soon
+                        </span>
+                      )}
                     </span>
                     <h4 className="font-display text-xl xl:text-3xl text-white font-bold group-hover:text-gold-300 transition-colors whitespace-pre-line">
                       {event.title}
@@ -415,8 +432,16 @@ export default function StorySection() {
                   <span className="text-gold-400 font-display text-xs font-bold tracking-widest uppercase mb-1 block">
                     {event.phase}
                   </span>
-                  <span className="text-[#9ca3af] font-body text-[10px] uppercase tracking-widest mb-3 block">
-                    {event.period}
+                  <span className="flex items-center gap-2 mb-3">
+                    <span className="text-[#9ca3af] font-body text-[10px] uppercase tracking-widest block">
+                      {event.period}
+                    </span>
+                    {event.comingSoon && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-[9px] font-bold">
+                        <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                        Coming Soon
+                      </span>
+                    )}
                   </span>
                   <h4 className="font-display text-xl text-white font-bold mb-2">
                     {event.title}

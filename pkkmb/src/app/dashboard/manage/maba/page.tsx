@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Loader2, Wand2, Star, StarOff, Eye, Trash2, Award } from "lucide-react";
+import { Loader2, Wand2, Star, StarOff, Eye, Trash2, Award, Accessibility } from "lucide-react";
 import { API_URL } from "@/lib/api";
 
 interface MabaData {
@@ -13,6 +13,7 @@ interface MabaData {
   studyProgram: string;
   pkkmbGroup?: { _id: string; name: string; ketuaGugusId?: string };
   isOnboarded?: boolean;
+  disability?: { isDisabled?: boolean; description?: string };
 }
 
 const AvatarImage = ({ src, name }: { src?: string; name: string }) => {
@@ -377,14 +378,15 @@ export default function DataMabaPage() {
                 </th>
                 <th className="px-6 py-4 font-medium">Gugus</th>
                 <th className="px-6 py-4 font-medium">Status</th>
-                 <th className="px-6 py-4 font-medium">Ketua Gugus</th>
+                <th className="px-6 py-4 font-medium">Disabilitas</th>
+                <th className="px-6 py-4 font-medium">Ketua Gugus</th>
                 <th className="px-6 py-4 font-medium text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {!isLoading && !error && data.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-white/50">
+                  <td colSpan={9} className="px-6 py-8 text-center text-white/50">
                     Belum ada data mahasiswa baru yang tersimpan.
                   </td>
                 </tr>
@@ -416,6 +418,19 @@ export default function DataMabaPage() {
                       <span className="px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-md text-xs font-bold">Lengkap</span>
                     ) : (
                       <span className="px-2 py-1 bg-red-500/10 text-red-400 border border-red-500/20 rounded-md text-xs font-bold">Pending</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
+                    {maba.disability?.isDisabled ? (
+                      <span
+                        className="inline-flex items-center gap-1.5 px-2 py-1 bg-purple-500/10 text-purple-300 border border-purple-500/30 rounded-md text-xs font-bold cursor-help"
+                        title={maba.disability.description || "Mahasiswa dengan disabilitas"}
+                      >
+                        <Accessibility className="w-3.5 h-3.5" />
+                        Disabilitas
+                      </span>
+                    ) : (
+                      <span className="text-white/30">-</span>
                     )}
                   </td>
                   <td className="px-6 py-4">
@@ -649,6 +664,14 @@ export default function DataMabaPage() {
                 <label className="text-xs text-white/50 block">Status Onboarding</label>
                 <div className="text-white">
                   {selectedMaba.isOnboarded ? 'Lengkap / Sudah Mengisi Data' : 'Pending / Belum Lengkap'}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-white/50 block">Disabilitas</label>
+                <div className="text-white">
+                  {selectedMaba.disability?.isDisabled
+                    ? (selectedMaba.disability.description || 'Ya — mahasiswa dengan disabilitas')
+                    : 'Tidak'}
                 </div>
               </div>
               <div>
