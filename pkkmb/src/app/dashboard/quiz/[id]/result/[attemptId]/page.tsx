@@ -7,7 +7,7 @@ import { API_URL } from "@/lib/api";
 import { QuizResult } from "@/lib/quiz";
 
 export default function QuizResultPage() {
-  const { quizId, attemptId } = useParams<{ quizId: string; attemptId: string }>();
+  const { id, attemptId } = useParams<{ id: string; attemptId: string }>();
   const router = useRouter();
   const [result, setResult] = useState<QuizResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ export default function QuizResultPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${quizId}/result/${attemptId}`, { credentials: "include" });
+        const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${id}/result/${attemptId}`, { credentials: "include" });
         if (res.status === 401) { router.push("/login"); return; }
         const json = await res.json();
         if (res.ok && json.success) setResult(json.data);
@@ -28,7 +28,7 @@ export default function QuizResultPage() {
       }
     };
     load();
-  }, [quizId, attemptId, router]);
+  }, [id, attemptId, router]);
 
   if (loading) {
     return (
