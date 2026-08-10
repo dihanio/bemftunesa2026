@@ -66,8 +66,8 @@ export function Navbar() {
         {/* Logo Section */}
         <Link href="/" className="flex items-center gap-4 group shrink-0">
           <div className="flex items-center gap-2">
-            <Image src="/logobemft.png" alt="BEM FT UNESA" width={44} height={44} className="object-contain filter drop-shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-transform duration-300 group-hover:scale-105 shrink-0" />
-            <Image src="/logo_kabinet.png" alt="Kabinet BEM FT" width={44} height={44} className="object-contain filter drop-shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-transform duration-300 group-hover:scale-105 shrink-0" />
+            <Image src="/logobemft.webp" alt="BEM FT UNESA" width={44} height={44} className="object-contain filter drop-shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-transform duration-300 group-hover:scale-105 shrink-0" />
+            <Image src="/logo_kabinet.webp" alt="Kabinet BEM FT" width={44} height={44} className="object-contain filter drop-shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-transform duration-300 group-hover:scale-105 shrink-0" />
           </div>
           <div className="flex flex-col border-l border-foreground/20 pl-3 ml-1">
             <span className="text-lg font-extrabold text-foreground tracking-tight leading-tight">BEM FT UNESA</span>

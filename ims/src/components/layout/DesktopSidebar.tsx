@@ -70,7 +70,7 @@ export function DesktopSidebar({ sections, onLogout }: DesktopSidebarProps) {
       {/* Logo Section (Fixed) */}
       <div className="px-6 flex items-center gap-3 mb-6 shrink-0 mt-2">
           <div className="w-9 h-9 flex items-center justify-center shrink-0">
-            <Image src="/images/logo-bemft.png" alt="Logo BEM FT" width={36} height={36} className="object-contain" />
+            <Image src="/images/logo-bemft.webp" alt="Logo BEM FT" width={36} height={36} className="object-contain" />
           </div>
           <div className="flex flex-col">
             <span className="text-ink font-medium text-sm leading-none mb-0.5">IMS Dashboard</span>

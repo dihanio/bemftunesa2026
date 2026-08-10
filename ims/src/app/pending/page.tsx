@@ -38,7 +38,7 @@ export default function PendingPage() {
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="relative w-16 h-16">
                 <Image 
-                  src="/images/logo-bemft.png" 
+                  src="/images/logo-bemft.webp" 
                   alt="BEM FT" 
                   fill 
                   className="object-contain" 

@@ -4,7 +4,7 @@ import { PublicApiService } from '@/lib/api';
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   let title = "Open Recruitment BEM FT UNESA";
   let description = "Pendaftaran kepanitiaan dan staf BEM FT UNESA.";
-  let imgUrl = "/icon.png";
+  let imgUrl = "/icon.webp";
 
   try {
     const res = await PublicApiService.getRecruitmentBySlug(params.slug);

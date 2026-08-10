@@ -74,7 +74,7 @@ export function MobileSidebar({ isOpen, onClose, sections, onLogout }: MobileSid
         {/* Header & Logo (Fixed) */}
         <div className="flex items-center justify-between border-b border-white/5 pb-4 px-6 shrink-0 mb-4 mt-2">
           <div className="flex items-center gap-2.5">
-              <Image src="/images/logo-bemft.png" alt="Logo BEM FT" width={24} height={24} className="object-contain" />
+              <Image src="/images/logo-bemft.webp" alt="Logo BEM FT" width={24} height={24} className="object-contain" />
               <span className="text-sm font-bold text-foreground">IMS Dashboard</span>
             </div>
             <button

@@ -53,14 +53,14 @@ export function HeroSection() {
       name: "Prisha",
       role: "Maskot Advokasi & Pelayanan",
       greeting: "Halo Rek! Ada aspirasi kampus? Kami siap kawal! 💙",
-      image: "/images/prisha_waving.png",
+      image: "/images/prisha_waving.webp",
       alt: "Maskot Prisha BEM FT UNESA"
     },
     smaya: {
       name: "Smaya",
       role: "Maskot Inovasi & Karya Teknik",
       greeting: "Salam Teknik! Mari bersinergi dan berinovasi bersama! ⚡",
-      image: "/images/smaya_cheering.png",
+      image: "/images/smaya_cheering.webp",
       alt: "Maskot Smaya BEM FT UNESA"
     }
   };
@@ -140,7 +140,7 @@ export function HeroSection() {
             {/* Right Column: FT Building Image & Interactive Mascot */}
             <div className="lg:col-span-7 relative w-full h-[320px] sm:h-[380px] lg:h-auto min-h-[320px] lg:min-h-[420px] overflow-hidden bg-slate-200/30 dark:bg-slate-800/15 group/rightCol">
               <Image
-                src="/images/gedung-ft.png"
+                src="/images/gedung-ft.webp"
                 alt="Gedung Fakultas Teknik UNESA"
                 fill
                 priority={false}

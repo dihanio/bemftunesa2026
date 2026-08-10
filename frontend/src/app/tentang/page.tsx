@@ -141,7 +141,7 @@ export default function TentangPage() {
           
           <div className="w-full lg:w-1/3 flex justify-center mb-6 lg:mb-0 relative">
             <div className={`relative w-64 h-64 md:w-80 md:h-80 drop-shadow-2xl transition-transform duration-500 ${hoveredPhilo !== null ? 'scale-110' : 'hover:scale-105'}`}>
-              <Image src="/logobemft.png" alt="Logo BEM FT UNESA" fill className="object-contain" priority />
+              <Image src="/logobemft.webp" alt="Logo BEM FT UNESA" fill className="object-contain" priority />
             </div>
 
             {/* Interactive Arrow Indicator (Desktop Only) */}

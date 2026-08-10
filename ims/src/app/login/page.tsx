@@ -58,8 +58,8 @@ function LoginContent() {
       {/* Mobile Branding */}
       <div className="flex flex-col items-center text-center lg:hidden mb-8">
         <div className="flex items-center gap-4 mb-3">
-          <Image src="/images/logo-bemft.png" alt="BEM FT" width={56} height={56} className="object-contain" />
-          <Image src="/images/logo-kabinet.png" alt="Kabinet" width={56} height={56} className="object-contain" />
+          <Image src="/images/logo-bemft.webp" alt="BEM FT" width={56} height={56} className="object-contain" />
+          <Image src="/images/logo-kabinet.webp" alt="Kabinet" width={56} height={56} className="object-contain" />
         </div>
         <div className="flex flex-col items-center mb-6">
           <span className="font-bold tracking-wide text-sm text-ink leading-none mb-1">BEM FT UNESA | KABINET DANADYAKSA</span>
@@ -113,7 +113,7 @@ export default function LoginPage() {
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image 
-            src="/images/gedung-ft.png" 
+            src="/images/gedung-ft.webp" 
             alt="Gedung Fakultas Teknik" 
             fill
             sizes="50vw"
@@ -128,14 +128,14 @@ export default function LoginPage() {
         <div className="relative z-10 flex items-center gap-6">
           <div className="flex items-center gap-4 bg-black/20 p-3 pr-6 rounded-full backdrop-blur-md border border-white/10 shadow-xl">
             <Image 
-              src="/images/logo-bemft.png" 
+              src="/images/logo-bemft.webp" 
               alt="BEM FT" 
               width={56} 
               height={56} 
               className="object-contain" 
             />
             <Image 
-              src="/images/logo-kabinet.png" 
+              src="/images/logo-kabinet.webp" 
               alt="Kabinet" 
               width={56} 
               height={56} 

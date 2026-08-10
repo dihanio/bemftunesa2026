@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description:
     "Portal resmi Badan Eksekutif Mahasiswa (BEM) Fakultas Teknik Universitas Negeri Surabaya Kabinet Danadyaksa 2026. Sinergi Nyata, Teknik Berdaya.",
   icons: {
-    icon: "/icon.png",
+    icon: "/icon.webp",
   },
 };
 

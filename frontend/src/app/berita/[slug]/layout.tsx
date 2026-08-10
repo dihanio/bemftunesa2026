@@ -4,7 +4,7 @@ import { PublicApiService } from '@/lib/api';
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   let title = "Berita BEM FT UNESA";
   let description = "Baca berita terbaru dari BEM FT UNESA.";
-  let imgUrl = "/icon.png";
+  let imgUrl = "/icon.webp";
 
   try {
     const res = await PublicApiService.getNewsBySlug(params.slug);
