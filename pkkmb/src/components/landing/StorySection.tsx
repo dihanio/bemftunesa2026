@@ -223,35 +223,27 @@ export default function StorySection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.7, ease: "easeOut", delay: idx * 0.1 }}
-                className="relative group p-8 rounded-[2rem] bg-black/40 border border-white/10 hover:border-gold-500/50 hover:bg-white/5 transition-all duration-700 overflow-hidden flex flex-col justify-between min-h-[280px]"
+                className="relative group pt-10 pb-2 border-t border-white/10 hover:border-gold-500/40 transition-colors duration-700 overflow-hidden"
               >
-                {/* Ambient Glow */}
-                <div className="absolute inset-0 bg-gold-500/0 group-hover:bg-gold-500/5 transition-colors duration-700" />
-                
                 {/* Massive Watermark Letter */}
-                <span className="absolute -bottom-8 -right-4 font-display font-black text-[180px] leading-none text-white/5 group-hover:text-gold-500/10 group-hover:-translate-y-4 group-hover:-translate-x-4 transition-all duration-700 z-0">
+                <span className="absolute top-6 -right-2 font-display font-black text-[120px] leading-none text-white/[0.04] group-hover:text-gold-500/10 transition-colors duration-700 z-0">
                   {val.id}
                 </span>
 
                 {/* Content */}
                 <div className="relative z-10">
-                  <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:bg-gold-500 group-hover:border-gold-500 transition-all duration-500 shadow-lg">
-                    <span className="font-display font-bold text-xl text-white/50 group-hover:text-black transition-colors duration-500">
-                      {val.id}
-                    </span>
-                  </div>
-                  
-                  <h3 className="font-display text-2xl text-white font-bold tracking-wide mb-4 group-hover:text-gold-400 transition-colors duration-500">
+                  <span className="font-display font-black text-4xl md:text-5xl text-white/25 group-hover:text-gold-400 transition-colors duration-500">
+                    {val.id}
+                  </span>
+
+                  <h3 className="font-display text-2xl text-white font-bold tracking-wide mt-5 mb-4 group-hover:text-gold-400 transition-colors duration-500">
                     {val.title}
                   </h3>
-                  
+
                   <p className="text-white/60 font-body text-sm leading-relaxed group-hover:text-white/90 transition-colors duration-500">
                     {val.description}
                   </p>
                 </div>
-                
-                {/* Decorative Line */}
-                <div className="relative z-10 w-0 h-1 bg-gradient-to-r from-gold-500 to-transparent mt-6 group-hover:w-full transition-all duration-700 ease-out" />
               </motion.div>
             ))}
           </div>
@@ -275,13 +267,13 @@ export default function StorySection() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
-              className="w-full lg:w-1/3 flex justify-center items-center p-8 bg-white/5 rounded-3xl border border-white/10"
+              className="w-full lg:w-1/3 flex justify-center items-center"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src="/logo_adrata.png" 
                 alt="Logo ADRATA FT UNESA 2026" 
-                className="w-full max-w-[240px] h-auto object-contain drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]"
+                className="w-full max-w-[300px] h-auto object-contain drop-shadow-[0_0_45px_rgba(234,179,8,0.35)]"
               />
             </motion.div>
 
@@ -294,7 +286,7 @@ export default function StorySection() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: idx * 0.1 }}
-                  className={`p-6 rounded-2xl bg-black/40 border ${item.borderClass} flex flex-col h-full hover:bg-white/5 transition-colors`}
+                  className="flex flex-col h-full pb-5 pt-1 border-b border-white/10 group-hover:border-transparent"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`w-4 h-4 rounded-full ${item.bgClass} shadow-[0_0_10px_currentColor] ${item.textClass}`} />

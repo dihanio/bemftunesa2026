@@ -56,7 +56,7 @@ export default function Navbar() {
           </Link>
           <Link
             href="/login"
-            className="px-5 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white font-body text-xs font-bold uppercase tracking-widest transition-all"
+            className="px-6 py-2.5 rounded-lg bg-white text-black hover:bg-gold-400 font-body text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-[0_0_20px_rgba(234,179,8,0.15)]"
           >
             Masuk Portal
           </Link>

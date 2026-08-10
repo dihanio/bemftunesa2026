@@ -43,8 +43,8 @@ function CountdownUnit({ value, label }: CountdownUnitProps) {
   }, [value]);
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="glass rounded-xl px-4 py-3 min-w-[64px] text-center relative overflow-hidden">
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative px-2 py-1 min-w-[64px] text-center">
         <AnimatePresence mode="popLayout">
           <motion.span
             key={value}
@@ -52,8 +52,8 @@ function CountdownUnit({ value, label }: CountdownUnitProps) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="block font-display font-bold text-2xl md:text-3xl text-white tabular-nums"
-            style={{ textShadow: "0 0 12px rgba(245,158,11,0.5)" }}
+            className="block font-display font-bold text-3xl md:text-4xl text-white tabular-nums"
+            style={{ textShadow: "0 0 18px rgba(245,158,11,0.35)" }}
           >
             {String(value).padStart(2, "0")}
           </motion.span>
@@ -88,7 +88,7 @@ export default function CountdownWidget() {
 
   if (isOver) {
     return (
-      <div className="glass rounded-2xl px-6 py-4 text-center">
+      <div className="text-center">
         <p className="font-display font-bold text-lg gradient-emerald-gold">
           PKKMB 2026 Telah Dimulai!
         </p>
