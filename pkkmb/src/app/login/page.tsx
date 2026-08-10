@@ -49,7 +49,7 @@ function LoginContent() {
     <div className="flex flex-col items-center text-center relative z-10">
       <div className="w-20 h-20 relative mb-6">
         <Link href="/" aria-label="Kembali ke halaman utama" className="relative block w-full h-full">
-          <Image src="/logo_adrata.png" alt="Logo Adrata" fill sizes="160px" priority className="object-contain drop-shadow-[0_0_15px_rgba(234,179,8,0.3)] hover:scale-105 transition-transform" />
+          <Image src="/logo_adrata.webp" alt="Logo Adrata" fill sizes="160px" priority className="object-contain drop-shadow-[0_0_15px_rgba(234,179,8,0.3)] hover:scale-105 transition-transform" />
         </Link>
       </div>
       
@@ -97,7 +97,7 @@ export default function LoginPage() {
       {/* Background Ambience */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/images/gedung_ft_new.jpeg"
+          src="/images/gedung_ft_new.webp"
           alt="Gedung Fakultas Teknik UNESA"
           fill
           priority

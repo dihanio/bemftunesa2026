@@ -477,7 +477,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-[#050505] text-white flex flex-col font-body relative overflow-x-hidden p-4 sm:p-8 py-12">
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <Image src="/images/gedung_ft_new.jpeg" alt="Background" fill priority className="object-cover opacity-[0.03] mix-blend-luminosity" />
+        <Image src="/images/gedung_ft_new.webp" alt="Background" fill priority className="object-cover opacity-[0.03] mix-blend-luminosity" />
         <div className="absolute inset-0 bg-gradient-to-br from-black via-[#0a0a0a] to-black" />
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.15, 0.1] }}
@@ -493,7 +493,7 @@ export default function OnboardingPage() {
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gold-500 to-transparent" />
           <div className="flex flex-col items-center text-center">
             <div className="w-20 h-20 relative mb-6">
-              <Image src="/logo_adrata.png" alt="Logo Adrata" fill sizes="80px" priority className="object-contain drop-shadow-[0_0_15px_rgba(234,179,8,0.3)]" />
+              <Image src="/logo_adrata.webp" alt="Logo Adrata" fill sizes="80px" priority className="object-contain drop-shadow-[0_0_15px_rgba(234,179,8,0.3)]" />
             </div>
             <h1 className="font-display text-3xl font-bold mb-4">
               Selamat Datang di <br />

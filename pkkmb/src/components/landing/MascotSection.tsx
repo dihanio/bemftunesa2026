@@ -40,13 +40,13 @@ export default function MascotSection() {
               <div className="absolute inset-4 bg-[#10b981]/20 rounded-full blur-3xl group-hover:bg-[#10b981]/40 transition-colors duration-700" />
               
               <Image
-                src="/prisha1.png"
+                src="/prisha1.webp"
                 alt="Prisha - Maskot PKKMB FT UNESA"
                 fill
                 className="object-contain relative z-10 drop-shadow-2xl transition-all duration-500 group-hover:opacity-0"
               />
               <Image
-                src="/prisha2.png"
+                src="/prisha2.webp"
                 alt="Prisha Alt - Maskot PKKMB FT UNESA"
                 fill
                 className="object-contain absolute inset-0 z-20 drop-shadow-2xl opacity-0 group-hover:opacity-100 group-hover:-translate-y-4 transition-all duration-500 ease-out"
@@ -71,13 +71,13 @@ export default function MascotSection() {
               <div className="absolute inset-4 bg-[#eab308]/20 rounded-full blur-3xl group-hover:bg-[#eab308]/40 transition-colors duration-700" />
               
               <Image
-                src="/smaya1.png"
+                src="/smaya1.webp"
                 alt="Smaya - Maskot PKKMB FT UNESA"
                 fill
                 className="object-contain relative z-10 drop-shadow-2xl transition-all duration-500 group-hover:opacity-0"
               />
               <Image
-                src="/smaya2.png"
+                src="/smaya2.webp"
                 alt="Smaya Alt - Maskot PKKMB FT UNESA"
                 fill
                 className="object-contain absolute inset-0 z-20 drop-shadow-2xl opacity-0 group-hover:opacity-100 group-hover:-translate-y-4 transition-all duration-500 ease-out"

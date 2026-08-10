@@ -83,7 +83,7 @@ export default function VerifyPage() {
       >
         <div className="text-center mb-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo_adrata.png" alt="Logo Adrata" width={64} height={64} className="mx-auto mb-4 opacity-90 object-contain" />
+          <img src="/logo_adrata.webp" alt="Logo Adrata" width={64} height={64} className="mx-auto mb-4 opacity-90 object-contain" />
           <h1 className="font-display text-xl font-bold text-white tracking-wide">Validasi Identitas</h1>
         </div>
 

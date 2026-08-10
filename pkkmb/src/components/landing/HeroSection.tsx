@@ -46,7 +46,7 @@ export default function HeroSection() {
         aria-hidden="true"
       >
         <Image
-          src="/images/gedung_ft_new.jpeg"
+          src="/images/gedung_ft_new.webp"
           alt="Gedung Fakultas Teknik Universitas Negeri Surabaya"
           fill
           priority

@@ -242,7 +242,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar */}
       <aside className="w-72 bg-black border-r border-white/5 hidden md:flex flex-col sticky top-0 h-screen">
         <div className="p-8 flex items-center gap-4 border-b border-white/5">
-          <Image src="/logo_adrata.png" alt="Logo" width={40} height={40} priority style={{ width: 'auto', height: 'auto' }} className="object-contain" />
+          <Image src="/logo_adrata.webp" alt="Logo" width={40} height={40} priority style={{ width: 'auto', height: 'auto' }} className="object-contain" />
           <div>
             <h2 className="font-display font-bold text-lg leading-tight">Portal<br/><span className="text-gold-500">Adrata</span></h2>
           </div>
@@ -271,7 +271,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Dashboard Background */}
         <div className="absolute inset-0 z-0 pointer-events-none">
           <Image
-            src="/images/gedung_ft_new.jpeg"
+            src="/images/gedung_ft_new.webp"
             alt="Background Dashboard"
             fill
             priority

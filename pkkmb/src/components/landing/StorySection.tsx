@@ -271,7 +271,7 @@ export default function StorySection() {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
-                src="/logo_adrata.png" 
+                src="/logo_adrata.webp" 
                 alt="Logo ADRATA FT UNESA 2026" 
                 className="w-full max-w-[300px] h-auto object-contain drop-shadow-[0_0_45px_rgba(234,179,8,0.35)]"
               />

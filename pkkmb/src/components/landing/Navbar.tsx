@@ -29,7 +29,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative w-10 h-10 md:w-12 md:h-12 shrink-0 transition-transform duration-500 group-hover:scale-110">
             <Image
-              src="/logo_adrata.webp"
+              src="/icon-adrata.webp"
               alt="Logo PKKMB Adrata"
               fill
               className="object-contain"
