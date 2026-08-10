@@ -33,7 +33,7 @@ const FAQ_DATA: FaqItem[] = [
     id: "faq-4",
     question: "Di mana saya bisa mendapatkan informasi dari Kakak Pendamping?",
     answer:
-      "Setelah Anda berhasil login ke Portal Maba, buka menu 'Adrista Hub'. Di sana Anda akan menemukan profil lengkap Kakak Pendamping beserta tautan (link) grup WhatsApp gugus Anda untuk berkoordinasi.",
+      "Setelah Anda berhasil login ke Portal Maba, buka menu 'Adrista Hub'. Di sana Anda akan menemukan profil lengkap Kakak Pendamping beserta kontak WhatsApp-nya. Untuk bergabung ke grup WhatsApp gugus, hubungi dan konfirmasi terlebih dahulu ke Kakak Pendamping Anda (sertakan nama lengkap dan NIM). Kakak Pendamping yang akan menambahkan Anda ke grup gugus tersebut.",
   },
   {
     id: "faq-5",
