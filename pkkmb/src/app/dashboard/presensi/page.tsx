@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle2, Clock, MapPin, Search, Fingerprint, AlertCircle, Camera, X, User, Lock } from "lucide-react";
+import { CheckCircle2, Clock, MapPin, Search, Fingerprint, AlertCircle, Camera, X, User, Lock, FileText, XCircle } from "lucide-react";
 import { API_URL } from "@/lib/api";
 import { formatWIB, formatWIBLong, getPeriodStatus, useNow } from "@/lib/presensi-time";
 import toast from "react-hot-toast";
@@ -107,7 +107,10 @@ export default function PresensiMabaPage() {
       setCameraOpen(true);
       // video element sudah render via effect
     } catch {
-      setCaptureError("Tidak dapat mengakses kamera. Izinkan akses kamera di browser.");
+      // UX: error kamera harus terlihat meski modal tidak terbuka
+      const msg = "Tidak dapat mengakses kamera. Izinkan akses kamera di browser, lalu coba lagi.";
+      setCaptureError(msg);
+      toast.error(msg, { duration: 5000 });
     }
   };
 
@@ -368,23 +371,36 @@ export default function PresensiMabaPage() {
             <div className="space-y-3">
               {sessions.map(s => {
                 const isSelected = selectedSessionId === s._id;
+                const sStatus = getPeriodStatus(now, s.startTime, s.endTime);
+                const statusChip =
+                  sStatus === "aktif"
+                    ? { label: "Berlangsung", cls: "bg-emerald-500/10 border-emerald-500/30 text-emerald-300", dot: "bg-emerald-400 animate-pulse" }
+                    : sStatus === "belum"
+                      ? { label: "Belum Dibuka", cls: "bg-gold-500/10 border-gold-500/30 text-gold-400", dot: "bg-gold-400" }
+                      : { label: "Ditutup", cls: "bg-white/5 border-white/10 text-white/40", dot: "bg-white/30" };
                 return (
                   <label
                     key={s._id}
-                    className={`flex items-center gap-4 px-4 py-4 rounded-2xl border cursor-pointer transition-all ${
+                    className={`group flex items-center gap-4 px-4 py-4 rounded-2xl border cursor-pointer transition-all duration-200 ${
                       isSelected
                         ? 'bg-gold-500/10 border-gold-500/40 text-white shadow-[0_0_20px_rgba(234,179,8,0.1)]'
-                        : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/[0.08]'
+                        : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/[0.08] hover:border-white/20'
                     }`}
                   >
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                      isSelected ? 'border-gold-500' : 'border-white/30'
+                      isSelected ? 'border-gold-500' : 'border-white/30 group-hover:border-white/50'
                     }`}>
                       {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-gold-500" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-white/80'}`}>{s.title}</p>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-white/40">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-white/80'}`}>{s.title}</p>
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold ${statusChip.cls}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusChip.dot}`} />
+                          {statusChip.label}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-white/40">
                         <span className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
                           {formatWIB(s.startTime, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
@@ -408,20 +424,23 @@ export default function PresensiMabaPage() {
               onClick={openCamera}
               disabled={!canCheckIn}
               aria-label="Buka kamera dan ambil presensi"
-              className="w-full px-8 py-4 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold-500 flex items-center justify-center gap-2 text-base shadow-[0_0_20px_rgba(234,179,8,0.25)] hover:shadow-[0_0_30px_rgba(234,179,8,0.4)] active:scale-[0.99]"
+              className="group w-full px-8 py-4 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gold-500 flex items-center justify-center gap-2 text-base shadow-[0_0_20px_rgba(234,179,8,0.25)] hover:shadow-[0_0_30px_rgba(234,179,8,0.4)] active:scale-[0.98]"
             >
-              <Camera className="w-5 h-5" />
+              <Camera className="w-5 h-5 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6" />
               {alreadyAttended ? "Sudah Presensi" : periodStatus === "aktif" ? "Ambil Presensi" : "Buka Kamera & Hadir"}
             </button>
             <button
               type="button"
               onClick={() => setIzinOpen(true)}
               disabled={!canCheckIn}
-              className="w-full px-8 py-3 bg-white/5 hover:bg-white/10 text-white/70 font-bold rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm border border-white/10"
+              className="w-full px-8 py-3 bg-white/5 hover:bg-white/10 text-white/70 font-bold rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white/5 flex items-center justify-center gap-2 text-sm border border-white/10"
             >
               <AlertCircle className="w-4 h-4" />
               Tidak Hadir (Izin / Sakit)
             </button>
+            {!canCheckIn && periodStatus === "tutup" && !alreadyAttended && (
+              <p className="text-center text-xs text-white/35">Presensi sesi ini telah ditutup.</p>
+            )}
           </form>
         )}
       </div>
@@ -451,7 +470,7 @@ export default function PresensiMabaPage() {
                 <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">Bukti (surat izin/sakit, opsional)</label>
                 <input type="file" accept="image/*,.pdf" onChange={(e) => setIzinProof(e.target.files?.[0] || null)} className="w-full text-sm text-white/70 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-white/10 file:text-white file:font-bold file:cursor-pointer" />
               </div>
-              <button type="submit" disabled={izinSubmitting} className="w-full px-6 py-3 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-50">
+              <button type="submit" disabled={izinSubmitting} className="w-full px-6 py-3 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed">
                 {izinSubmitting ? (
                   <><div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> Mengirim...</>
                 ) : (
@@ -567,13 +586,16 @@ export default function PresensiMabaPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: "Hadir", value: recap.hadir, color: "text-green-400", bar: "bg-green-500", pct: totalRecords ? Math.round((recap.hadir / totalRecords) * 100) : 0 },
-              { label: "Terlambat", value: recap.late, color: "text-yellow-400", bar: "bg-yellow-500", pct: totalRecords ? Math.round((recap.late / totalRecords) * 100) : 0 },
-              { label: "Izin / Sakit", value: recap.izin, color: "text-blue-400", bar: "bg-blue-500", pct: totalRecords ? Math.round((recap.izin / totalRecords) * 100) : 0 },
-              { label: "Tidak Hadir", value: recap.alpha, color: "text-red-400", bar: "bg-red-500", pct: totalRecords ? Math.round((recap.alpha / totalRecords) * 100) : 0 },
+              { label: "Hadir", value: recap.hadir, color: "text-green-400", bar: "bg-green-500", Icon: CheckCircle2, pct: totalRecords ? Math.round((recap.hadir / totalRecords) * 100) : 0 },
+              { label: "Terlambat", value: recap.late, color: "text-yellow-400", bar: "bg-yellow-500", Icon: Clock, pct: totalRecords ? Math.round((recap.late / totalRecords) * 100) : 0 },
+              { label: "Izin / Sakit", value: recap.izin, color: "text-blue-400", bar: "bg-blue-500", Icon: FileText, pct: totalRecords ? Math.round((recap.izin / totalRecords) * 100) : 0 },
+              { label: "Tidak Hadir", value: recap.alpha, color: "text-red-400", bar: "bg-red-500", Icon: XCircle, pct: totalRecords ? Math.round((recap.alpha / totalRecords) * 100) : 0 },
             ].map((item) => (
-              <div key={item.label} className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
-                <p className="text-white/40 text-xs uppercase tracking-wider font-semibold mb-2">{item.label}</p>
+              <div key={item.label} className="group bg-white/[0.03] border border-white/5 rounded-2xl p-4 hover:bg-white/[0.06] hover:border-white/15 transition-all duration-200">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-white/40 text-xs uppercase tracking-wider font-semibold">{item.label}</p>
+                  <item.Icon className={`w-4 h-4 ${item.color} opacity-60 group-hover:opacity-100 transition-opacity duration-200`} />
+                </div>
                 <p className={`font-display text-3xl font-black ${item.color}`}>{item.value}</p>
                 <div className="w-full bg-white/5 rounded-full h-1.5 mt-3 overflow-hidden">
                   <div className={`${item.bar} h-1.5 rounded-full transition-all duration-700`} style={{ width: `${item.pct}%` }} />
@@ -599,7 +621,7 @@ export default function PresensiMabaPage() {
             {history.map((record) => {
               const isPresent = (record.status || "").toUpperCase() === "HADIR";
               return (
-                <div key={record._id} className="bg-black/40 backdrop-blur-md border border-white/10 rounded-3xl p-6 flex flex-col hover:border-white/20 transition-colors group">
+                <div key={record._id} className="bg-black/40 backdrop-blur-md border border-white/10 rounded-3xl p-6 flex flex-col hover:border-white/25 hover:bg-black/50 transition-all duration-200 group">
                   <div className="flex justify-between items-start mb-4">
                     <span className={`px-3 py-1 text-xs font-bold rounded-lg border flex items-center gap-1.5
                       ${isPresent ? 'bg-green-500/10 border-green-500/20 text-green-300' : 'bg-red-500/10 border-red-500/20 text-red-300'}
