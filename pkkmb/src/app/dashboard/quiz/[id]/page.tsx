@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Play, Repeat, CheckCircle2, Calendar, Timer, ShieldCheck } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { StudentQuizDetail, TYPE_LABEL } from "@/lib/quiz";
 import toast from "react-hot-toast";
 
@@ -25,7 +25,7 @@ export default function QuizDetailPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${id}`, { credentials: "include" });
+      const res = await apiFetch(`/pkkmb/quiz/${id}`);
       if (res.status === 401) { router.push("/login"); return; }
       const json = await res.json();
       if (res.ok && json.success) {
@@ -79,7 +79,7 @@ export default function QuizDetailPage() {
   const beginAttempt = async () => {
     setStarting(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${quiz!._id}/start`, { credentials: "include" });
+      const res = await apiFetch(`/pkkmb/quiz/${quiz!._id}/start`, { method: "POST" });
       const json = await res.json();
       if (res.ok && json.success) {
         try {

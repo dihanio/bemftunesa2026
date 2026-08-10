@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { ClipboardList, Clock, Timer, Repeat, CheckCircle2, Lock, Play } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { StudentQuiz, TYPE_LABEL } from "@/lib/quiz";
 import { useRouter } from "next/navigation";
 
@@ -22,7 +22,7 @@ export default function QuizListPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz`, { credentials: "include" });
+      const res = await apiFetch("/pkkmb/quiz");
       if (res.status === 401) {
         router.push("/login");
         return;
