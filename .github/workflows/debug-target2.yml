@@ -1,0 +1,46 @@
+name: Debug taskModel query
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Query taskModel utk Fibrian
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+            FIBRIAN_ID=$(docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'const u=db.users.findOne({name:/FIBRIAN/i}); print(u._id.toString())')
+            docker compose -f docker-compose.yml exec -T -e FIBRIAN_ID="$FIBRIAN_ID" api node -e '
+              const { NestFactory } = require("@nestjs/core");
+              const { AppModule } = require("./dist/src/app.module");
+              (async () => {
+                const app = await NestFactory.createApplicationContext(AppModule, { logger: false });
+                const PkkmbService = require("./dist/src/pkkmb/pkkmb.service").PkkmbService;
+                const svc = app.get(PkkmbService);
+                const userId = process.env.FIBRIAN_ID;
+                try {
+                  const tf = await svc.mabaTaskTargetFilter(userId);
+                  // pakai svc.taskModel (model mongoose asli)
+                  const tasks = await svc.taskModel.find({ deletedAt: null, status: "PUBLISHED", ...tf }).lean().exec();
+                  console.log("taskModel query match:", tasks.length);
+                  tasks.forEach(t => console.log(" -", t.title, "| status:", t.status, "| target:", t.targetType, "| deleted:", t.deletedAt));
+                } catch (e) {
+                  console.error("ERROR:", e.message);
+                  console.error(e.stack);
+                }
+                await app.close();
+                process.exit(0);
+              })().catch(e => { console.error("FATAL", e.message); process.exit(1); });
+            '
