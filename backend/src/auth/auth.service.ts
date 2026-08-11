@@ -106,9 +106,18 @@ export class AuthService {
     }
 
     user.googleId = profile.googleId;
-    if (profile.avatar) {
+    // JANGAN timpa avatar dengan foto Google jika user sudah punya foto upload
+    // (avatar dari pasfoto onboarding/profil). Foto Google hanya dipakai sbg
+    // default saat user belum punya avatar upload sama sekali.
+    const existingAvatar = (user.avatar || '').trim();
+    const isGoogleAvatar = existingAvatar.includes('googleusercontent.com');
+    if (profile.avatar && !existingAvatar) {
+      user.avatar = profile.avatar;
+    } else if (profile.avatar && isGoogleAvatar) {
+      // Ganti foto Google lama dgn foto Google terbaru (bukan foto upload).
       user.avatar = profile.avatar;
     }
+    // Jika user sudah punya avatar upload (bukan googleusercontent), biarkan.
 
     user.lastLoginAt = new Date();
     await user.save();
