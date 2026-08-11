@@ -133,6 +133,60 @@ const STUDY_PROGRAMS_DATA = [
   },
 ];
 
+// Nama 50 Gugus Adrata FT UNESA 2026 (indeks 0 → Gugus nomor 1, dst.).
+const GUGUS_NAMES = [
+  'Majapahit',
+  'Sriwijaya',
+  'Singasari',
+  'Kediri',
+  'Medang',
+  'Mataram',
+  'Kutai',
+  'Kalingga',
+  'Tarumanegara',
+  'Pajajaran',
+  'Kahuripan',
+  'Janggala',
+  'Galuh',
+  'Panjalu',
+  'Kanjuruhan',
+  'Blambangan',
+  'Dharmasraya',
+  'Pagaruyung',
+  'Demak',
+  'Pajang',
+  'Banten',
+  'Cirebon',
+  'Ternate',
+  'Tidore',
+  'Bacan',
+  'Jailolo',
+  'Gowa',
+  'Bone',
+  'Luwu',
+  'Wajo',
+  'Soppeng',
+  'Buton',
+  'Banjar',
+  'Siak',
+  'Lamuri',
+  'Indrapura',
+  'Kandis',
+  'Konawe',
+  'Banggai',
+  'Selaparang',
+  'Aceh Darussalam',
+  'Lingga',
+  'Kutai Kartanegara',
+  'Melayu',
+  'Salakanagara',
+  'Sunda Galuh',
+  'Bulungan',
+  'Aru',
+  'Sambas',
+  'Kutaringin',
+];
+
 async function seed() {
   console.log(
     '🚀 Connecting to MongoDB for Gugus & Master Data Seeding:',
@@ -190,13 +244,12 @@ async function seed() {
   }
   console.log(`✅ Seeded ${STUDY_PROGRAMS_DATA.length} Study Programs.`);
 
-  // 3. Seed 50 Gugus (Gugus 01 - Gugus 50)
+  // 3. Seed 50 Gugus (Gugus 01 - Gugus 50) — nama sejarah Adrata FT 2026.
   console.log('🛡️ Seeding 50 Gugus PKKMB FT UNESA 2026...');
   let gugusCount = 0;
   for (let i = 1; i <= 50; i++) {
     const nomor = i;
-    const padded = i < 10 ? `0${i}` : `${i}`;
-    const name = `Gugus ${padded} - Garuda Teknik ${padded}`;
+    const name = GUGUS_NAMES[i - 1];
 
     await db.collection('pkkmb_gugus').findOneAndUpdate(
       { nomor },
