@@ -1,0 +1,35 @@
+name: Debug Gugus field pendamping
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cek field pendamping di gugus
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+            echo "== gugus 1-3 field pendamping =="
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval '
+              db.pkkmb_gugus.find({}, { nomor: 1, name: 1, pendampingId: 1, pendampingName: 1, pendampingWhatsApp: 1, pendampingEmail: 1 }).sort({ nomor: 1 }).limit(3).toArray().forEach(g => printjson(g))
+            '
+            echo "== user pendamping gugus1 (via pendampingId) =="
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval '
+              const g = db.pkkmb_gugus.findOne({ nomor: 1 });
+              if (g && g.pendampingId) {
+                const u = db.users.findOne({ _id: g.pendampingId });
+                print("pendamping user:", u ? (u.name + " | phone=" + (u.phone||"NULL") + " | wa=" + (u.pendampingWhatsApp||"NULL") + " | email=" + (u.pendampingEmail||"NULL")) : "TIDAK ADA");
+              }
+            '
