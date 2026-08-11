@@ -100,10 +100,10 @@ const TIMELINE: TimelineEvent[] = [
   {
     phase: "Pra-PKKMB FT",
     title: "Technical Meeting",
-    period: "7 Agustus 2026",
+    period: "12 Agustus 2026",
     description:
       "Pengarahan teknis, pembagian kelompok, persiapan atribut tingkat Fakultas, serta aktivasi portal mahasiswa.",
-    completed: true,
+    completed: false,
   },
   {
     phase: "Pra-PKKMB Univ",
