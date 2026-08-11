@@ -1,0 +1,45 @@
+name: Debug Penugasan Kosong (Query Langsung)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Query langsung listAssignments
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+
+            echo "== Replikasi query listAssignments (student): PUBLISHED + target ALL =="
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval '
+              const or = [
+                { targetType: "ALL" },
+                { targetType: { $exists: false } },
+              ];
+              const res = db.pkkmb_tasks.find(
+                { deletedAt: null, status: "PUBLISHED", $or: or }
+              ).toArray();
+              print("MATCH count: " + res.length);
+              res.forEach(t => print(" - " + t.title));
+            '
+
+            echo "== Apakah ada task yang createdBy tidak valid / user deleted? =="
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval '
+              db.pkkmb_tasks.aggregate([
+                { $match: { deletedAt: null } },
+                { $lookup: { from: "users", localField: "createdBy", foreignField: "_id", as: "cb" } },
+                { $project: { title: 1, status: 1, cb: 1 } }
+              ]).toArray().forEach(t => print(t.title + " | createdByMatch=" + t.cb.length))
+            '
