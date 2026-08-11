@@ -3152,10 +3152,11 @@ export class PkkmbService {
         )
         .populate({
           path: 'pkkmbGroup',
-          select: '_id nomor name pendampingId',
+          select:
+            '_id nomor name pendampingId pendampingName pendampingWhatsApp pendampingEmail grupLink',
           populate: {
             path: 'pendampingId',
-            select: 'name phone',
+            select: 'name phone pendampingWhatsApp',
           },
         })
         .lean();
