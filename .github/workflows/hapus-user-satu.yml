@@ -1,0 +1,68 @@
+name: Hapus Satu User Maba (Cascade)
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: 'Email user yang akan dihapus'
+        required: true
+        default: 'diha.23212@mhs.unesa.ac.id'
+
+jobs:
+  hapus:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Hapus user + cascade data
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            EMAIL="${{ github.event.inputs.email }}"
+            cd "$DEPLOY_PATH"
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+
+            echo "== Menghapus user: $EMAIL =="
+            docker compose -f docker-compose.yml exec -T -e TARGET_EMAIL="$EMAIL" db mongosh "$MDB_URI" --quiet --eval '
+              const email = process.env.TARGET_EMAIL;
+              const u = db.users.findOne({ email });
+              if (!u) { print("❌ User tidak ditemukan: " + email); quit(1); }
+              const id = u._id;
+              const oid = id;
+              print("Menghapus user: " + u.name + " (" + email + ") id=" + id);
+
+              const cascade = [
+                { c: "pkkmb_quiz_attempts", f: "userId" },
+                { c: "pkkmb_attendance_records", f: "participant" },
+                { c: "health_records", f: "studentId" },
+                { c: "health_profiles", f: "studentId" },
+                { c: "onboarding_consent", f: "studentId" },
+                { c: "pkkmbpointlogs", f: "userId" },
+                { c: "pkkmbsubmissions", f: "userId" },
+                { c: "pkkmbassignments", f: "userId" },
+                { c: "committees", f: "userId" },
+              ];
+              for (const { c, f } of cascade) {
+                let r = db.getCollection(c).deleteMany({ [f]: id });
+                if (r.deletedCount === 0) {
+                  r = db.getCollection(c).deleteMany({ [f]: oid });
+                }
+                if (r.deletedCount > 0) print("  🗑 " + c + ": " + r.deletedCount + " dihapus");
+              }
+              const ur = db.users.deleteOne({ _id: id });
+              print("🗑 users: " + ur.deletedCount + " dihapus");
+              print("✅ Selesai. User " + email + " beserta data terkait dihapus.");
+            '
+            echo "== Verifikasi user tidak ada & konten tetap ada =="
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval '
+              print("User diha.23212 masih ada? " + (db.users.countDocuments({ email: "diha.23212@mhs.unesa.ac.id" }) > 0));
+              print("Total task: " + db.pkkmbtasks.countDocuments({}));
+              print("Total quiz: " + db.pkkmb_quizzes.countDocuments({}));
+              print("Total sesi presensi: " + db.pkkmb_attendance_sessions.countDocuments({}));
+            '
