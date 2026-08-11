@@ -350,7 +350,7 @@ async function seed() {
   const userPelaksana = await findUser(CREATED_BY_PELAKSANA);
   let tasksCreated = 0;
   for (const t of TASKS) {
-    const existing = await db.collection('pkkmb_tasks').findOne({
+    const existing = await db.collection('pkkmbtasks').findOne({
       title: t.title,
       deletedAt: null,
     });
@@ -368,7 +368,7 @@ async function seed() {
       createdBy: userPelaksana._id,
     };
     if (t.isLink) doc.link = 'https://drive.google.com/';
-    await db.collection('pkkmb_tasks').insertOne(doc);
+    await db.collection('pkkmbtasks').insertOne(doc);
     tasksCreated++;
   }
   console.log(`✅ Penugasan dibuat: ${tasksCreated}.`);
@@ -405,7 +405,7 @@ async function seed() {
 
     // Hubungkan quiz ke penugasan tipe QUIZ (pretest/posttest sebagai
     // assignment container agar tampil di dashboard maba).
-    await db.collection('pkkmb_tasks').insertOne({
+    await db.collection('pkkmbtasks').insertOne({
       title: `${q.title} (Penugasan)`,
       description: q.description,
       deadline: daysFromNow(q.endOffset, 23, 59),
