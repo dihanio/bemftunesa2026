@@ -456,6 +456,23 @@ export class CreateAnnouncementDto {
   @IsString({ each: true })
   @IsOptional()
   attachments?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Jenis aksi deep-link (quiz / task / attendance / schedule / general)',
+    enum: ['quiz', 'task', 'attendance', 'schedule', 'general'],
+    default: 'general',
+  })
+  @IsEnum(['quiz', 'task', 'attendance', 'schedule', 'general'])
+  @IsOptional()
+  actionType?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID target aksi (quizId / taskId / sessionId)',
+  })
+  @IsString()
+  @IsOptional()
+  actionId?: string;
 }
 
 export class UpdateAnnouncementDto {
@@ -491,6 +508,14 @@ export class UpdateAnnouncementDto {
   @IsString({ each: true })
   @IsOptional()
   attachments?: string[];
+
+  @IsEnum(['quiz', 'task', 'attendance', 'schedule', 'general'])
+  @IsOptional()
+  actionType?: string;
+
+  @IsString()
+  @IsOptional()
+  actionId?: string;
 }
 
 export class CreateScheduleDto {
@@ -524,6 +549,14 @@ export class CreateScheduleDto {
   @IsString()
   @IsOptional()
   pic?: string;
+
+  @ApiPropertyOptional({
+    description: 'Online (daring) atau Offline (tatap muka)',
+    example: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  isOnline?: boolean;
 }
 
 export class UpdateScheduleDto {
@@ -546,6 +579,10 @@ export class UpdateScheduleDto {
   @IsString()
   @IsOptional()
   pic?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isOnline?: boolean;
 }
 
 export class OnboardDto {

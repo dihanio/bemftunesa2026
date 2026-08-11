@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Clock, MapPin, Search, Fingerprint, AlertCircle, Camera, X, User, Lock, FileText, XCircle } from "lucide-react";
 import { API_URL } from "@/lib/api";
 import { formatWIB, formatWIBLong, getPeriodStatus, useNow } from "@/lib/presensi-time";
@@ -34,6 +35,7 @@ interface ParticipantInfo {
 }
 
 export default function PresensiMabaPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<AttendanceRecord[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -50,6 +52,11 @@ export default function PresensiMabaPage() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [captureError, setCaptureError] = useState<string | null>(null);
   const [participant, setParticipant] = useState<ParticipantInfo>({ name: "", nim: "" });
+  // Layar sukses setelah check-in berhasil (menggantikan toast sesaat).
+  const [checkinSuccess, setCheckinSuccess] = useState<{
+    title: string;
+    time: string;
+  } | null>(null);
 
   // Izin / Sakit
   const [izinOpen, setIzinOpen] = useState(false);
@@ -101,6 +108,7 @@ export default function PresensiMabaPage() {
     }
     setCaptureError(null);
     setPhotoUrl(null);
+    setCheckinSuccess(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       streamRef.current = stream;
@@ -137,6 +145,10 @@ export default function PresensiMabaPage() {
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    // Mirror horizontal agar hasil selfie sama seperti cermin/kamera depan
+    // (konsisten dengan preview video yang di-mirror).
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0);
     setPhotoUrl(canvas.toDataURL("image/jpeg", 0.8));
   };
@@ -199,9 +211,21 @@ export default function PresensiMabaPage() {
           if (!res.ok || !json.success) {
             throw new Error(json.message || "Gagal melakukan presensi");
           }
-          toast.success("Berhasil presensi!");
-          stopCamera();
+          // Hentikan stream kamera TANPA menutup modal (setCameraOpen(false)
+          // ada di stopCamera) — modal harus tetap terbuka untuk menampilkan
+          // layar sukses. Video akan unmount karena branch checkinSuccess
+          // menggantikan konten kamera.
+          streamRef.current?.getTracks().forEach((t) => t.stop());
+          streamRef.current = null;
           setPhotoUrl(null);
+          setCheckinSuccess({
+            title:
+              sessions.find((s) => s._id === selectedSessionId)?.title ||
+              "Sesi PKKMB",
+            time: formatWIBLong(
+              json.data?.checkInTime || new Date().toISOString(),
+            ),
+          });
           fetchData();
           return;
         } catch (error: unknown) {
@@ -487,8 +511,10 @@ export default function PresensiMabaPage() {
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-[#0a0a0a] border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-              <h3 className="font-display font-bold text-lg">Selfie Presensi</h3>
-              <button onClick={() => { stopCamera(); setPhotoUrl(null); }} className="p-2 rounded-lg hover:bg-white/10 text-white/60"><X className="w-5 h-5" /></button>
+              <h3 className="font-display font-bold text-lg">
+                {checkinSuccess ? "Presensi Selesai" : "Selfie Presensi"}
+              </h3>
+              <button onClick={() => { stopCamera(); setPhotoUrl(null); setCheckinSuccess(null); }} className="p-2 rounded-lg hover:bg-white/10 text-white/60"><X className="w-5 h-5" /></button>
             </div>
 
             {/* Metadata sesi */}
@@ -517,6 +543,45 @@ export default function PresensiMabaPage() {
               ) : null;
             })()}
 
+            {checkinSuccess ? (
+              <div className="p-8 text-center">
+                <div className="w-20 h-20 mx-auto rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mb-5">
+                  <CheckCircle2 className="w-10 h-10 text-green-400" />
+                </div>
+                <h3 className="font-display font-bold text-2xl text-white">
+                  Presensi Berhasil!
+                </h3>
+                <p className="text-sm text-white/70 mt-2">
+                  {checkinSuccess.title}
+                </p>
+                <p className="text-xs text-white/40 mt-1">
+                  Tercatat pada {checkinSuccess.time}.
+                </p>
+                <div className="flex flex-col gap-3 mt-8">
+                  <button
+                    onClick={() => {
+                      stopCamera();
+                      setPhotoUrl(null);
+                      setCheckinSuccess(null);
+                    }}
+                    className="w-full px-6 py-3 bg-white/10 hover:bg-white/15 text-white font-bold rounded-xl transition-colors"
+                  >
+                    Tutup
+                  </button>
+                  <button
+                    onClick={() => {
+                      stopCamera();
+                      setPhotoUrl(null);
+                      setCheckinSuccess(null);
+                      router.push("/dashboard");
+                    }}
+                    className="w-full px-6 py-3 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="w-5 h-5" /> Kembali ke Dashboard
+                  </button>
+                </div>
+              </div>
+            ) : (
             <div className="p-6">
               {captureError && (
                 <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-sm mb-4">
@@ -527,7 +592,7 @@ export default function PresensiMabaPage() {
               {!photoUrl ? (
                 <>
                   <div className="aspect-[4/3] bg-black rounded-2xl overflow-hidden border border-white/10 relative">
-                    <video ref={videoRef} className="w-full h-full object-cover" playsInline muted autoPlay />
+                    <video ref={videoRef} className="w-full h-full object-cover -scale-x-100" playsInline muted autoPlay />
                     {!cameraOpen && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/40">
                         <Camera className="w-10 h-10" />
@@ -571,6 +636,7 @@ export default function PresensiMabaPage() {
                 </>
               )}
             </div>
+            )}
           </div>
         </div>
       )}

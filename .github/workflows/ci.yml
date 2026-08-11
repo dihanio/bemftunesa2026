@@ -26,12 +26,17 @@ jobs:
       pkkmb: ${{ steps.filter.outputs.pkkmb }}
       backend: ${{ steps.filter.outputs.backend }}
       shared: ${{ steps.filter.outputs.shared }}
+      public_web: ${{ steps.filter.outputs.public_web }}
+      ims_web: ${{ steps.filter.outputs.ims_web }}
+      pkkmb_web: ${{ steps.filter.outputs.pkkmb_web }}
+      api: ${{ steps.filter.outputs.api }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
+            # --- app-directory filters (preserved for lint-and-test) ---
             frontend:
               - 'frontend/**'
             ims:
@@ -46,6 +51,46 @@ jobs:
               - 'package-lock.json'
               - 'Dockerfile.*'
               - '.github/workflows/**'
+
+            # --- per-service build triggers ---
+            # Each filter group is TRUE when ANY listed path changes.
+            # App dirs only affect their own service:
+            #   frontend/** -> public_web, ims/** -> ims_web,
+            #   pkkmb/** -> pkkmb_web, backend/** -> api.
+            #
+            # Shared files are mapped to the services that actually consume them
+            # (analyzed from the repo):
+            #   - packages/** (@bemft/permissions, @bemft/types) -> api ONLY
+            #     (only backend depends on these workspace packages)
+            #   - Dockerfile.frontend -> the 3 frontend services
+            #   - Dockerfile.backend  -> api
+            #   - package.json / package-lock.json / turbo.json (root workspace
+            #     + lockfile + turbo task config) -> all services
+            public_web:
+              - 'frontend/**'
+              - 'Dockerfile.frontend'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'turbo.json'
+            ims_web:
+              - 'ims/**'
+              - 'Dockerfile.frontend'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'turbo.json'
+            pkkmb_web:
+              - 'pkkmb/**'
+              - 'Dockerfile.frontend'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'turbo.json'
+            api:
+              - 'backend/**'
+              - 'packages/**'
+              - 'Dockerfile.backend'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'turbo.json'
 
   lint-and-test:
     needs: changes
@@ -81,57 +126,29 @@ jobs:
         if: needs.changes.outputs.pkkmb == 'true' || needs.changes.outputs.shared == 'true'
         run: npx turbo run test --filter=@bemft/pkkmb
 
-  build-and-push:
+  # ---------------------------------------------------------------------------
+  # Selective build: one job per service. Each job only runs when BOTH the
+  # standard push/tag gate is met AND its service was actually affected
+  # (detected in the `changes` job). Unaffected services are skipped entirely
+  # by GitHub Actions via the job-level `if` — the matrix+step-skip pattern is
+  # removed so skipped services do not even spawn a runner.
+  # ---------------------------------------------------------------------------
+  build-public-web:
+    name: build-and-push (public_web)
     needs: [changes, lint-and-test]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && needs.changes.outputs.public_web == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        service: [public_web, ims_web, pkkmb_web, api]
-        include:
-          - service: public_web
-            app_name: frontend
-            dockerfile: Dockerfile.frontend
-            change_key: frontend
-          - service: ims_web
-            app_name: ims
-            dockerfile: Dockerfile.frontend
-            change_key: ims
-          - service: pkkmb_web
-            app_name: pkkmb
-            dockerfile: Dockerfile.frontend
-            change_key: pkkmb
-          - service: api
-            app_name: backend
-            dockerfile: Dockerfile.backend
-            change_key: backend
 
     steps:
-      - name: Check if build needed
-        id: check
-        run: |
-          # PKKMB always gets a fresh immutable image on deploy. Its runtime is
-          # public-facing and must not silently reuse an older `latest` image.
-          if [ "${{ matrix.service }}" == "pkkmb_web" ] || [ "${{ needs.changes.outputs.shared }}" == "true" ] || [ "${{ needs.changes.outputs[matrix.change_key] }}" == "true" ]; then
-            echo "build=true" >> $GITHUB_OUTPUT
-          else
-            echo "build=false" >> $GITHUB_OUTPUT
-          fi
-
       - uses: actions/checkout@v4
-        if: steps.check.outputs.build == 'true'
 
       - name: Setup Docker Buildx
-        if: steps.check.outputs.build == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to the Container registry
-        if: steps.check.outputs.build == 'true'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -139,32 +156,186 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker
-        if: steps.check.outputs.build == 'true'
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          images: ${{ env.IMAGE_PREFIX }}-public_web
           tags: |
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
 
       - name: Build and push Docker image
-        if: steps.check.outputs.build == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ${{ matrix.dockerfile }}
+          file: Dockerfile.frontend
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            APP_NAME=${{ matrix.app_name }}
+            APP_NAME=frontend
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_PUBLIC_URL=${{ vars.NEXT_PUBLIC_PUBLIC_URL }}
             NEXT_PUBLIC_IMS_URL=${{ vars.NEXT_PUBLIC_IMS_URL }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
-          cache-from: type=gha,scope=${{ github.ref }}-${{ matrix.service }}
-          cache-to: type=gha,mode=max,scope=${{ github.ref }}-${{ matrix.service }}
+          cache-from: type=gha,scope=${{ github.ref }}-public_web
+          cache-to: type=gha,mode=max,scope=${{ github.ref }}-public_web
+          provenance: true
+          sbom: true
+
+  build-ims-web:
+    name: build-and-push (ims_web)
+    needs: [changes, lint-and-test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && needs.changes.outputs.ims_web == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}-ims_web
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_NAME=ims
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_PUBLIC_URL=${{ vars.NEXT_PUBLIC_PUBLIC_URL }}
+            NEXT_PUBLIC_IMS_URL=${{ vars.NEXT_PUBLIC_IMS_URL }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+          cache-from: type=gha,scope=${{ github.ref }}-ims_web
+          cache-to: type=gha,mode=max,scope=${{ github.ref }}-ims_web
+          provenance: true
+          sbom: true
+
+  build-pkkmb-web:
+    name: build-and-push (pkkmb_web)
+    needs: [changes, lint-and-test]
+    # PKKMB keeps a fresh immutable image on every deploy (its runtime is
+    # public-facing and must not silently reuse an older `latest` image), so it
+    # also builds whenever a relevant shared file changes.
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && needs.changes.outputs.pkkmb_web == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}-pkkmb_web
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_NAME=pkkmb
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_PUBLIC_URL=${{ vars.NEXT_PUBLIC_PUBLIC_URL }}
+            NEXT_PUBLIC_IMS_URL=${{ vars.NEXT_PUBLIC_IMS_URL }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+          cache-from: type=gha,scope=${{ github.ref }}-pkkmb_web
+          cache-to: type=gha,mode=max,scope=${{ github.ref }}-pkkmb_web
+          provenance: true
+          sbom: true
+
+  build-api:
+    name: build-and-push (api)
+    needs: [changes, lint-and-test]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}-api
+          tags: |
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_NAME=backend
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_PUBLIC_URL=${{ vars.NEXT_PUBLIC_PUBLIC_URL }}
+            NEXT_PUBLIC_IMS_URL=${{ vars.NEXT_PUBLIC_IMS_URL }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+          cache-from: type=gha,scope=${{ github.ref }}-api
+          cache-to: type=gha,mode=max,scope=${{ github.ref }}-api
           provenance: true
           sbom: true

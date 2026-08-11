@@ -95,8 +95,15 @@ export class PkkmbController {
   @ApiOperation({
     summary: 'Feed notifikasi pengumuman dengan status read/unread (MABA)',
   })
-  async getMabaNotificationFeed(@CurrentUser() user: { userId: string }) {
-    const data = await this.pkkmbService.getMabaNotificationFeed(user.userId);
+  async getMabaNotificationFeed(
+    @CurrentUser() user: { userId: string },
+    @Query('limit') limit?: string,
+  ) {
+    const parsed = parseInt(limit || '', 10);
+    const data = await this.pkkmbService.getMabaNotificationFeed(
+      user.userId,
+      Number.isFinite(parsed) && parsed > 0 ? parsed : undefined,
+    );
     return { success: true, data };
   }
 

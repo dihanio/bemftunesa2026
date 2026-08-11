@@ -20,6 +20,10 @@ export class PkkmbSchedule {
   @Prop()
   pic: string;
 
+  // Online (daring) atau Offline (tatap muka) — default tatap muka.
+  @Prop({ default: false })
+  isOnline: boolean;
+
   @Prop()
   deletedAt?: Date;
 }

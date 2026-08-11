@@ -14,8 +14,10 @@ import {
   CheckCircle2,
   ExternalLink,
   Paperclip,
+  Users,
 } from "lucide-react";
 import { API_URL } from "@/lib/api";
+import TaskSubmitModal from "@/components/assignments/TaskSubmitModal";
 
 interface AssignmentDetail {
   _id: string;
@@ -36,6 +38,7 @@ interface AssignmentDetail {
   } | null;
   attachment?: string;
   link?: string;
+  type?: string;
   quiz?: {
     _id: string;
     title: string;
@@ -70,6 +73,9 @@ export default function AssignmentDetailPage() {
 
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isKetuaGugus, setIsKetuaGugus] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<AssignmentDetail | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const fmtDate = (iso?: string) => {
     if (!iso) return "—";
@@ -99,6 +105,13 @@ export default function AssignmentDetailPage() {
         }
         const json = await res.json();
         if (json.success) setAssignment(json.data);
+        const meRes = await fetch(`${API_URL}/api/v1/auth/me`, {
+          credentials: "include",
+        });
+        const meJson = await meRes.json().catch(() => null);
+        if (meJson?.success && meJson.data) {
+          setIsKetuaGugus(!!meJson.data.isKetuaGugus);
+        }
       } catch {
         // ignore
       } finally {
@@ -106,7 +119,7 @@ export default function AssignmentDetailPage() {
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, reloadKey]);
 
   if (loading) {
     return (
@@ -155,11 +168,20 @@ export default function AssignmentDetailPage() {
         router.push(`/dashboard/quiz/${assignment.quizId}`);
       }
     } else {
-      router.push(`/dashboard/tugas`);
+      // TASK: buka modal submit langsung di tempat (tanpa pindah halaman).
+      if (assignment.status === "COMPLETED") return; // sudah di halaman ini
+      setSelectedTask(assignment);
     }
   };
 
   const isOverdue = assignment.status === "OVERDUE";
+  // Anggota non-ketua pada tugas kelompok: tidak bisa submit (dicegah juga di backend).
+  const memberBlocked =
+    !isQuiz &&
+    (assignment.type === "kelompok" || assignment.type === "angkatan") &&
+    !isKetuaGugus &&
+    assignment.status !== "SUBMITTED" &&
+    assignment.status !== "COMPLETED";
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -303,46 +325,87 @@ export default function AssignmentDetailPage() {
         <div className="px-6 py-4 border-t border-white/5 flex justify-end">
           <button
             onClick={primaryAction}
-            disabled={isOverdue}
+            disabled={
+              isQuiz
+                ? isOverdue
+                : assignment.status === "OVERDUE" ||
+                  memberBlocked ||
+                  assignment.status === "COMPLETED"
+            }
             className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-              isOverdue
-                ? "bg-white/5 text-white/30 cursor-not-allowed border border-white/10"
-                : assignment.status === "IN_PROGRESS"
-                  ? "bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30"
-                  : assignment.status === "COMPLETED"
-                    ? "bg-white/10 border border-white/20 text-white hover:bg-white/20"
+              isQuiz
+                ? isOverdue
+                  ? "bg-white/5 text-white/30 cursor-not-allowed border border-white/10"
+                  : assignment.status === "IN_PROGRESS"
+                    ? "bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30"
                     : "bg-gold-500 text-black hover:bg-gold-400"
+                : assignment.status === "COMPLETED" ||
+                    assignment.status === "OVERDUE" ||
+                    memberBlocked
+                  ? "bg-white/5 text-white/30 cursor-not-allowed border border-white/10"
+                  : "bg-gold-500 text-black hover:bg-gold-400"
             }`}
           >
-            {isOverdue ? (
-              <>
-                <AlertTriangle className="w-4 h-4" />
-                Quiz Ditutup
-              </>
-            ) : assignment.status === "IN_PROGRESS" ? (
-              <>
-                <Play className="w-4 h-4" />
-                Lanjutkan Quiz
-              </>
+            {isQuiz ? (
+              isOverdue ? (
+                <>
+                  <AlertTriangle className="w-4 h-4" />
+                  Quiz Ditutup
+                </>
+              ) : assignment.status === "IN_PROGRESS" ? (
+                <>
+                  <Play className="w-4 h-4" />
+                  Lanjutkan Quiz
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" />
+                  Mulai Quiz
+                </>
+              )
             ) : assignment.status === "COMPLETED" ? (
               <>
-                <ArrowRight className="w-4 h-4" />
-                Lihat Hasil
+                <CheckCircle2 className="w-4 h-4" />
+                Sudah Dinilai
               </>
-            ) : isQuiz ? (
+            ) : assignment.status === "SUBMITTED" ? (
               <>
-                <Play className="w-4 h-4" />
-                Mulai Quiz
+                <ArrowRight className="w-4 h-4" />
+                Perbarui Pengumpulan
+              </>
+            ) : isOverdue ? (
+              <>
+                <AlertTriangle className="w-4 h-4" />
+                Terlambat
+              </>
+            ) : memberBlocked ? (
+              <>
+                <Users className="w-4 h-4" />
+                Menunggu Ketua
               </>
             ) : (
               <>
                 <ArrowRight className="w-4 h-4" />
-                Kerjakan Tugas
+                Kumpulkan Tugas
               </>
             )}
           </button>
         </div>
       </div>
+
+      {selectedTask && (
+        <TaskSubmitModal
+          task={selectedTask}
+          isKetuaGugus={isKetuaGugus}
+          hasSubmitted={
+            selectedTask.status === "SUBMITTED" ||
+            selectedTask.status === "COMPLETED"
+          }
+          deadline={selectedTask.deadline}
+          onClose={() => setSelectedTask(null)}
+          onSubmitted={() => setReloadKey((k) => k + 1)}
+        />
+      )}
     </div>
   );
 }

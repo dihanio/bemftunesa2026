@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { API_URL } from "@/lib/api";
 import PhotoCropDialog from "@/components/onboarding/PhotoCropDialog";
 import QRCode from "react-qr-code";
@@ -230,13 +231,16 @@ export default function ProfilPage() {
               </div>
               
               <div className="mt-2 pt-3 border-t border-white/10 w-full">
-                <div className="flex flex-col items-center">
+                <Link href="/dashboard/poin" className="flex flex-col items-center group">
                   <span className="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-0.5">Total Poin Keaktifan</span>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xl font-display font-black text-gold-400">{totalPoints !== null ? totalPoints : '...'}</span>
                     <span className="text-[10px] text-gold-400/50 uppercase">POIN</span>
                   </div>
-                </div>
+                  <span className="mt-1 inline-flex items-center gap-0.5 text-[10px] text-gold-500/80 group-hover:text-gold-400 font-semibold transition-colors">
+                    Lihat Rincian Skor <ChevronRight className="w-3 h-3" />
+                  </span>
+                </Link>
               </div>
             </div>
           </div>

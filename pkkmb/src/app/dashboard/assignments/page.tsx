@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileText,
@@ -12,18 +12,13 @@ import {
   AlertTriangle,
   Loader2,
   ListTodo,
+  Users,
+  User,
 } from "lucide-react";
+import Link from "next/link";
 import { API_URL } from "@/lib/api";
-
-interface AssignmentQuizMeta {
-  _id: string;
-  title: string;
-  type: string;
-  durationMinutes: number;
-  maxAttempts: number;
-  passingScore: number;
-  totalQuestions: number;
-}
+import { statusMeta, deadlineLabel } from "@/lib/maba";
+import TaskSubmitModal from "@/components/assignments/TaskSubmitModal";
 
 interface Assignment {
   _id: string;
@@ -42,7 +37,23 @@ interface Assignment {
     submittedAt?: string;
     attemptId?: string;
   } | null;
-  quiz?: AssignmentQuizMeta;
+  quiz?: {
+    _id: string;
+    title: string;
+    type: string;
+    durationMinutes: number;
+    maxAttempts: number;
+    passingScore: number;
+    totalQuestions: number;
+  };
+  // TASK metadata (backend listAssignments)
+  type?: string;
+  allowedFormats?: string[];
+}
+
+interface Submission {
+  taskId: { _id: string } | string;
+  fileUrl: string;
 }
 
 type FilterTab =
@@ -56,32 +67,12 @@ const FILTERS: { key: FilterTab; match: (a: Assignment) => boolean }[] = [
   { key: "SEMUA", match: () => true },
   { key: "BELUM DIKERJAKAN", match: (a) => a.status === "NOT_STARTED" },
   { key: "SEDANG DIKERJAKAN", match: (a) => a.status === "IN_PROGRESS" },
-  { key: "SELESAI", match: (a) => a.status === "COMPLETED" },
+  {
+    key: "SELESAI",
+    match: (a) => a.status === "COMPLETED" || a.status === "SUBMITTED",
+  },
   { key: "TERLAMBAT", match: (a) => a.status === "OVERDUE" },
 ];
-
-const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
-  NOT_STARTED: {
-    label: "Belum Dikerjakan",
-    cls: "bg-white/5 border-white/10 text-white/60",
-  },
-  IN_PROGRESS: {
-    label: "Sedang Dikerjakan",
-    cls: "bg-amber-500/10 border-amber-500/30 text-amber-300",
-  },
-  COMPLETED: {
-    label: "Selesai",
-    cls: "bg-green-500/10 border-green-500/30 text-green-400",
-  },
-  OVERDUE: {
-    label: "Terlambat",
-    cls: "bg-red-500/10 border-red-500/30 text-red-400",
-  },
-  SUBMITTED: {
-    label: "Dikumpulkan",
-    cls: "bg-green-500/10 border-green-500/30 text-green-400",
-  },
-};
 
 const TYPE_ICON = {
   TASK: <FileText className="w-6 h-6" />,
@@ -93,25 +84,42 @@ export default function AssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>("SEMUA");
+  const [isKetuaGugus, setIsKetuaGugus] = useState(false);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [selectedTask, setSelectedTask] = useState<Assignment | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/assignments`, {
-        credentials: "include",
-      });
+      const [res, meRes, subsRes] = await Promise.all([
+        fetch(`${API_URL}/api/v1/pkkmb/assignments`, {
+          credentials: "include",
+        }),
+        fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" }),
+        fetch(`${API_URL}/api/v1/pkkmb/maba/submissions`, {
+          credentials: "include",
+        }),
+      ]);
       if (res.status === 401) {
         router.push("/login");
         return;
       }
       const json = await res.json();
       if (json.success) setAssignments(json.data || []);
+
+      const meJson = await meRes.json().catch(() => null);
+      if (meJson?.success && meJson.data) {
+        setIsKetuaGugus(!!meJson.data.isKetuaGugus);
+      }
+
+      const subsJson = await subsRes.json().catch(() => null);
+      if (subsJson?.success) setSubmissions(subsJson.data || []);
     } catch {
       // network error — biarkan list kosong
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     setTimeout(fetchData, 0);
@@ -126,23 +134,27 @@ export default function AssignmentsPage() {
     [assignments, activeTab],
   );
 
-  const fmtDate = (iso?: string) => {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const hasSubmitted = (a: Assignment) =>
+    a.status === "SUBMITTED" || a.status === "COMPLETED";
+
+  const submissionFileUrl = (a: Assignment) => {
+    const sub = submissions.find(
+      (s) =>
+        (typeof s.taskId === "object" ? s.taskId?._id : s.taskId) === a._id,
+    );
+    return sub?.fileUrl;
   };
+
+  const isMemberBlocked = (a: Assignment) =>
+    (a.type === "kelompok" || a.type === "angkatan") &&
+    !isKetuaGugus &&
+    !hasSubmitted(a);
 
   const openAssignment = (a: Assignment) => {
     if (a.assignmentType === "QUIZ") {
       if (a.activeAttemptId) {
         router.push(`/dashboard/quiz/${a.quizId}/play/${a.activeAttemptId}`);
       } else if (a.status === "COMPLETED" && a.bestAttempt?.attemptId) {
-        // Lihat Hasil → halaman result existing (pakai attempt terbaik).
         router.push(
           `/dashboard/quiz/${a.quizId}/result/${a.bestAttempt.attemptId}`,
         );
@@ -152,7 +164,13 @@ export default function AssignmentsPage() {
         router.push(`/dashboard/assignments/${a._id}`);
       }
     } else {
-      router.push(`/dashboard/assignments/${a._id}`);
+      if (a.status === "COMPLETED") {
+        // Tugas sudah dinilai → buka halaman detail (nilai & feedback).
+        router.push(`/dashboard/assignments/${a._id}`);
+        return;
+      }
+      // TASK: buka modal submit langsung di tempat (tanpa pindah halaman).
+      setSelectedTask(a);
     }
   };
 
@@ -173,23 +191,39 @@ export default function AssignmentsPage() {
       return { label: "Mulai", icon: <Play className="w-4 h-4" /> };
     }
     if (a.status === "COMPLETED")
-      return {
-        label: "Lihat Detail",
-        icon: <ArrowRight className="w-4 h-4" />,
-      };
-    return { label: "Kerjakan", icon: <ArrowRight className="w-4 h-4" /> };
+      return { label: "Lihat Nilai", icon: <ArrowRight className="w-4 h-4" /> };
+    if (a.status === "SUBMITTED")
+      return { label: "Perbarui", icon: <ArrowRight className="w-4 h-4" /> };
+    if (a.status === "OVERDUE")
+      return { label: "Terlambat", icon: <AlertTriangle className="w-4 h-4" /> };
+    if (isMemberBlocked(a))
+      return { label: "Menunggu Ketua", icon: <Users className="w-4 h-4" /> };
+    return { label: "Kumpulkan", icon: <ArrowRight className="w-4 h-4" /> };
   };
+
+  const actionDisabled = (a: Assignment) => {
+    if (a.assignmentType === "QUIZ") return a.status === "OVERDUE";
+    if (a.status === "OVERDUE" && !hasSubmitted(a)) return true;
+    if (a.status === "COMPLETED") return false; // tombol = lihat detail
+    return isMemberBlocked(a);
+  };
+
+  const allDone =
+    assignments.length > 0 &&
+    assignments.every(
+      (a) => a.status === "COMPLETED" || a.status === "SUBMITTED",
+    );
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <ListTodo className="w-6 h-6 text-gold-500" />
-          Penugasan
+          Aktivitas Saya
         </h1>
         <p className="text-white/50 mt-1 text-sm">
-          Semua tugas & quiz dalam satu tempat. Quiz dikerjakan lewat Quiz
-          Player.
+          Semua tugas & quiz dalam satu tempat. Status selalu terbarui setelah
+          kamu mengerjakan.
         </p>
       </div>
 
@@ -221,15 +255,30 @@ export default function AssignmentsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-white/40">
-          <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-40" />
-          <p>Tidak ada penugasan pada filter ini.</p>
+          {allDone && activeTab === "SEMUA" ? (
+            <>
+              <div className="text-4xl mb-3">🎉</div>
+              <p className="text-white/70 font-semibold">
+                Semua aktivitas selesai!
+              </p>
+              <p className="text-sm text-white/40 mt-1">
+                Tidak ada tugas atau quiz yang perlu dikerjakan.
+              </p>
+            </>
+          ) : (
+            <>
+              <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-40" />
+              <p>Tidak ada aktivitas pada filter ini.</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
           {filtered.map((a) => {
-            const st = STATUS_STYLE[a.status] || STATUS_STYLE.NOT_STARTED;
+            const st = statusMeta(a.status);
             const action = actionLabel(a);
-            const disabled = a.status === "OVERDUE";
+            const disabled = actionDisabled(a);
+            const blocked = isMemberBlocked(a);
             return (
               <div
                 key={a._id}
@@ -254,6 +303,22 @@ export default function AssignmentsPage() {
                       >
                         {a.assignmentType === "QUIZ" ? "Quiz" : "Tugas"}
                       </span>
+                      {a.assignmentType === "TASK" && a.type && (
+                        <span
+                          className={`text-[11px] px-2 py-0.5 rounded-full border font-medium capitalize inline-flex items-center gap-1 ${
+                            a.type === "individu"
+                              ? "bg-white/5 border-white/10 text-white/50"
+                              : "bg-orange-500/10 border-orange-500/30 text-orange-300"
+                          }`}
+                        >
+                          {a.type === "individu" ? (
+                            <User className="w-3 h-3" />
+                          ) : (
+                            <Users className="w-3 h-3" />
+                          )}
+                          {a.type}
+                        </span>
+                      )}
                       <span
                         className={`text-[11px] px-2 py-0.5 rounded-full border ${st.cls}`}
                       >
@@ -290,9 +355,25 @@ export default function AssignmentsPage() {
                       )}
                       <span className="inline-flex items-center gap-1">
                         <AlertTriangle className="w-3.5 h-3.5" />
-                        Deadline {fmtDate(a.deadline)}
+                        Deadline {deadlineLabel(a.deadline)}
                       </span>
                     </div>
+
+                    {blocked && (
+                      <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2 py-1">
+                        <Users className="w-3 h-3" /> Tugas kelompok —
+                        pengumpulan oleh Ketua Gugus. Kamu tidak perlu submit.
+                      </p>
+                    )}
+
+                    {a.assignmentType === "TASK" && (
+                      <Link
+                        href={`/dashboard/assignments/${a._id}`}
+                        className="mt-2 inline-block text-xs text-gold-500 hover:text-gold-400 font-semibold"
+                      >
+                        Lihat detail &rarr;
+                      </Link>
+                    )}
                   </div>
 
                   <div className="shrink-0 flex sm:items-center">
@@ -317,14 +398,35 @@ export default function AssignmentsPage() {
                   <div className="px-5 py-2 border-t border-white/5 bg-green-500/5 flex items-center gap-2 text-xs text-green-400">
                     <CheckCircle2 className="w-4 h-4" />
                     {a.assignmentType === "QUIZ"
-                      ? `Selesai — nilai ${a.bestAttempt.score ?? 0} (${a.bestAttempt.percentage ?? 0}%), dikumpulkan ${fmtDate(a.bestAttempt.submittedAt)}`
-                      : "Selesai — telah dikumpulkan"}
+                      ? `Selesai — nilai ${a.bestAttempt.score ?? 0} (${a.bestAttempt.percentage ?? 0}%)`
+                      : `Selesai — dinilai ${a.bestAttempt.score ?? 0}/100`}
+                  </div>
+                )}
+                {a.status === "SUBMITTED" && (
+                  <div className="px-5 py-2 border-t border-white/5 bg-blue-500/5 flex items-center gap-2 text-xs text-blue-300">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Sudah dikumpulkan — menunggu penilaian.
                   </div>
                 )}
               </div>
             );
           })}
         </div>
+      )}
+
+      {selectedTask && (
+        <TaskSubmitModal
+          task={selectedTask}
+          isKetuaGugus={isKetuaGugus}
+          hasSubmitted={hasSubmitted(selectedTask)}
+          fileUrl={submissionFileUrl(selectedTask)}
+          deadline={selectedTask.deadline}
+          onClose={() => setSelectedTask(null)}
+          onSubmitted={() => {
+            // Biarkan modal menampilkan layar sukses; daftar di-refresh di baliknya.
+            void fetchData();
+          }}
+        />
       )}
     </div>
   );

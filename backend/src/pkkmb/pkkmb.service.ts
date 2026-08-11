@@ -2138,6 +2138,10 @@ export class PkkmbService {
         status: isPanitia ? a.status : statusInfo.status,
         activeAttemptId: statusInfo.activeAttemptId,
         bestAttempt: statusInfo.bestAttempt,
+        // Metadata TASK (dipakai UI Aktivitas utk badge jenis & logika
+        // submit kelompok oleh ketua gugus).
+        type: a.type,
+        allowedFormats: a.allowedFormats,
         // Metadata quiz (read-only summary di card & detail).
         quiz: quiz
           ? {
@@ -2894,7 +2898,7 @@ export class PkkmbService {
     }
     const query = this.scheduleModel
       .find(filter)
-      .select('_id name startTime endTime location pic');
+      .select('_id name startTime endTime location pic isOnline');
 
     if (!paginationDto.sortBy) {
       query.sort({ startTime: 1 });
@@ -2963,7 +2967,7 @@ export class PkkmbService {
       .exec();
   }
 
-  async getMabaNotificationFeed(userId: string) {
+  async getMabaNotificationFeed(userId: string, limit = 3) {
     const user = await this.userModel
       .findById(userId)
       .select('pkkmbGroup announcementsRead')
@@ -2986,9 +2990,9 @@ export class PkkmbService {
     }
     const items = await this.announcementModel
       .find(filter)
-      .select('_id title content isPriority createdAt')
+      .select('_id title content isPriority createdAt actionType actionId')
       .sort({ isPriority: -1, createdAt: -1 })
-      .limit(3)
+      .limit(limit)
       .lean()
       .exec();
     const enriched = items.map((a) => ({
@@ -2997,6 +3001,8 @@ export class PkkmbService {
       content: a.content,
       isPriority: a.isPriority,
       createdAt: (a as unknown as { createdAt?: Date }).createdAt,
+      actionType: a.actionType || 'general',
+      actionId: a.actionId || undefined,
       isRead: readIds.has(a._id.toString()),
     }));
     return {
@@ -3028,7 +3034,7 @@ export class PkkmbService {
     const now = new Date();
     return this.scheduleModel
       .find({ deletedAt: null, endTime: { $gte: now } })
-      .select('_id name startTime endTime location pic')
+      .select('_id name startTime endTime location pic isOnline')
       .sort({ startTime: 1 })
       .limit(3)
       .lean()
@@ -3303,7 +3309,7 @@ export class PkkmbService {
     const now = new Date();
     return this.scheduleModel
       .find({ deletedAt: null, endTime: { $gte: now } })
-      .select('_id name startTime endTime location pic')
+      .select('_id name startTime endTime location pic isOnline')
       .sort({ startTime: 1 })
       .limit(5)
       .lean()

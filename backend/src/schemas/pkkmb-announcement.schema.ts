@@ -23,6 +23,18 @@ export class PkkmbAnnouncement {
   @Prop({ default: false })
   isPriority: boolean;
 
+  // Aksi deep-link opsional: memetakan notifikasi ke halaman terkait di
+  // aplikasi MABA (quiz / task / attendance / schedule). Tanpa field ini,
+  // frontend melakukan inferensi dari judul/isi pengumuman.
+  @Prop({
+    enum: ['quiz', 'task', 'attendance', 'schedule', 'general'],
+    default: 'general',
+  })
+  actionType?: string;
+
+  @Prop()
+  actionId?: string;
+
   @Prop({
     required: true,
     enum: ['PUBLISHED', 'DRAFT', 'SCHEDULED'],

@@ -5,6 +5,7 @@ import { ClipboardList, Clock, Timer, Repeat, CheckCircle2, Lock, Play } from "l
 import { apiFetch } from "@/lib/api";
 import { StudentQuiz, TYPE_LABEL } from "@/lib/quiz";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const TYPE_STYLE: Record<string, string> = {
   PRETEST: "bg-purple-500/10 border-purple-500/30 text-purple-300",
@@ -83,8 +84,19 @@ export default function QuizListPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-display font-bold mb-2">Quiz PKKMB</h1>
-        <p className="text-white/60">Kerjakan Pretest, Posttest, dan Quiz Materi di sini.</p>
+        <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+          <h1 className="text-3xl font-display font-bold">Quiz PKKMB</h1>
+          <Link
+            href="/dashboard/assignments"
+            className="text-sm text-gold-500 hover:text-gold-400 font-semibold"
+          >
+            ← Semua Aktivitas
+          </Link>
+        </div>
+        <p className="text-white/60">
+          Kerjakan Pretest, Posttest, dan Quiz Materi di sini — quiz juga tampil
+          di menu <span className="text-white/80 font-semibold">Aktivitas</span>.
+        </p>
       </div>
 
       {error && (

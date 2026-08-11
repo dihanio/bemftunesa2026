@@ -31,6 +31,25 @@ export function formatWIBLong(iso: string | number | Date): string {
   });
 }
 
+// Kunci tanggal dalam WIB (YYYY-MM-DD) — dipakai untuk pengelompokan
+// per-hari yang konsisten di semua halaman MABA.
+export function wibDayKey(iso: string | number | Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: WIB_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+}
+
+export function shiftDayKey(key: string, delta: number): string {
+  const [y, m, d] = key.split("-").map(Number);
+  const dt = new Date(y, m - 1, d + delta);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(
+    dt.getDate(),
+  ).padStart(2, "0")}`;
+}
+
 export type PeriodStatus = "belum" | "aktif" | "tutup";
 
 export function getPeriodStatus(

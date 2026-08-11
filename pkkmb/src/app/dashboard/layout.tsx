@@ -5,7 +5,16 @@ import { useEffect, useState, useMemo } from "react";
 import { API_URL } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
-import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, Trophy, ClipboardList } from "lucide-react";
+import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, ClipboardList, CalendarDays } from "lucide-react";
+import { notificationHref, type MabaNotification } from "@/lib/maba";
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ReactNode;
+  active: boolean;
+  badge?: number;
+}
 
 interface UserProfile {
   id: string;
@@ -18,14 +27,7 @@ interface UserProfile {
   permissions?: string[];
 }
 
-interface NotifItem {
-  _id: string;
-  title: string;
-  content: string;
-  isPriority?: boolean;
-  createdAt: string;
-  isRead: boolean;
-}
+type NotifItem = MabaNotification;
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<{ user: UserProfile } | null>(null);
@@ -72,7 +74,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (status !== "authenticated") return;
     const fetchNotif = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/dashboard/maba/announcements/notifications`, { credentials: "include" });
+        // limit besar agar unreadCount akurat (default backend = 3)
+        const res = await fetch(`${API_URL}/api/v1/pkkmb/dashboard/maba/announcements/notifications?limit=50`, { credentials: "include" });
         if (res.ok) {
           const json = await res.json();
           if (json.success) setNotif({ unreadCount: json.data.unreadCount, items: json.data.items });
@@ -114,7 +117,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const openNotification = (item: NotifItem) => {
     setNotifOpen(false);
     if (!item.isRead) markRead([item._id]);
-    router.push("/dashboard");
+    const roleObj = session?.user?.role;
+    const roleString =
+      typeof roleObj === "object" && roleObj !== null
+        ? (roleObj.slug || roleObj.name || "user").toLowerCase()
+        : String(roleObj || "user").toLowerCase();
+    const isMaba = roleString === "maba" || roleString === "user";
+    // Halaman Notifikasi khusus MABA; panitia/admin tetap ke dashboard.
+    router.push(notificationHref(item) || (isMaba ? "/dashboard/notifikasi" : "/dashboard"));
   };
 
   useEffect(() => {
@@ -165,13 +175,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const isMaba = roleString === 'maba' || roleString === 'user';
 
     if (isMaba) {
-      return [
-        { label: "Maba Hub", href: "/dashboard", icon: <Home className="w-5 h-5" />, active: pathname === "/dashboard" },
-        { label: "Penugasan", href: "/dashboard/assignments", icon: <FileText className="w-5 h-5" />, active: pathname.startsWith("/dashboard/assignments") },
-        { label: "Quiz", href: "/dashboard/quiz", icon: <ClipboardList className="w-5 h-5" />, active: pathname.startsWith("/dashboard/quiz") },
-        { label: "Presensi", href: "/dashboard/presensi", icon: <CheckSquare className="w-5 h-5" />, active: pathname === "/dashboard/presensi" },
-        { label: "Skor Keaktifan", href: "/dashboard/poin", icon: <Trophy className="w-5 h-5" />, active: pathname === "/dashboard/poin" },
+      // 5 menu utama: Beranda / Aktivitas / Jadwal / Notifikasi / Profil.
+      // Presensi & Skor Keaktifan bersifat kontekstual (CTA di hero & stat
+      // dashboard) agar Maba tidak kebingungan dengan banyak menu.
+      const items: NavItem[] = [
+        { label: "Beranda", href: "/dashboard", icon: <Home className="w-5 h-5" />, active: pathname === "/dashboard" },
+        { label: "Aktivitas", href: "/dashboard/assignments", icon: <ClipboardList className="w-5 h-5" />, active: pathname.startsWith("/dashboard/assignments") || pathname.startsWith("/dashboard/quiz") || pathname === "/dashboard/tugas" },
+        { label: "Jadwal", href: "/dashboard/jadwal", icon: <CalendarDays className="w-5 h-5" />, active: pathname.startsWith("/dashboard/jadwal") },
+        { label: "Notifikasi", href: "/dashboard/notifikasi", icon: <Bell className="w-5 h-5" />, active: pathname === "/dashboard/notifikasi", badge: notif.unreadCount },
+        { label: "Profil", href: "/dashboard/profil", icon: <User className="w-5 h-5" />, active: pathname === "/dashboard/profil" },
       ];
+      return items;
     } else {
       // Panitia / Admin / Evaluator
       const isPendamping = division.includes('pendamping');
@@ -180,7 +194,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const isPemateri = division.includes('pemateri') || division.includes('acara');
       const isTatib = division.includes('tatib') || division.includes('komdis') || division.includes('tata tertib');
 
-      const items = [
+      const items: NavItem[] = [
         { label: roleString === 'super_admin' ? "Admin Panel" : isPendamping ? "Portal Pendamping" : "Portal Panitia", href: "/dashboard", icon: <MonitorSmartphone className="w-5 h-5" />, active: pathname === "/dashboard" },
       ];
 
@@ -225,7 +239,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       return items;
     }
-  }, [session, pathname]);
+  }, [session, pathname, notif.unreadCount]);
 
   if (status === "loading") {
     return (
@@ -260,7 +274,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               }`}
             >
               {menu.icon}
-              {menu.label}
+              <span className="flex-1">{menu.label}</span>
+              {menu.badge ? (
+                <span className="min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-gold-500 text-black text-[10px] font-black rounded-full">
+                  {menu.badge > 9 ? "9+" : menu.badge}
+                </span>
+              ) : null}
             </Link>
           ))}
         </nav>
@@ -363,8 +382,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     )}
                   </div>
                   {notif.items.length > 0 && (
-                    <Link href="/dashboard" onClick={() => setNotifOpen(false)} className="block px-4 py-3 text-center text-xs text-gold-500 hover:text-gold-400 font-semibold border-t border-white/5">
-                      Lihat Semua Pengumuman
+                    <Link href="/dashboard/notifikasi" onClick={() => setNotifOpen(false)} className="block px-4 py-3 text-center text-xs text-gold-500 hover:text-gold-400 font-semibold border-t border-white/5">
+                      Lihat Semua Notifikasi
                     </Link>
                   )}
                 </div>
@@ -434,13 +453,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link
               key={menu.href}
               href={menu.href}
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${
+              className={`relative flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${
                 menu.active 
                   ? "text-gold-500 font-bold" 
                   : "text-white/50 hover:text-white"
               }`}
             >
               {menu.icon}
+              {menu.badge ? (
+                <span className="absolute top-0.5 right-1/2 translate-x-4 min-w-[16px] h-4 px-0.5 flex items-center justify-center bg-gold-500 text-black text-[9px] font-black rounded-full">
+                  {menu.badge > 9 ? "9+" : menu.badge}
+                </span>
+              ) : null}
               <span className="text-[10px] mt-1">{menu.label.split(" ")[0]}</span>
             </Link>
           ))}

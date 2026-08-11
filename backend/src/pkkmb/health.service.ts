@@ -101,7 +101,19 @@ export class HealthService {
       this.consentModel.findOne({ studentId: userId }).lean().exec(),
     ]);
 
+    // Pita NON-SENSITIF: hanya warna, TANPA diagnosis apa pun. Tim medis
+    // sudah mengetahui rincian kondisi; maba cukup tahu warna pita yang harus
+    // dikenakan. Diturunkan dari agregat risk level:
+    //   TINGGI → Pita Merah, SEDANG → Pita Kuning, RENDAH → tidak perlu pita.
+    const ribbon =
+      profile?.overallRiskLevel === 'TINGGI'
+        ? 'MERAH'
+        : profile?.overallRiskLevel === 'SEDANG'
+          ? 'KUNING'
+          : null;
+
     return {
+      ribbon,
       hasMedicalHistory: profile?.hasMedicalHistory ?? false,
       isDisabled: profile?.isDisabled ?? false,
       disabilityDescription: profile?.disabilityDescription ?? null,
