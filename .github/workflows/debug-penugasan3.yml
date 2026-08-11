@@ -1,0 +1,46 @@
+name: Debug Penugasan (Panggil listAssignments langsung)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Panggil listAssignments utk user Fibrian
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+            # Cari user id Fibrian
+            USER_ID=$(docker compose -f docker-compose.yml exec -T db mongosh "$(grep -E '^MONGODB_URI=' .env | cut -d= -f2-)" --quiet --eval 'const u=db.users.findOne({name:/FIBRIAN/i}); print(u._id.toString())')
+            echo "USER_ID=$USER_ID"
+            echo "== test dengan node repl di kontainer api =="
+            docker compose -f docker-compose.yml exec -T api node -e '
+              const mongoose = require("mongoose");
+              const uri = process.env.MONGODB_URI;
+              const userId = "'"$USER_ID"'";
+              mongoose.connect(uri).then(async () => {
+                const conn = mongoose.connection;
+                const taskModel = conn.collection("pkkmb_tasks");
+                const userModel = conn.collection("users");
+                const u = await userModel.findOne({ _id: new mongoose.Types.ObjectId(userId) });
+                console.log("user:", u && (u.email || u.name), "role:", u && u.role);
+                const or = [{ targetType: "ALL" }, { targetType: { $exists: false } }];
+                if (u && u.pkkmbGroup) or.push({ targetType: "GROUP", targetIds: u.pkkmbGroup });
+                if (u && u.studyProgramId) or.push({ targetType: "STUDY_PROGRAM", targetIds: u.studyProgramId });
+                or.push({ targetType: "INDIVIDUAL", targetIds: u._id });
+                const tasks = await taskModel.find({ deletedAt: null, status: "PUBLISHED", $or: or }).toArray();
+                console.log("tasks matched:", tasks.length);
+                tasks.forEach(t => console.log(" -", t.title, "| type:", t.assignmentType, "| quizId:", t.quizId ? "yes" : "no"));
+                await mongoose.disconnect();
+              }).catch(e => { console.error("ERR", e.message); process.exit(1); });
+            '
