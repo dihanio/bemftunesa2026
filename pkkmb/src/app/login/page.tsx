@@ -16,9 +16,9 @@ function LoginContent() {
   const error = searchParams.get("error");
 
   const errorMessages: Record<string, string> = {
-    not_unesa: "Gagal masuk: gunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).",
-    deactivated: "Akun Anda dinonaktifkan. Hubungi Tim IT PKKMB.",
-    auth_failed: "Autentikasi gagal. Silakan coba lagi.",
+    not_unesa: "Gagal masuk: gunakan email kampus UNESA Anda (contoh: namakamu@mhs.unesa.ac.id).",
+    deactivated: "Akun Anda sedang dinonaktifkan. Silakan hubungi Tim IT PKKMB.",
+    auth_failed: "Gagal masuk. Silakan coba lagi.",
   };
   const errorMessage = error ? (errorMessages[error] || "") : "";
 
@@ -39,7 +39,7 @@ function LoginContent() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 text-center py-20 relative z-10">
         <Loader2 className="w-10 h-10 text-gold-500 animate-spin" />
-        <h3 className="text-xl font-semibold text-white">Mengautentikasi...</h3>
+        <h3 className="text-xl font-semibold text-white">Memproses masuk...</h3>
         <p className="text-sm text-white/60">Harap tunggu sesaat.</p>
       </div>
     );
@@ -55,7 +55,7 @@ function LoginContent() {
       
       <h1 className="font-display text-3xl font-bold text-white mb-2">Portal <span className="text-gold-500">Adrata</span></h1>
       <p className="text-white/60 font-body text-sm mb-10 leading-relaxed">
-        Silakan masuk menggunakan email resmi UNESA (@mhs.unesa.ac.id atau @unesa.ac.id).
+        Masuk dengan email kampus UNESA Anda — biasanya berakhiran @mhs.unesa.ac.id (contoh: namakamu@mhs.unesa.ac.id).
       </p>
 
       {errorMessage && (
@@ -80,11 +80,11 @@ function LoginContent() {
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
         )}
-        <span>{isLoading ? "Menghubungkan..." : "Lanjutkan dengan Google"}</span>
+        <span>{isLoading ? "Membuka halaman Google..." : "Lanjutkan dengan Google"}</span>
       </button>
 
       <div className="mt-8 pt-8 border-t border-white/10 w-full text-xs text-white/40 font-body">
-        Mengalami kendala login? Hubungi <a href="#" className="text-gold-500 hover:underline">Tim IT PKKMB</a>
+        Ada kendala saat masuk? Hubungi <a href="#" className="text-gold-500 hover:underline">Tim IT PKKMB</a>
       </div>
 
     </div>

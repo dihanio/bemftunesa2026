@@ -308,10 +308,10 @@ export default function OnboardingPage() {
           setFormData((f) => ({ ...f, nim: nimMatch[0] }));
           setQrResult({ ok: true, text: nimMatch[0] });
         } else {
-          setQrResult({ ok: false, text: text || "Tidak ada QR terdeteksi" });
+          setQrResult({ ok: false, text: text || "Tidak ada kode QR yang terbaca pada foto" });
         }
       } catch {
-        setQrResult({ ok: false, text: "Gagal membaca QR" });
+        setQrResult({ ok: false, text: "Gagal membaca kode QR pada foto" });
       } finally {
         setQrScanning(false);
       }
@@ -341,22 +341,22 @@ export default function OnboardingPage() {
         setOcrStatus("done");
       } else {
         setOcrStatus("error");
-        setError(json.message || "Gagal membaca data dari KTMS. Silakan coba lagi.");
+        setError(json.message || "Data belum berhasil terbaca. Coba unggah foto yang lebih jelas dan terang.");
       }
     } catch {
       setOcrStatus("error");
-      setError("Gagal terhubung ke server OCR. Coba lagi.");
+      setError("Gagal terhubung ke server. Silakan coba lagi.");
     }
   };
 
   const goToStep2 = () => {
     if (ocrStatus !== "done") {
-      setError("Tunggu hasil OCR selesai, atau unggah ulang KTMS.");
+      setError("Tunggu sampai data selesai terbaca, atau unggah ulang fotonya.");
       setTimeout(() => setError(null), 4000);
       return;
     }
     if (!formData.nim) {
-      setError("NIM belum terbaca. Isi manual atau unggah ulang.");
+      setError("NIM belum terbaca. Coba unggah ulang dengan foto yang lebih jelas dan tidak buram.");
       setTimeout(() => setError(null), 4000);
       return;
     }
@@ -466,8 +466,8 @@ export default function OnboardingPage() {
   };
 
   const stepLabels = [
-    { n: 1, t: "Upload KTMS", d: "OCR data identitas" },
-    { n: 2, t: "Konfirmasi Data", d: "Periksa hasil OCR" },
+    { n: 1, t: "Upload KTMS", d: "Data terbaca otomatis" },
+    { n: 2, t: "Konfirmasi Data", d: "Periksa & perbaiki data" },
     { n: 3, t: "Data Kesehatan", d: "Riwayat & risiko" },
     { n: 4, t: "Pasfoto Resmi", d: "Unggah pasfoto 3x4" },
     { n: 5, t: "Persetujuan", d: "Tanda tangan digital" },
@@ -501,7 +501,7 @@ export default function OnboardingPage() {
               <span className="text-gold-500">Keluarga Teknik!</span>
             </h1>
             <p className="text-white/50 text-sm leading-relaxed mb-12">
-              Data identitas diambil otomatis dari KTMS/KTM Sementara Anda. Pastikan foto terlihat jelas.
+              Data diri Anda akan terbaca otomatis dari foto KTM Sementara. Pastikan foto terlihat jelas dan tidak buram, ya!
             </p>
           </div>
 
@@ -561,7 +561,10 @@ export default function OnboardingPage() {
               <motion.div key="s1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col flex-1 min-h-full">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">Verifikasi Identitas Mahasiswa</h2>
-                  <p className="text-white/50 text-sm mb-6">Silakan unggah foto KTMS/KTM Sementara Anda. Sistem akan membaca data identitas secara otomatis (OCR).</p>
+                  <p className="text-white/50 text-sm mb-6">
+                    Unggah foto KTM Sementara (KTMS) Anda. Data diri di kartu akan terbaca otomatis —
+                    tidak perlu diketik manual. Pastikan foto jelas dan tidak terpotong.
+                  </p>
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center space-y-6">
@@ -583,8 +586,9 @@ export default function OnboardingPage() {
                     className="border-2 border-dashed border-white/20 rounded-3xl p-12 flex flex-col items-center justify-center text-center bg-white/[0.02] hover:bg-white/[0.04] hover:border-gold-500/40 transition-colors group"
                   >
                     <UploadCloud className="w-14 h-14 text-white/30 mb-4 group-hover:text-gold-500 transition-colors" />
-                    <p className="font-bold mb-1">Klik untuk unggah foto KTMS</p>
+                    <p className="font-bold mb-1">Klik untuk memilih foto</p>
                     <p className="text-xs text-white/40">JPG, PNG, atau PDF (maks. 5MB)</p>
+                    <p className="text-xs text-white/30 mt-4 max-w-xs">💡 Pastikan seluruh bagian kartu terlihat jelas agar nama, NIM, dan program studi terbaca semua.</p>
                   </button>
                 ) : (
                   <div className="space-y-5">
@@ -605,14 +609,14 @@ export default function OnboardingPage() {
                     {ocrStatus === "loading" && (
                       <div className="flex items-center justify-center gap-3 text-gold-400 text-sm py-4">
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>{qrScanning ? "Membaca QR & data..." : "Sedang membaca data dari KTMS (OCR)..."}</span>
+                        <span>{qrScanning ? "Membaca kode & data dari kartu..." : "Sedang membaca data dari foto Anda..."}</span>
                       </div>
                     )}
 
                     {ocrStatus === "done" && (
                       <div className="flex items-center gap-2 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm">
                         <CheckCircle2 className="w-4 h-4 shrink-0" />
-                        <span>Data identitas berhasil dibaca! Periksa di langkah berikutnya.</span>
+                        <span>Data berhasil dibaca! Silakan periksa kembali di langkah berikutnya.</span>
                       </div>
                     )}
 
@@ -620,7 +624,7 @@ export default function OnboardingPage() {
                     {!qrScanning && qrResult && (
                       <p className={`text-sm flex items-center gap-2 ${qrResult.ok ? "text-green-400" : "text-yellow-400"}`}>
                         <ScanLine className="w-4 h-4" />
-                        {qrResult.ok ? `QR terbaca: NIM ${qrResult.text}` : `QR: ${qrResult.text}`}
+                        {qrResult.ok ? `NIM terbaca dari QR di kartu: ${qrResult.text}` : `QR: ${qrResult.text}`}
                       </p>
                     )}
 
@@ -644,10 +648,10 @@ export default function OnboardingPage() {
               <motion.div key="s2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col flex-1 min-h-full">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">Konfirmasi Data Identitas</h2>
-                  <p className="text-white/50 text-sm mb-2">Data berikut diambil dari KTMS via OCR. Perbaiki bila ada yang salah.</p>
+                  <p className="text-white/50 text-sm mb-2">Data di bawah terbaca otomatis dari foto KTM Sementara Anda. Periksa dan perbaiki bila ada yang salah.</p>
                   {qrResult?.ok && (
                     <p className="text-xs text-green-400 flex items-center gap-2 mb-2">
-                      <CheckCircle2 className="w-4 h-4" /> QR Code KTM terverifikasi (NIM {qrResult.text})
+                      <CheckCircle2 className="w-4 h-4" /> Kode QR di kartu terbaca — NIM {qrResult.text}
                     </p>
                   )}
                 </div>

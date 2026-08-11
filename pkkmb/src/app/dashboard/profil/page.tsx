@@ -191,7 +191,7 @@ export default function ProfilPage() {
     <div className="space-y-8 w-full max-w-6xl mx-auto pb-12">
       {/* Digital ID Card Section */}
       <div className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8">
-        <h2 className="text-2xl font-bold font-display text-white mb-6">Digital ID Card</h2>
+        <h2 className="text-2xl font-bold font-display text-white mb-6">Kartu Maba Digital</h2>
         <div className="flex flex-col md:flex-row gap-8 items-center md:items-start justify-center">
           {/* Card UI */}
           <div className="w-[300px] h-[450px] relative rounded-2xl overflow-hidden shadow-2xl border border-white/20 bg-gradient-to-b from-gold-500/20 to-black/80 backdrop-blur-md flex flex-col items-center pt-8 pb-6">
@@ -231,10 +231,10 @@ export default function ProfilPage() {
               
               <div className="mt-2 pt-3 border-t border-white/10 w-full">
                 <div className="flex flex-col items-center">
-                  <span className="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-0.5">Total Skor Keaktifan</span>
+                  <span className="text-[10px] uppercase tracking-wider text-white/50 font-bold mb-0.5">Total Poin Keaktifan</span>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xl font-display font-black text-gold-400">{totalPoints !== null ? totalPoints : '...'}</span>
-                    <span className="text-[10px] text-gold-400/50 uppercase">PTS</span>
+                    <span className="text-[10px] text-gold-400/50 uppercase">POIN</span>
                   </div>
                 </div>
               </div>
@@ -245,7 +245,7 @@ export default function ProfilPage() {
           <div className="w-[300px] h-[450px] relative rounded-2xl overflow-hidden shadow-2xl border border-white/20 bg-gradient-to-b from-black/80 to-gold-500/20 backdrop-blur-md flex flex-col items-center justify-center p-6">
             <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none"></div>
             
-            <h3 className="text-gold-500 font-display font-bold text-lg uppercase tracking-wider z-10 mb-6">Validasi Identitas</h3>
+            <h3 className="text-gold-500 font-display font-bold text-lg uppercase tracking-wider z-10 mb-6">Verifikasi Kartu</h3>
             <div className="p-4 bg-white rounded-xl shadow-[0_0_30px_rgba(234,179,8,0.2)] z-10 mb-6">
               {profileData?.verificationToken ? (
                 <QRCode value={`${typeof window !== 'undefined' ? window.location.origin : ''}/verify/${profileData.verificationToken}`} size={160} level="H" />
@@ -258,7 +258,7 @@ export default function ProfilPage() {
             
             <div className="mt-auto z-10 flex flex-col items-center w-full">
               <p className="text-white/40 text-xs text-center max-w-[220px]">
-                Scan QR Code ini untuk verifikasi identitas publik.
+                Pindai QR ini untuk memastikan data dan kartu kamu terverifikasi.
               </p>
             </div>
           </div>
