@@ -1,0 +1,27 @@
+name: Debug API Log & Respons Penugasan
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cek log API + hit endpoint assignments
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+            echo "== 30 baris log API terakhir =="
+            docker compose -f docker-compose.yml logs --tail=30 api 2>&1 || true
+            echo ""
+            echo "== hit endpoint /assignments tanpa auth (harus 401) =="
+            docker compose -f docker-compose.yml exec -T api sh -c 'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/api/v1/pkkmb/assignments' 2>&1 || echo "curl gagal"
