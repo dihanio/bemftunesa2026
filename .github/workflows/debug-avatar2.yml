@@ -1,0 +1,29 @@
+name: Debug User dengan Avatar Terisi
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cari user yang avatar-nya terisi
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+            echo "== user dgn avatar tidak kosong =="
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval '
+              const users = db.users.find({ avatar: { $ne: null, $ne: "", $exists: true } }, { name: 1, email: 1, avatar: 1 }).toArray();
+              print("Total user dgn avatar: " + users.length);
+              users.forEach(u => print(u.email + " | avatar=" + u.avatar));
+            '
