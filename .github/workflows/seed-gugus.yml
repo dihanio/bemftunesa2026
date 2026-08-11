@@ -1,0 +1,71 @@
+name: Seed Gugus & Pendamping PKKMB (VPS)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed-gugus-pendamping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Cek status DB & jalankan seed di VPS
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+
+            echo "======================================================"
+            echo "STEP 1/4 — Cek status data gugus & pendamping (sebelum seed)"
+            echo "======================================================"
+            # Ambil MONGODB_URI dari .env (tanpa echo rahasia)
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+            if [ -z "$MDB_URI" ]; then
+              echo "❌ MONGODB_URI tidak ditemukan di .env"
+              exit 1
+            fi
+
+            echo "→ Jumlah gugus di DB (semua):"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.pkkmb_gugus.countDocuments({})'
+            echo "→ Jumlah gugus ACTIVE di DB:"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.pkkmb_gugus.countDocuments({ status: "ACTIVE" })'
+            echo "→ Jumlah user pendamping di DB:"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.users.countDocuments({ division: "Sie Pendamping" })'
+            echo "→ Jumlah user pendamping yang sudah di-assign ke gugus:"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.users.countDocuments({ pkkmbGroup: { $ne: null }, division: "Sie Pendamping" })'
+
+            echo ""
+            echo "======================================================"
+            echo "STEP 2/4 — Seed 50 Gugus (seed-gugus.js)"
+            echo "======================================================"
+            docker compose -f docker-compose.yml exec -T api node dist/src/database/seeders/seed-gugus.js
+
+            echo ""
+            echo "======================================================"
+            echo "STEP 3/4 — Seed 50 Pendamping (seed-pendamping-50.js)"
+            echo "======================================================"
+            docker compose -f docker-compose.yml exec -T api node dist/src/database/seeders/seed-pendamping-50.js
+
+            echo ""
+            echo "======================================================"
+            echo "STEP 4/4 — Verifikasi hasil (setelah seed)"
+            echo "======================================================"
+            echo "→ Jumlah gugus ACTIVE setelah seed:"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.pkkmb_gugus.countDocuments({ status: "ACTIVE" })'
+            echo "→ Jumlah user pendamping setelah seed:"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.users.countDocuments({ division: "Sie Pendamping" })'
+            echo "→ Jumlah gugus yang punya pendamping ter-assign:"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.pkkmb_gugus.countDocuments({ pendampingId: { $ne: null } })'
+            echo "→ Contoh 3 gugus pertama beserta pendamping:"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.pkkmb_gugus.find({ status: "ACTIVE" }, { nomor: 1, name: 1, pendampingName: 1 }).sort({ nomor: 1 }).limit(3).toArray()'
+            echo ""
+            echo "✅ Seed gugus & pendamping selesai."
