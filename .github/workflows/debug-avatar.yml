@@ -1,0 +1,29 @@
+name: Debug Avatar vs Foto Google
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cek field avatar/image user maba
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+            echo "== user maba demo & lainnya: cek avatar/image =="
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval '
+              db.users.find({ isOnboarded: true }, { name: 1, email: 1, avatar: 1, image: 1, picture: 1, googleImage: 1 }).limit(20).toArray().forEach(u => {
+                print(u.email + " | avatar=" + (u.avatar || "NULL") + " | image=" + (u.image || "NULL") + " | picture=" + (u.picture || "NULL"));
+              })
+            '
