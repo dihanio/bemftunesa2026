@@ -159,12 +159,31 @@ describe('gugus-assignment — pickBestGugus', () => {
     expect(pickBestGugus([], counts)).toBeNull();
   });
 
-  it('tie-break deterministik: skor sama → kandidat pertama yang dipilih', () => {
+  it('tie-break ACAK: skor sama → salah satu di antara kandidat terbaik (bukan selalu pertama)', () => {
     const same = new Map<string, GugusBalanceCounts>([
       ['g1', { prodiN: 1, sameGenderProdiN: 1, genderGapN: 0, totalN: 5 }],
       ['g2', { prodiN: 1, sameGenderProdiN: 1, genderGapN: 0, totalN: 5 }],
+      ['g3', { prodiN: 1, sameGenderProdiN: 1, genderGapN: 0, totalN: 5 }],
     ]);
-    expect(pickBestGugus([g1, g2], same)?.id).toBe('g1');
+    // random → 0 : pilih kandidat pertama di antara yang tie.
+    expect(
+      pickBestGugus([g1, g2, g3], same, () => 0)?.id,
+    ).toBe('g1');
+    // random mendekati 1 : pilih kandidat terakhir di antara yang tie.
+    expect(
+      pickBestGugus([g1, g2, g3], same, () => 0.999)?.id,
+    ).toBe('g3');
+  });
+
+  it('skor minimum tetap dihormati walau ada random (tidak keluar dari gugus terbaik)', () => {
+    const counts = new Map<string, GugusBalanceCounts>([
+      ['g1', { prodiN: 2, sameGenderProdiN: 2, genderGapN: 0, totalN: 30 }],
+      ['g2', { prodiN: 0, sameGenderProdiN: 0, genderGapN: 0, totalN: 25 }],
+      ['g3', { prodiN: 1, sameGenderProdiN: 0, genderGapN: 1, totalN: 20 }],
+    ]);
+    // Walaupun random mendekati 1 (bias ke akhir), g2 (skor terkecil) tetap dipilih.
+    const chosen = pickBestGugus([g1, g2, g3], counts, () => 0.999);
+    expect(chosen?.id).toBe('g2');
   });
 });
 
@@ -176,7 +195,7 @@ describe('gugus-assignment — pickBestGugus', () => {
 //   (2) komposisi cowo/cewe RATA di SETIAP gugus (selisih <= 1).
 type SimMaba = { prodi: string; gender: 'L' | 'P' };
 
-function simulate(maba: SimMaba[], gugusCount: number) {
+function simulate(maba: SimMaba[], gugusCount: number, random?: () => number) {
   const gugus = Array.from({ length: gugusCount }, (_, i) => ({
     id: `g${i + 1}`,
     nomor: i + 1,
@@ -200,7 +219,7 @@ function simulate(maba: SimMaba[], gugusCount: number) {
         totalN: g.total,
       });
     });
-    const best = pickBestGugus(gugus, countsByGugus);
+    const best = pickBestGugus(gugus, countsByGugus, random);
     if (!best) throw new Error('tidak ada gugus');
     assigned.push(best.id);
     best.total += 1;
@@ -217,6 +236,15 @@ function simulate(maba: SimMaba[], gugusCount: number) {
 }
 
 describe('gugus-assignment — simulasi distribusi global', () => {
+  // RNG pseudo-acak deterministik (LCG) agar simulasi stabil di CI.
+  function makeLcg(seedInit: number) {
+    let seed = seedInit;
+    return () => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return seed / 2147483648;
+    };
+  }
+
   it('rata cowo/cewe SETIAP gugus walau prodi didominasi satu gender (masalah skor lama)', () => {
     // Prodi X: 8 cowo + 2 cewe; Prodi Y: 2 cowo + 8 cewe → 10 gugus.
     // Dengan skor lama (prodi→sameGenderProdi→total) hasil akhir beberapa
@@ -240,7 +268,7 @@ describe('gugus-assignment — simulasi distribusi global', () => {
         gender: 'P' as const,
       })),
     ];
-    const { gugus } = simulate(maba, 10);
+    const { gugus } = simulate(maba, 10, makeLcg(1));
 
     gugus.forEach((g) => {
       expect(Math.abs(g.male - g.female)).toBeLessThanOrEqual(1);
@@ -264,7 +292,7 @@ describe('gugus-assignment — simulasi distribusi global', () => {
         gender: 'P' as const,
       })),
     ];
-    const { gugus } = simulate(maba, 10);
+    const { gugus } = simulate(maba, 10, makeLcg(2));
     gugus.forEach((g) => {
       expect(Math.abs(g.male - g.female)).toBeLessThanOrEqual(1);
     });
@@ -278,25 +306,41 @@ describe('gugus-assignment — simulasi distribusi global', () => {
         maba.push({ prodi: p, gender: i % 2 === 0 ? 'L' : 'P' });
       }
     }
-    const { gugus } = simulate(maba, 5);
+    const { gugus } = simulate(maba, 5, makeLcg(3));
     gugus.forEach((g) => {
       prodis.forEach((p) => expect(g.prodi.get(p) || 0).toBeGreaterThan(0));
     });
   });
 
-  it('deterministik: input sama → hasil sama', () => {
-    const build = () =>
-      simulate(
-        [
-          ...Array.from({ length: 6 }, (_, i) => ({
-            prodi: 'X',
-            gender: i % 2 === 0 ? ('L' as const) : ('P' as const),
-          })),
-        ],
-        4,
-      );
-    const a = build();
-    const b = build();
-    expect(a.assigned).toEqual(b.assigned);
+  it('random tie-break menyebarkan maba ke banyak gugus sejak awal (tidak menumpuk di gugus 1)', () => {
+    // 20 maba prodi sama + gender sama → dgn tie-break acak, seharusnya
+    // tersebar ke ~ semua gugus, bukan menumpuk di gugus 1-2 dulu.
+    const maba: SimMaba[] = Array.from({ length: 20 }, () => ({
+      prodi: 'X',
+      gender: 'L' as const,
+    }));
+    const gugusCount = 10;
+    const { gugus, assigned } = simulate(maba, gugusCount, makeLcg(12345));
+
+    // Terdistribusi ke lebih dari 1 gugus (bukan hanya gugus 1).
+    const used = new Set(assigned);
+    expect(used.size).toBeGreaterThan(1);
+
+    // Total anggota terbilang merata (tidak ada gugus yang sangat timpang).
+    const totals = gugus.map((g) => g.total).sort((a, b) => a - b);
+    expect(totals[gugusCount - 1] - totals[0]).toBeLessThanOrEqual(1);
+  });
+
+  it('random RNG deterministik (LCG): input sama + seed sama → hasil sama', () => {
+    const build = (s: number) => {
+      const maba: SimMaba[] = Array.from({ length: 8 }, (_, i) => ({
+        prodi: i % 2 === 0 ? 'X' : 'Y',
+        gender: i % 2 === 0 ? ('L' as const) : ('P' as const),
+      }));
+      return simulate(maba, 4, makeLcg(s)).assigned;
+    };
+    const a = build(99);
+    const b = build(99);
+    expect(a).toEqual(b);
   });
 });

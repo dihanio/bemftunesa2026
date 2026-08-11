@@ -62,25 +62,45 @@ export function gugusBalanceScore(counts: GugusBalanceCounts): number {
 
 /**
  * Pilih gugus dengan skor keseimbangan terkecil dari daftar kandidat.
+ *
+ * Kebijakan distribusi: jangan pernah menumpuk maba ke gugus dengan nomor
+ * kecil hanya karena urutannya kebetulan lebih dulu. Karena itu, bila beberapa
+ * gugus memiliki skor keseimbangan TERENDAH yang sama (mis. saat semua masih
+ * kosong), kita memilih secara ACAK di antara kandidat terbaik tsb — bukan
+ * selalu kandidat pertama. Keseimbangan prodi & gender tetap terjaga karena
+ * pilihan selalu dibatasi pada gugus dengan skor minimum.
+ *
+ * `random` (Math.random secara default) memungkinkan pengujian yang
+ * deterministik lewat injeksi seed/urutan tetap.
+ *
  * Kandidat wajib memiliki `id` (string). Mengembalikan kandidat asli (supaya
  * pemanggil tetap memegang referensi `_id`), atau `null` bila daftar kosong.
  */
 export function pickBestGugus<T extends { id: string }>(
   candidates: T[],
   countsByGugus: Map<string, GugusBalanceCounts>,
+  random: () => number = Math.random,
 ): T | null {
   if (!candidates || candidates.length === 0) return null;
-  let best = candidates[0];
   let bestScore = Infinity;
+  let bestCandidates: T[] = [];
   for (const g of candidates) {
     const counts = countsByGugus.get(g.id) ?? EMPTY_COUNTS;
     const score = gugusBalanceScore(counts);
     if (score < bestScore) {
       bestScore = score;
-      best = g;
+      bestCandidates = [g];
+    } else if (score === bestScore) {
+      bestCandidates.push(g);
     }
   }
-  return best;
+  if (bestCandidates.length === 0) return null;
+  // Random tie-break: pilih satu di antara gugus dengan skor minimum.
+  const idx = Math.min(
+    bestCandidates.length - 1,
+    Math.floor(random() * bestCandidates.length),
+  );
+  return bestCandidates[idx];
 }
 
 // ─── HELPERS BERBAGI (dipakai pkkmb.service.ts & health.service.ts) ────────

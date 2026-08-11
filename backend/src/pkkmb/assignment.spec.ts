@@ -233,7 +233,7 @@ function buildService(
 const baseDto = {
   title: 'Pretest PKKMB FT',
   description: 'Kerjakan pretest',
-  deadline: '2026-08-10T23:59:59Z',
+  deadline: '2099-12-31T23:59:59Z',
 };
 
 // ─── CREATE ASSIGNMENT ─────────────────────────────────────────────────────
@@ -354,7 +354,7 @@ describe('PkkmbService — studentAssignmentStatus (derivasi dari attempt)', () 
         _id: { toString: () => ASSIGNMENT_ID },
         assignmentType: 'QUIZ',
         quizId: { toString: () => QUIZ_ID },
-        deadline: new Date('2026-08-10T23:59:59Z'),
+        deadline: new Date('2099-12-31T23:59:59Z'),
       },
       USER_ID,
     );
@@ -376,7 +376,7 @@ describe('PkkmbService — studentAssignmentStatus (derivasi dari attempt)', () 
         _id: { toString: () => ASSIGNMENT_ID },
         assignmentType: 'QUIZ',
         quizId: { toString: () => QUIZ_ID },
-        deadline: new Date('2026-08-10T23:59:59Z'),
+        deadline: new Date('2099-12-31T23:59:59Z'),
       },
       USER_ID,
     );
@@ -393,7 +393,7 @@ describe('PkkmbService — studentAssignmentStatus (derivasi dari attempt)', () 
         _id: { toString: () => ASSIGNMENT_ID },
         assignmentType: 'QUIZ',
         quizId: { toString: () => QUIZ_ID },
-        deadline: new Date('2026-08-10T23:59:59Z'),
+        deadline: new Date('2099-12-31T23:59:59Z'),
       },
       USER_ID,
     );
@@ -433,7 +433,7 @@ describe('PkkmbService — studentAssignmentStatus (derivasi dari attempt)', () 
         _id: { toString: () => ASSIGNMENT_ID },
         assignmentType: 'QUIZ',
         quizId: { toString: () => QUIZ_ID },
-        deadline: new Date('2026-08-10T23:59:59Z'),
+        deadline: new Date('2099-12-31T23:59:59Z'),
       },
       USER_ID,
     );
@@ -462,7 +462,7 @@ describe('PkkmbService — studentAssignmentStatus (derivasi dari attempt)', () 
         _id: { toString: () => ASSIGNMENT_ID },
         assignmentType: 'TASK',
         type: 'individu',
-        deadline: new Date('2026-08-10T23:59:59Z'),
+        deadline: new Date('2099-12-31T23:59:59Z'),
       },
       USER_ID,
     );
@@ -481,7 +481,7 @@ describe('PkkmbService — listAssignments visibility quiz (AND targeting)', () 
     assignmentType: 'QUIZ',
     quizId: { toString: () => QUIZ_ID },
     status: 'PUBLISHED',
-    deadline: new Date('2026-08-10T23:59:59Z'),
+    deadline: new Date('2099-12-31T23:59:59Z'),
     targetType: 'ALL',
     targetIds: [],
     deletedAt: null,
@@ -532,7 +532,7 @@ describe('PkkmbService — listAssignments visibility quiz (AND targeting)', () 
       assignmentType: 'QUIZ',
       quizId: { toString: () => QUIZ_ID },
       status: 'DRAFT',
-      deadline: new Date('2026-08-10T23:59:59Z'),
+      deadline: new Date('2099-12-31T23:59:59Z'),
       targetType: 'ALL',
       targetIds: [],
       deletedAt: null,
@@ -576,7 +576,7 @@ describe('PkkmbService — updateAssignment (PATCH parsial aman)', () => {
       status: 'PUBLISHED',
       targetType: 'GROUP',
       targetIds: [{ toString: () => '507f1f77bcf86cd799439099' }],
-      deadline: new Date('2026-08-10T23:59:59Z'),
+      deadline: new Date('2099-12-31T23:59:59Z'),
       quizId: null,
       save: jest.fn().mockResolvedValue(true),
       ...overrides,
@@ -630,7 +630,7 @@ describe('PkkmbService — getAssignmentDetail targeting', () => {
       assignmentType: 'TASK',
       type: 'individu',
       status: 'PUBLISHED',
-      deadline: new Date('2026-08-10T23:59:59Z'),
+      deadline: new Date('2099-12-31T23:59:59Z'),
       targetType: 'INDIVIDUAL',
       targetIds: [{ toString: () => '507f1f77bcf86cd799439099' }],
       deletedAt: null,
@@ -652,7 +652,7 @@ describe('PkkmbService — getAssignmentDetail targeting', () => {
       description: 'd',
       assignmentType: 'QUIZ',
       status: 'PUBLISHED',
-      deadline: new Date('2026-08-10T23:59:59Z'),
+      deadline: new Date('2099-12-31T23:59:59Z'),
       targetType: 'ALL',
       targetIds: [],
       quizId: { toString: () => QUIZ_ID },
@@ -675,7 +675,7 @@ describe('PkkmbService — getAssignmentDetail targeting', () => {
       description: 'd',
       assignmentType: 'QUIZ',
       status: 'PUBLISHED',
-      deadline: new Date('2026-08-10T23:59:59Z'),
+      deadline: new Date('2099-12-31T23:59:59Z'),
       targetType: 'ALL',
       targetIds: [],
       quizId: { toString: () => QUIZ_ID },
