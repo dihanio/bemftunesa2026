@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { API_URL } from "@/lib/api";
+import { API_URL, apiFetch } from "@/lib/api";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -105,7 +105,7 @@ export default function OnboardingPage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" });
+        const res = await apiFetch("/auth/me");
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.data) {
@@ -321,10 +321,9 @@ export default function OnboardingPage() {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/ktms/ocr`, {
+      const res = await apiFetch("/pkkmb/ktms/ocr", {
         method: "POST",
         body: fd,
-        credentials: "include",
       });
       const json = await res.json();
       if (res.ok && json.success && json.data) {
@@ -393,10 +392,9 @@ export default function OnboardingPage() {
       if (croppedAvatarBlob) {
         const uploadForm = new FormData();
         uploadForm.append("file", croppedAvatarBlob, "avatar.webp");
-        const uploadRes = await fetch(`${API_URL}/api/v1/contents/upload`, {
+        const uploadRes = await apiFetch("/contents/upload", {
           method: "POST",
           body: uploadForm,
-          credentials: "include",
         });
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
@@ -412,10 +410,9 @@ export default function OnboardingPage() {
       if (ktmFile) {
         const uploadForm = new FormData();
         uploadForm.append("file", ktmFile, ktmFile.name);
-        const uploadRes = await fetch(`${API_URL}/api/v1/contents/upload`, {
+        const uploadRes = await apiFetch("/contents/upload", {
           method: "POST",
           body: uploadForm,
-          credentials: "include",
         });
         if (uploadRes.ok) {
           const uploadData = await uploadRes.json();
@@ -437,11 +434,10 @@ export default function OnboardingPage() {
         ktmObjectKey: finalKtmKey,
       };
 
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/onboard`, {
+      const res = await apiFetch("/pkkmb/onboard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        credentials: "include",
       });
 
       if (res.ok) {
@@ -460,7 +456,7 @@ export default function OnboardingPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_URL}/api/v1/auth/logout`, { method: "POST", credentials: "include" });
+      await apiFetch("/auth/logout", { method: "POST" });
     } catch {}
     router.push("/login");
   };

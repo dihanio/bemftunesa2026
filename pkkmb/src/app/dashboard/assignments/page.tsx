@@ -16,7 +16,7 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { statusMeta, deadlineLabel } from "@/lib/maba";
 import TaskSubmitModal from "@/components/assignments/TaskSubmitModal";
 
@@ -92,13 +92,9 @@ export default function AssignmentsPage() {
     setLoading(true);
     try {
       const [res, meRes, subsRes] = await Promise.all([
-        fetch(`${API_URL}/api/v1/pkkmb/assignments`, {
-          credentials: "include",
-        }),
-        fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" }),
-        fetch(`${API_URL}/api/v1/pkkmb/maba/submissions`, {
-          credentials: "include",
-        }),
+        apiFetch("/pkkmb/assignments"),
+        apiFetch("/auth/me"),
+        apiFetch("/pkkmb/maba/submissions"),
       ]);
       if (res.status === 401) {
         router.push("/login");

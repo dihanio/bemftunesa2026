@@ -15,7 +15,7 @@ import {
   Sparkles,
   RotateCcw,
 } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { formatWIB, useNow, wibDayKey, shiftDayKey } from "@/lib/presensi-time";
 
 interface PointLog {
@@ -71,9 +71,7 @@ export default function PoinPage() {
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/maba/points`, {
-        credentials: "include",
-      });
+      const res = await apiFetch("/pkkmb/maba/points");
       if (res.ok) {
         const json = await res.json();
         if (json.success) {

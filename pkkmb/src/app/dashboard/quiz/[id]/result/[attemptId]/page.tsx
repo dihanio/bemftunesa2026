@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Trophy, Check, XCircle, Home } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { QuizResult } from "@/lib/quiz";
 
 export default function QuizResultPage() {
@@ -16,7 +16,7 @@ export default function QuizResultPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${id}/result/${attemptId}`, { credentials: "include" });
+        const res = await apiFetch(`/pkkmb/quiz/${id}/result/${attemptId}`);
         if (res.status === 401) { router.push("/login"); return; }
         const json = await res.json();
         if (res.ok && json.success) setResult(json.data);

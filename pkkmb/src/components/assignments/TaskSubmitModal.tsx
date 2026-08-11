@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { UploadCloud, Users, CheckCircle2, X, Loader2, AlertTriangle } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { canSubmitTask } from "@/lib/maba";
 
 interface TaskSubmitModalProps {
@@ -51,15 +51,11 @@ export default function TaskSubmitModal({
     setSubmitting(true);
     setError("");
     try {
-      const res = await fetch(
-        `${API_URL}/api/v1/pkkmb/maba/tasks/${task._id}/submit`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ fileUrl: linkInput.trim() }),
-        },
-      );
+      const res = await apiFetch(`/pkkmb/maba/tasks/${task._id}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl: linkInput.trim() }),
+      });
       const json = await res.json();
       if (res.ok && json.success) {
         setSuccess(true);

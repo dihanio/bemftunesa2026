@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2, ClipboardList, Check } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import toast from "react-hot-toast";
 
 interface QuizOption {
@@ -50,9 +50,7 @@ export default function CreateAssignmentPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz`, {
-          credentials: "include",
-        });
+        const res = await apiFetch("/pkkmb/quiz");
         if (res.status === 401) {
           router.push("/login");
           return;
@@ -74,9 +72,7 @@ export default function CreateAssignmentPage() {
     if (!editId) return;
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/assignments/${editId}`, {
-          credentials: "include",
-        });
+        const res = await apiFetch(`/pkkmb/assignments/${editId}`);
         if (res.status === 401) {
           router.push("/login");
           return;
@@ -135,14 +131,13 @@ export default function CreateAssignmentPage() {
         ...(attachment ? { attachment } : {}),
         ...(link ? { link } : {}),
       };
-      const res = await fetch(
+      const res = await apiFetch(
         editId
-          ? `${API_URL}/api/v1/pkkmb/assignments/${editId}`
-          : `${API_URL}/api/v1/pkkmb/assignments`,
+          ? `/pkkmb/assignments/${editId}`
+          : "/pkkmb/assignments",
         {
           method: editId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify(payload),
         },
       );

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, ArrowLeft, Save, GripVertical, Download, Upload, CheckCircle2, AlertTriangle, X } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { ManagedQuiz, ManagedQuestion, TargetType, QuizType } from "@/lib/quiz";
 import { parseImportFile, validateImportRows, normalizeOrders, downloadTemplate, ImportRowResult } from "@/lib/quiz-import-export";
 import toast from "react-hot-toast";
@@ -70,8 +70,8 @@ export default function QuizForm({ quiz }: { quiz?: ManagedQuiz }) {
     const loadTargets = async () => {
       try {
         const [spRes, gRes] = await Promise.all([
-          fetch(`${API_URL}/api/v1/pkkmb/master/study-programs`, { credentials: "include" }),
-          fetch(`${API_URL}/api/v1/pkkmb/gugus`, { credentials: "include" }),
+          apiFetch("/pkkmb/master/study-programs"),
+          apiFetch("/pkkmb/gugus"),
         ]);
         const spJson = await spRes.json();
         const gJson = await gRes.json();
@@ -94,7 +94,7 @@ export default function QuizForm({ quiz }: { quiz?: ManagedQuiz }) {
     if (targetType !== "INDIVIDUAL") return;
     const load = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/maba?limit=200`, { credentials: "include" });
+        const res = await apiFetch("/pkkmb/admin/maba?limit=200");
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
           setStudents(json.data.map((s: { _id: string; name: string; nim?: string }) => ({
@@ -312,11 +312,10 @@ export default function QuizForm({ quiz }: { quiz?: ManagedQuiz }) {
       // Question Builder, disimpan saat Save Quiz). Edit = APPEND + simpan.
       // skip=true dipakai saat user memilih [Import Tetap] (duplikat WARNING).
       const url = isEdit
-        ? `${API_URL}/api/v1/pkkmb/quiz/${quiz!._id}/import${skip ? "?skipDuplicates=true" : ""}`
-        : `${API_URL}/api/v1/pkkmb/quiz/import`;
-      const res = await fetch(url, {
+        ? `/pkkmb/quiz/${quiz!._id}/import${skip ? "?skipDuplicates=true" : ""}`
+        : "/pkkmb/quiz/import";
+      const res = await apiFetch(url, {
         method: "POST",
-        credentials: "include",
         body: fd,
       });
       const json = await res.json();
@@ -416,11 +415,10 @@ export default function QuizForm({ quiz }: { quiz?: ManagedQuiz }) {
 
     setSaving(true);
     try {
-      const url = isEdit ? `${API_URL}/api/v1/pkkmb/quiz/${quiz!._id}` : `${API_URL}/api/v1/pkkmb/quiz`;
-      const res = await fetch(url, {
+      const url = isEdit ? `/pkkmb/quiz/${quiz!._id}` : "/pkkmb/quiz";
+      const res = await apiFetch(url, {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(payload),
       });
       const json = await res.json();

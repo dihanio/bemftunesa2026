@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import Link from "next/link";
 import MabaDashboard from "@/components/dashboard/MabaDashboard";
 
@@ -27,9 +27,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchProfileAndRole = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/auth/me`, {
-          credentials: "include",
-        });
+        // apiFetch: auto-refresh token saat 401/403 — hindari logout mendadak.
+        const res = await apiFetch("/auth/me");
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.data) {
@@ -43,10 +42,7 @@ export default function DashboardPage() {
 
             if (roleString !== "user" && roleString !== "maba") {
               try {
-                const adminRes = await fetch(
-                  `${API_URL}/api/v1/pkkmb/dashboard/admin`,
-                  { credentials: "include" },
-                );
+                const adminRes = await apiFetch("/pkkmb/dashboard/admin");
                 if (adminRes.ok) {
                   const adminData = await adminRes.json();
                   if (adminData.success) {

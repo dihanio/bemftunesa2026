@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, CheckCircle2, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { API_URL } from "@/lib/api";
+import { API_URL, apiFetch } from "@/lib/api";
 import PhotoCropDialog from "@/components/onboarding/PhotoCropDialog";
 import QRCode from "react-qr-code";
 
@@ -68,8 +68,8 @@ export default function ProfilPage() {
     const fetchProfile = async () => {
       try {
         const [res, pointsRes] = await Promise.all([
-          fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" }),
-          fetch(`${API_URL}/api/v1/pkkmb/maba/points/summary`, { credentials: "include" })
+          apiFetch("/auth/me"),
+          apiFetch("/pkkmb/maba/points/summary"),
         ]);
 
         if (pointsRes.ok) {
@@ -134,10 +134,9 @@ export default function ProfilPage() {
       if (croppedAvatarBlob) {
         const uploadForm = new FormData();
         uploadForm.append("file", croppedAvatarBlob, "avatar.webp");
-        const uploadRes = await fetch(`${API_URL}/api/v1/contents/upload`, {
+        const uploadRes = await apiFetch("/contents/upload", {
           method: "POST",
           body: uploadForm,
-          credentials: "include",
         });
         
         if (uploadRes.ok) {
@@ -155,11 +154,10 @@ export default function ProfilPage() {
         avatarObjectKey: finalAvatarKey,
       };
 
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/onboard`, {
+      const res = await apiFetch("/pkkmb/onboard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        credentials: "include",
       });
 
       if (res.ok) {

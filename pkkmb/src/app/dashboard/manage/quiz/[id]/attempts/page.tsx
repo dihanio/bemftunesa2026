@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ShieldCheck, ShieldAlert, Eye, X } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { ManagedAttempt } from "@/lib/quiz";
 import { VIOLATION_LABEL, RISK_LABEL } from "@/lib/quiz-anticheat";
 import type { QuizViolationType } from "@/lib/quiz-anticheat";
@@ -37,9 +37,7 @@ export default function ManageQuizAttemptsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${id}/attempts`, {
-        credentials: "include",
-      });
+      const res = await apiFetch(`/pkkmb/quiz/${id}/attempts`);
       if (res.status === 401) {
         router.push("/login");
         return;

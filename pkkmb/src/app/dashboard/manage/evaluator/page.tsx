@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { FileText, CheckCircle2, Clock, Search, X, Check } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { API_URL, apiFetch } from "@/lib/api";
 
 interface Submission {
   _id: string;
@@ -30,9 +30,7 @@ export default function EvaluatorPage() {
   const fetchSubmissions = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/pemateri/submissions`, {
-        credentials: "include"
-      });
+      const res = await apiFetch("/pkkmb/pemateri/submissions");
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
@@ -59,11 +57,10 @@ export default function EvaluatorPage() {
     if (!selectedItem || score === "") return;
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/pemateri/submissions/${selectedItem._id}/grade`, {
+      const res = await apiFetch(`/pkkmb/pemateri/submissions/${selectedItem._id}/grade`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ score: Number(score), feedback })
+        body: JSON.stringify({ score: Number(score), feedback }),
       });
       const json = await res.json();
       if (json.success) {

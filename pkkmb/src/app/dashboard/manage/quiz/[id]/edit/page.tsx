@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { ManagedQuiz } from "@/lib/quiz";
 import QuizForm from "@/components/quiz/QuizForm";
 
@@ -16,7 +16,7 @@ export default function EditQuizPage() {
     const load = async () => {
       try {
         // Detail management dari endpoint tersendiri (bukan list lalu find).
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${id}`, { credentials: "include" });
+        const res = await apiFetch(`/pkkmb/quiz/${id}`);
         if (res.status === 401) { router.push("/login"); return; }
         if (res.status === 403) { setQuiz(undefined); return; }
         const json = await res.json();

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Loader2, Globe, School, Group, User, FileText, ClipboardList } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 interface ManagedAssignment {
   _id: string;
@@ -51,9 +51,7 @@ export default function ManageAssignmentsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/assignments`, {
-        credentials: "include",
-      });
+      const res = await apiFetch("/pkkmb/assignments");
       if (res.status === 401) {
         router.push("/login");
         return;

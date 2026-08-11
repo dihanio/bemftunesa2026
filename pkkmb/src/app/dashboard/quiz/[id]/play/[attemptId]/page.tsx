@@ -12,7 +12,7 @@ import {
   AlertTriangle,
   ShieldCheck,
 } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { API_URL, apiFetch } from "@/lib/api";
 import { StartQuizResponse, TYPE_LABEL } from "@/lib/quiz";
 import {
   makeViolationReporter,
@@ -127,15 +127,11 @@ export default function QuizPlayerPage() {
     return makeViolationReporter(
       async (type: QuizViolationType, questionId?: string) => {
         try {
-          const res = await fetch(
-            `${API_URL}/api/v1/pkkmb/quiz/${id}/attempt/${attemptId}/violation`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ type, ...(questionId ? { questionId } : {}) }),
-            },
-          );
+          const res = await apiFetch(`/pkkmb/quiz/${id}/attempt/${attemptId}/violation`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type, ...(questionId ? { questionId } : {}) }),
+          });
           if (!res.ok) return;
           const json = await res.json();
           const count = json?.data?.violationCount as number | undefined;
@@ -324,10 +320,9 @@ export default function QuizPlayerPage() {
         }))
         .filter((a) => a.selectedAnswer);
       try {
-        await fetch(`${API_URL}/api/v1/pkkmb/quiz/${id}/attempt/${attemptId}/answers`, {
+        await apiFetch(`/pkkmb/quiz/${id}/attempt/${attemptId}/answers`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify({ answers: payload }),
         });
       } catch {
@@ -342,7 +337,7 @@ export default function QuizPlayerPage() {
     if (data) return;
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${id}/attempt/${attemptId}`, { credentials: "include" });
+        const res = await apiFetch(`/pkkmb/quiz/${id}/attempt/${attemptId}`);
         if (res.status === 401) { router.push("/login"); return; }
         const json = await res.json();
         if (!res.ok || !json.success) {
@@ -417,10 +412,9 @@ export default function QuizPlayerPage() {
         questionId: q.questionId,
         selectedAnswer: answers[i.toString()] ?? answers[q.questionId] ?? "",
       })).filter((a) => a.selectedAnswer);
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${id}/attempt/${attemptId}/submit`, {
+      const res = await apiFetch(`/pkkmb/quiz/${id}/attempt/${attemptId}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ answers: payload }),
       });
       const json = await res.json();

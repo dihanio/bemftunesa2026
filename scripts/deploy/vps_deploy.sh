@@ -82,7 +82,7 @@ PORT=4000
 NODE_ENV=production
 MONGODB_URI=mongodb://admin:password@db:27017/bemft-cms?authSource=admin
 JWT_SECRET=super-secret-key-change-me-in-production
-JWT_EXPIRES_IN=7d
+JWT_EXPIRES_IN=1800
 FRONTEND_URL=https://bemftunesa.org
 IMS_URL=https://ims.bemftunesa.org
 PKKMB_URL=https://pkkmb.bemftunesa.org
@@ -101,6 +101,18 @@ else
     echo "GOOGLE_CLIENT_SECRET=dummy-google-client-secret" >> .env
     echo "GOOGLE_CALLBACK_URL=https://api.bemftunesa.org/api/v1/auth/google/callback" >> .env
   fi
+fi
+
+# Pastikan JWT_EXPIRES_IN selalu = 1800 detik (30 menit) — nilai lama yang
+# pendek (mis. 300/600) bikin access token kedaluwarsa tiap beberapa menit,
+# sehingga maba harus login ulang terus-menerus. 1800 + auto-refresh token di
+# frontend = sesi praktis tidak pernah terputus (refresh token 30 hari).
+if grep -q "^JWT_EXPIRES_IN=" .env 2>/dev/null; then
+  sed -i 's|^JWT_EXPIRES_IN=.*|JWT_EXPIRES_IN=1800|' .env
+  log "JWT_EXPIRES_IN dipaksa = 1800 (30 menit) di .env"
+else
+  echo "JWT_EXPIRES_IN=1800" >> .env
+  log "JWT_EXPIRES_IN=1800 ditambahkan ke .env"
 fi
 
 # Ensure backing services are running before restarting apps

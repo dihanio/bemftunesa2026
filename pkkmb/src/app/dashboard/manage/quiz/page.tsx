@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Globe, School, Group, User, Download, Trash2, AlertTriangle, Activity } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { ManagedQuiz, TYPE_LABEL, STATUS_LABEL } from "@/lib/quiz";
 import { sanitizeFilename } from "@/lib/quiz-import-export";
 import toast from "react-hot-toast";
@@ -40,7 +40,7 @@ export default function ManageQuizPage() {
     setLoading(true);
     try {
       const q = search ? `?search=${encodeURIComponent(search)}` : "";
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz${q}`, { credentials: "include" });
+      const res = await apiFetch(`/pkkmb/quiz${q}`);
       if (res.status === 401) { router.push("/login"); return; }
       if (res.status === 403) { toast.error("Kamu tidak memiliki akses ke halaman ini."); return; }
       const json = await res.json();
@@ -63,9 +63,8 @@ export default function ManageQuizPage() {
     if (!deleteTarget) return;
     setDeleting(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${deleteTarget._id}`, {
+      const res = await apiFetch(`/pkkmb/quiz/${deleteTarget._id}`, {
         method: "DELETE",
-        credentials: "include",
       });
       if (res.status === 401) { router.push("/login"); return; }
       const json = await res.json();
@@ -92,9 +91,7 @@ export default function ManageQuizPage() {
   // Export selalu dari BACKEND (bukan dari data tampilan/state frontend).
   const handleExport = async (q: ManagedQuiz) => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/quiz/${q._id}/export`, {
-        credentials: "include",
-      });
+      const res = await apiFetch(`/pkkmb/quiz/${q._id}/export`);
       if (res.status === 401) {
         router.push("/login");
         return;

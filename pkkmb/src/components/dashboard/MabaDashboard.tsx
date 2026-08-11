@@ -8,7 +8,7 @@ import {
   MessagesSquare,
   Megaphone,
 } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { API_URL, apiFetch } from "@/lib/api";
 import { getPeriodStatus } from "@/lib/presensi-time";
 import {
   pendampingWaLink,
@@ -70,6 +70,8 @@ export default function MabaDashboard() {
     setError(null);
     let coreFailed = false;
     try {
+      // apiFetch: auto-refresh saat access token kedaluwarsa (401/403) via
+      // refresh token 30 hari — maba tidak perlu login ulang tiap token expire.
       const [
         dashRes,
         meRes,
@@ -80,27 +82,14 @@ export default function MabaDashboard() {
         linksRes,
         healthRes,
       ] = await Promise.all([
-        fetch(`${API_URL}/api/v1/pkkmb/dashboard/maba`, {
-          credentials: "include",
-        }),
-        fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" }),
-        fetch(`${API_URL}/api/v1/pkkmb/assignments`, {
-          credentials: "include",
-        }),
-        fetch(`${API_URL}/api/v1/pkkmb/maba/points/summary`, {
-          credentials: "include",
-        }),
-        fetch(
-          `${API_URL}/api/v1/pkkmb/attendance/sessions?status=PUBLISHED`,
-          { credentials: "include" },
-        ),
-        fetch(`${API_URL}/api/v1/pkkmb/attendance/my-history`, {
-          credentials: "include",
-        }),
-        fetch(`${API_URL}/api/v1/settings/public/links`),
-        fetch(`${API_URL}/api/v1/pkkmb/health/me`, {
-          credentials: "include",
-        }),
+        apiFetch("/pkkmb/dashboard/maba"),
+        apiFetch("/auth/me"),
+        apiFetch("/pkkmb/assignments"),
+        apiFetch("/pkkmb/maba/points/summary"),
+        apiFetch("/pkkmb/attendance/sessions?status=PUBLISHED"),
+        apiFetch("/pkkmb/attendance/my-history"),
+        apiFetch("/settings/public/links"),
+        apiFetch("/pkkmb/health/me"),
       ]);
 
       const dashJson = dashRes.ok ? await dashRes.json().catch(() => null) : null;

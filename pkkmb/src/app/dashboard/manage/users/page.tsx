@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Loader2, Plus, Edit, Trash2, Shield, Search, Info, Check } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 interface UserData {
   _id: string;
@@ -130,7 +130,7 @@ export default function UserManagementPage() {
   const fetchUsers = useCallback(async (currentPage = pagination.page, searchQuery = search, sort = sortBy, order = sortOrder, currentLimit = pagination.limit) => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/users?page=${currentPage}&limit=${currentLimit}&search=${searchQuery}&sortBy=${sort}&sortOrder=${order}`, { credentials: "include" });
+      const res = await apiFetch(`/pkkmb/admin/users?page=${currentPage}&limit=${currentLimit}&search=${searchQuery}&sortBy=${sort}&sortOrder=${order}`);
 
       if (!res.ok) throw new Error("Gagal mengambil data users");
       const json = await res.json();
@@ -161,7 +161,7 @@ export default function UserManagementPage() {
 
   const fetchRoles = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/roles`, { credentials: "include" });
+      const res = await apiFetch("/pkkmb/roles");
       const json = await res.json();
       if (json.success) setRoles(json.data);
     } catch (err) {
@@ -185,9 +185,8 @@ export default function UserManagementPage() {
   const executeDelete = useCallback(async () => {
     if (!confirmDelete.id) return;
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/users/${confirmDelete.id}`, {
+      const res = await apiFetch(`/pkkmb/admin/users/${confirmDelete.id}`, {
         method: "DELETE",
-        credentials: "include"
       });
       const json = await res.json();
       if (res.ok && json.success) {
@@ -210,9 +209,8 @@ export default function UserManagementPage() {
       setIsLoading(true);
       
       const promises = selectedIds.map(id => 
-        fetch(`${API_URL}/api/v1/pkkmb/admin/users/${id}`, {
+        apiFetch(`/pkkmb/admin/users/${id}`, {
           method: "DELETE",
-          credentials: "include"
         }).then(r => r.json())
       );
       
@@ -312,8 +310,8 @@ export default function UserManagementPage() {
     
     try {
       const url = modalMode === "CREATE" 
-        ? `${API_URL}/api/v1/pkkmb/admin/users` 
-        : `${API_URL}/api/v1/pkkmb/admin/users/${selectedUser?._id}`;
+        ? "/pkkmb/admin/users" 
+        : `/pkkmb/admin/users/${selectedUser?._id}`;
       
       const method = modalMode === "CREATE" ? "POST" : "PATCH";
 
@@ -324,11 +322,10 @@ export default function UserManagementPage() {
       if (!payload.division) delete payload.division;
       if (!payload.pkkmbGroup) delete payload.pkkmbGroup;
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-        credentials: "include"
       });
       
       const json = await res.json();

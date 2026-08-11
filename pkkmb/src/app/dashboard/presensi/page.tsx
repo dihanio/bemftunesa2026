@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Clock, MapPin, Search, Fingerprint, AlertCircle, Camera, X, User, Lock, FileText, XCircle } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { formatWIB, formatWIBLong, getPeriodStatus, useNow } from "@/lib/presensi-time";
 import toast from "react-hot-toast";
 
@@ -69,9 +69,9 @@ export default function PresensiMabaPage() {
     setLoading(true);
     try {
       const [histRes, sessRes, meRes] = await Promise.all([
-        fetch(`${API_URL}/api/v1/pkkmb/attendance/my-history`, { credentials: "include" }),
-        fetch(`${API_URL}/api/v1/pkkmb/attendance/sessions?status=PUBLISHED`, { credentials: "include" }),
-        fetch(`${API_URL}/api/v1/auth/me`, { credentials: "include" })
+        apiFetch("/pkkmb/attendance/my-history"),
+        apiFetch("/pkkmb/attendance/sessions?status=PUBLISHED"),
+        apiFetch("/auth/me"),
       ]);
 
       const histJson = await histRes.json();
@@ -179,10 +179,9 @@ export default function PresensiMabaPage() {
       const blob = await (await fetch(photoUrl)).blob();
       const uploadForm = new FormData();
       uploadForm.append("file", blob, "selfie.jpg");
-      const uploadRes = await fetch(`${API_URL}/api/v1/contents/upload`, {
+      const uploadRes = await apiFetch("/contents/upload", {
         method: "POST",
         body: uploadForm,
-        credentials: "include",
       });
       const uploadJson = await uploadRes.json();
       if (!uploadRes.ok || !uploadJson.fileUrl) {
@@ -201,10 +200,9 @@ export default function PresensiMabaPage() {
       let lastErr: Error | null = null;
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/checkin`, {
+          const res = await apiFetch("/pkkmb/attendance/checkin", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            credentials: "include",
             body,
           });
           const json = await res.json();
@@ -263,19 +261,17 @@ export default function PresensiMabaPage() {
       if (izinProof) {
         const form = new FormData();
         form.append("file", izinProof);
-        const res = await fetch(`${API_URL}/api/v1/contents/upload`, {
+        const res = await apiFetch("/contents/upload", {
           method: "POST",
           body: form,
-          credentials: "include",
         });
         const json = await res.json();
         if (!res.ok || !json.fileUrl) throw new Error(json.message || "Gagal mengunggah bukti");
         proofUrl = json.fileUrl;
       }
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/izin`, {
+      const res = await apiFetch("/pkkmb/attendance/izin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ sessionId: selectedSessionId, izinType, reason: izinReason, proofUrl }),
       });
       const json = await res.json();

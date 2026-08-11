@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Users, RefreshCw, X, AlertCircle, ChevronDown, Check } from 'lucide-react';
-import { API_URL } from "@/lib/api";
+import { API_URL, apiFetch } from "@/lib/api";
 import toast from 'react-hot-toast';
 
 interface Pendamping {
@@ -50,9 +50,7 @@ export default function ManageGroupsPage() {
   const fetchGroups = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/gugus`, {
-        credentials: "include"
-      });
+      const res = await apiFetch("/pkkmb/gugus");
       const json = await res.json();
       if (res.ok && json.data) {
         setGroups(json.data);
@@ -69,9 +67,7 @@ export default function ManageGroupsPage() {
 
   const fetchPendampings = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/gugus/pendamping`, {
-        credentials: "include"
-      });
+      const res = await apiFetch("/pkkmb/gugus/pendamping");
       const json = await res.json();
       if (res.ok && json.data) setPendampings(json.data);
     } catch (error) {
@@ -83,10 +79,9 @@ export default function ManageGroupsPage() {
     if (!pendampingId) return;
     setAssigningTo(gugusId);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/gugus/${gugusId}/pendamping`, {
+      const res = await apiFetch(`/pkkmb/gugus/${gugusId}/pendamping`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ pendampingId }),
       });
       const json = await res.json();
@@ -108,9 +103,7 @@ export default function ManageGroupsPage() {
     setDetailLoading(true);
     setDetail(null);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/gugus/${id}`, {
-        credentials: "include"
-      });
+      const res = await apiFetch(`/pkkmb/gugus/${id}`);
       const json = await res.json();
       if (res.ok && json.success && json.data) {
         setDetail(json.data);

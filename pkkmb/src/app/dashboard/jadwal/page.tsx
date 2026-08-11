@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   User as UserIcon,
 } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import {
   formatWIB,
   getPeriodStatus,
@@ -76,15 +76,9 @@ export default function JadwalMabaPage() {
     setLoading(true);
     try {
       const [schedRes, sessRes, histRes] = await Promise.all([
-        fetch(`${API_URL}/api/v1/pkkmb/schedules?limit=100`, {
-          credentials: "include",
-        }),
-        fetch(`${API_URL}/api/v1/pkkmb/attendance/sessions?status=PUBLISHED`, {
-          credentials: "include",
-        }),
-        fetch(`${API_URL}/api/v1/pkkmb/attendance/my-history`, {
-          credentials: "include",
-        }),
+        apiFetch("/pkkmb/schedules?limit=100"),
+        apiFetch("/pkkmb/attendance/sessions?status=PUBLISHED"),
+        apiFetch("/pkkmb/attendance/my-history"),
       ]);
 
       const schedJson = await schedRes.json();

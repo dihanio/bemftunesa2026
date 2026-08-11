@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
-import { API_URL } from "@/lib/api";
+import { API_URL, apiFetch } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
 import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, ClipboardList, CalendarDays } from "lucide-react";
@@ -43,9 +43,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/auth/me`, {
-          credentials: "include"
-        });
+        // apiFetch: kalau access token kedaluwarsa (401/403), otomatis
+        // refresh via refreshToken (30 hari) lalu retry — user tidak perlu
+        // login ulang. Hanya ketika refresh pun gagal, barulah dianggap
+        // unauthenticated. Error jaringan (network) TIDAK mengarahkan ke
+        // /login — biarkan loading, user tinggal coba lagi.
+        const res = await apiFetch("/auth/me");
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.data) {
@@ -58,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           setStatus("unauthenticated");
         }
       } catch {
-        setStatus("unauthenticated");
+        // Jangan logout saat error jaringan — status tetap loading.
       }
     };
     
@@ -75,7 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const fetchNotif = async () => {
       try {
         // limit besar agar unreadCount akurat (default backend = 3)
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/dashboard/maba/announcements/notifications?limit=50`, { credentials: "include" });
+        const res = await apiFetch("/pkkmb/dashboard/maba/announcements/notifications?limit=50");
         if (res.ok) {
           const json = await res.json();
           if (json.success) setNotif({ unreadCount: json.data.unreadCount, items: json.data.items });
@@ -101,10 +104,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return { unreadCount: 0, items: prev.items.map((i) => ({ ...i, isRead: true })) };
     });
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/dashboard/maba/announcements/read`, {
+      const res = await apiFetch("/pkkmb/dashboard/maba/announcements/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(ids && ids.length > 0 ? { announcementIds: ids } : {}),
       });
       if (res.ok) {
@@ -151,10 +153,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const doLogout = async () => {
     setConfirmLogout(false);
     try {
-      await fetch(`${API_URL}/api/v1/auth/logout`, {
-        method: "POST",
-        credentials: "include"
-      });
+      await apiFetch("/auth/logout", { method: "POST" });
     } catch {
       /* tetap arahkan ke login */
     }

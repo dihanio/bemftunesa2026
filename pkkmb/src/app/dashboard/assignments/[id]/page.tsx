@@ -16,7 +16,7 @@ import {
   Paperclip,
   Users,
 } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import TaskSubmitModal from "@/components/assignments/TaskSubmitModal";
 
 interface AssignmentDetail {
@@ -92,9 +92,7 @@ export default function AssignmentDetailPage() {
     if (!id) return;
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/pkkmb/assignments/${id}`, {
-          credentials: "include",
-        });
+        const res = await apiFetch(`/pkkmb/assignments/${id}`);
         if (res.status === 401) {
           router.push("/login");
           return;
@@ -105,9 +103,7 @@ export default function AssignmentDetailPage() {
         }
         const json = await res.json();
         if (json.success) setAssignment(json.data);
-        const meRes = await fetch(`${API_URL}/api/v1/auth/me`, {
-          credentials: "include",
-        });
+        const meRes = await apiFetch("/auth/me");
         const meJson = await meRes.json().catch(() => null);
         if (meJson?.success && meJson.data) {
           setIsKetuaGugus(!!meJson.data.isKetuaGugus);

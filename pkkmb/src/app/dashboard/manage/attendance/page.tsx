@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { MapPin, Clock, Users, Activity, Plus, Wifi, WifiOff, Check, X, FileText } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import LiveAttendanceMap from './LiveAttendanceMap';
 import toast from "react-hot-toast";
 
@@ -62,7 +62,7 @@ export default function AttendancePage() {
 
   const fetchIzins = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/izin/pending`, { credentials: "include" });
+      const res = await apiFetch("/pkkmb/attendance/izin/pending");
       if (res.ok) {
         const json = await res.json();
         if (json.success) setIzins(json.data || []);
@@ -75,10 +75,9 @@ export default function AttendancePage() {
   const verifyIzin = async (recordId: string, decision: "APPROVED" | "REJECTED") => {
     setVerifying(recordId);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/izin/verify`, {
+      const res = await apiFetch("/pkkmb/attendance/izin/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ recordId, decision }),
       });
       const json = await res.json();
@@ -94,9 +93,7 @@ export default function AttendancePage() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/sessions`, {
-        credentials: "include",
-      });
+      const res = await apiFetch("/pkkmb/attendance/sessions");
       if (res.ok) {
         const json = await res.json();
         if (json.success) setSessions(json.data || []);
@@ -110,10 +107,9 @@ export default function AttendancePage() {
     e.preventDefault();
     setCreating(true);
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/sessions`, {
+      const res = await apiFetch("/pkkmb/attendance/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           title: form.title,
           date: form.date,
@@ -141,9 +137,7 @@ export default function AttendancePage() {
 
   const fetchLogs = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/pkkmb/attendance/monitoring?limit=50`, {
-        credentials: "include"
-      });
+      const res = await apiFetch("/pkkmb/attendance/monitoring?limit=50");
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
@@ -167,9 +161,7 @@ export default function AttendancePage() {
 
   const checkProfile = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/v1/auth/me`, {
-        credentials: "include"
-      });
+      const res = await apiFetch("/auth/me");
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {

@@ -13,7 +13,7 @@ import {
   CheckCheck,
   AlertTriangle,
 } from "lucide-react";
-import { API_URL } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import {
   notificationHref,
   type MabaNotification,
@@ -98,9 +98,8 @@ export default function NotifikasiPage() {
     setError(false);
     setLoading(true);
     try {
-      const res = await fetch(
-        `${API_URL}/api/v1/pkkmb/dashboard/maba/announcements/notifications?limit=50`,
-        { credentials: "include" },
+      const res = await apiFetch(
+        "/pkkmb/dashboard/maba/announcements/notifications?limit=50",
       );
       if (res.ok) {
         const json = await res.json();
@@ -141,12 +140,11 @@ export default function NotifikasiPage() {
       ),
     }));
     try {
-      const res = await fetch(
-        `${API_URL}/api/v1/pkkmb/dashboard/maba/announcements/read`,
+      const res = await apiFetch(
+        "/pkkmb/dashboard/maba/announcements/read",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: "include",
           body: JSON.stringify(
             idSet ? { announcementIds: ids } : {},
           ),
