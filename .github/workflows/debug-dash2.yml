@@ -1,0 +1,43 @@
+name: Debug Dashboard (grep log maba)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cari log dashboard/maba
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+            echo "== semua log yg menyebut dashboard/maba =="
+            docker compose -f docker-compose.yml logs --tail=200 api 2>&1 | grep -E "dashboard/maba|dashboard/admin" || echo "(tidak ada di 200 baris terakhir)"
+            echo ""
+            echo "== test langsung getMabaDashboard dgn user yg ada =="
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+            USER_ID=$(docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'const u=db.users.findOne({email:"maba.demo@mhs.unesa.ac.id"}); if(u) print(u._id.toString()); else print("NONE")')
+            echo "USER_ID=$USER_ID"
+            if [ "$USER_ID" != "NONE" ]; then
+              docker compose -f docker-compose.yml exec -T -e DASH_USER="$USER_ID" api timeout 20 node -e '
+                const { NestFactory } = require("@nestjs/core");
+                const { AppModule } = require("./dist/src/app.module");
+                (async () => {
+                  const app = await NestFactory.createApplicationContext(AppModule, { logger: false });
+                  const PkkmbService = require("./dist/src/pkkmb/pkkmb.service").PkkmbService;
+                  const svc = app.get(PkkmbService);
+                  const r = await svc.getMabaDashboard(process.env.DASH_USER);
+                  console.log("OK getMabaDashboard, nextAction:", r.nextAction ? "ada" : "kosong");
+                  await app.close();
+                })().catch(e => { console.error("ERR:", e.message); process.exit(1); });
+              '
+            fi
