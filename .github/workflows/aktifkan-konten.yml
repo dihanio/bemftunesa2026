@@ -1,0 +1,59 @@
+name: Aktifkan Konten PKKMB utk Test (Update Window Waktu)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  aktifkan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Update window waktu konten di DB
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            cd "$DEPLOY_PATH"
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+
+            echo "======================================================"
+            echo "Aktifkan window waktu konten utk test (hari ini)"
+            echo "======================================================"
+
+            # 1. Sesi presensi: mulai 2 jam lalu, berakhir 6 jam ke depan.
+            #    Hari 1 (besok) di-geser ke hari ini agar bisa check-in.
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval '
+              const now = new Date();
+              const start = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+              const end = new Date(now.getTime() + 6 * 60 * 60 * 1000);
+              const r = db.pkkmb_attendance_sessions.updateMany(
+                { deletedAt: null },
+                { $set: { date: now, startTime: start, endTime: end, status: "PUBLISHED" } }
+              );
+              print("Sesi presensi diaktifkan: " + r.modifiedCount);
+            '
+
+            # 2. Quiz: startTime sudah lewat (1 jam lalu), endTime besok (masa depan).
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval '
+              const start = new Date(Date.now() - 60 * 60 * 1000);
+              const end = new Date(Date.now() + 24 * 60 * 60 * 1000);
+              const r = db.pkkmb_quizzes.updateMany(
+                { deletedAt: null },
+                { $set: { startTime: start, endTime: end, status: "PUBLISHED" } }
+              );
+              print("Quiz diaktifkan: " + r.modifiedCount);
+            '
+
+            echo ""
+            echo "→ Verifikasi:"
+            echo "→ Sesi presensi (aktif hari ini):"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.pkkmb_attendance_sessions.find({ deletedAt: null }, { title: 1, startTime: 1, endTime: 1, status: 1 }).toArray()'
+            echo "→ Quiz:"
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.pkkmb_quizzes.find({ deletedAt: null }, { title: 1, startTime: 1, endTime: 1, status: 1 }).toArray()'
+            echo "✅ Semua konten aktif."
