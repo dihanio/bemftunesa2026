@@ -24,6 +24,31 @@ const CATEGORIES = [
   "Lainnya",
 ];
 
+// Daftar penyakit umum utk dropdown "Nama Penyakit / Kondisi" (bisa di-custom).
+const DISEASES = [
+  "Asma",
+  "Gastritis / Maag",
+  "Epilepsi",
+  "Hipertensi",
+  "Diabetes",
+  "Alergi makanan",
+  "Alergi obat",
+  "Rhinitis / Alergi debu",
+  "Jantung / Penyakit jantung",
+  "Kolesterol tinggi",
+  "Anemia",
+  "Migrain",
+  "Tifus",
+  "Demam Berdarah",
+  "Tuberkulosis (TBC)",
+  "Sakit maag / GERD",
+  "Gangguan pernapasan (bronkitis)",
+  "Kulit / Eksim",
+  "Lainnya",
+];
+
+const CUSTOM_DISEASE_VALUE = "__custom__";
+
 const CONDITION_STATUSES = [
   "Sudah sembuh",
   "Terkontrol",
@@ -147,9 +172,11 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
   const [showEditor, setShowEditor] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [customDisease, setCustomDisease] = useState(false);
 
   const openAdd = () => {
     setEditor({ name: "", category: "", yearStart: "", conditionStatus: "Masih aktif", needsMedication: false, notes: "" });
+    setCustomDisease(false);
     setEditingIndex(null);
     setShowEditor(true);
   };
@@ -158,6 +185,8 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
     setEditor(records[idx]);
     setEditingIndex(idx);
     setShowEditor(true);
+    // Jika nama penyakit lama tidak ada di daftar, aktifkan mode ketik sendiri.
+    setCustomDisease(!!records[idx]?.name && !DISEASES.includes(records[idx].name));
   };
 
   const saveRecord = () => {
@@ -338,7 +367,41 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
                   <div className="bg-[#111] border border-white/10 rounded-2xl p-5 space-y-4">
                     <div>
                       <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">Nama Penyakit / Kondisi</label>
-                      <input type="text" value={editor.name} onChange={(e) => setEditor({ ...editor, name: e.target.value })} className="w-full px-4 py-2.5 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500" placeholder="cth. Asma, Gastritis, Epilepsi" />
+                      {!customDisease ? (
+                        <select
+                          value={DISEASES.includes(editor.name) ? editor.name : CUSTOM_DISEASE_VALUE}
+                          onChange={(e) => {
+                            if (e.target.value === CUSTOM_DISEASE_VALUE) {
+                              setCustomDisease(true);
+                              setEditor({ ...editor, name: "" });
+                            } else {
+                              setEditor({ ...editor, name: e.target.value });
+                            }
+                          }}
+                          className="w-full px-4 py-2.5 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500"
+                        >
+                          <option value="">Pilih penyakit / kondisi</option>
+                          {DISEASES.map((d) => (<option key={d} value={d}>{d}</option>))}
+                        </select>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <input
+                            type="text"
+                            value={editor.name}
+                            onChange={(e) => setEditor({ ...editor, name: e.target.value })}
+                            className="w-full px-4 py-2.5 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500"
+                            placeholder="Ketik nama penyakit / kondisi"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => { setCustomDisease(false); setEditor({ ...editor, name: "" }); }}
+                            className="text-xs text-gold-400 hover:text-gold-300 self-start"
+                          >
+                            ← Pilih dari daftar
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">Kategori Penyakit</label>
