@@ -113,6 +113,9 @@ export default function QuizDetailPage() {
         sessionStorage.removeItem(`quiz_answers_${quiz.activeAttemptId}`);
         sessionStorage.removeItem(`quiz_current_${quiz.activeAttemptId}`);
       } catch {}
+      // Resume juga bisa memakai fullscreen bila preferensinya masih aktif —
+      // diminta DI SINI, masih dalam user gesture klik "Lanjutkan Quiz".
+      requestFullscreenIfOpted(quiz._id);
       router.push(`/dashboard/quiz/${quiz._id}/play/${quiz.activeAttemptId}`);
       return;
     }
@@ -127,7 +130,27 @@ export default function QuizDetailPage() {
     try {
       sessionStorage.setItem(`quiz_fullscreen_${quiz!._id}`, fullscreenOpt ? "1" : "0");
     } catch {}
+    // Minta fullscreen DI SINI — masih di dalam user gesture klik tombol
+    // "Mulai Quiz". requestFullscreen lewat setTimeout setelah navigasi
+    // ditolak browser ("API can only be initiated by a user gesture").
+    if (fullscreenOpt) requestFullscreenIfOpted(quiz!._id);
     void beginAttempt();
+  };
+
+  // Helper: minta fullscreen bila preferensi aktif. Harus dipanggil sinkron
+  // dalam handler klik (user gesture) — bukan setelah await/setTimeout.
+  const requestFullscreenIfOpted = (quizId: string) => {
+    let enabled = false;
+    try {
+      enabled = sessionStorage.getItem(`quiz_fullscreen_${quizId}`) === "1";
+    } catch {}
+    if (!enabled) return;
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) {
+      el.requestFullscreen().catch(() => {
+        /* browser menolak — non-fatal, hanya deterrence */
+      });
+    }
   };
 
 

@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { CustomSelect } from "./CustomSelect";
 import {
   ArrowRight,
   CheckCircle2,
@@ -368,21 +369,24 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
                     <div>
                       <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">Nama Penyakit / Kondisi</label>
                       {!customDisease ? (
-                        <select
+                        <CustomSelect
                           value={DISEASES.includes(editor.name) ? editor.name : CUSTOM_DISEASE_VALUE}
-                          onChange={(e) => {
-                            if (e.target.value === CUSTOM_DISEASE_VALUE) {
+                          onChange={(v) => {
+                            if (v === CUSTOM_DISEASE_VALUE) {
                               setCustomDisease(true);
                               setEditor({ ...editor, name: "" });
                             } else {
-                              setEditor({ ...editor, name: e.target.value });
+                              setEditor({ ...editor, name: v });
                             }
                           }}
-                          className="w-full px-4 py-2.5 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500"
-                        >
-                          <option value="">Pilih penyakit / kondisi</option>
-                          {DISEASES.map((d) => (<option key={d} value={d}>{d}</option>))}
-                        </select>
+                          placeholder="Pilih penyakit / kondisi"
+                          ariaLabel="Nama penyakit atau kondisi"
+                          options={[
+                            { value: "", label: "Pilih penyakit / kondisi" },
+                            ...DISEASES.map((d) => ({ value: d, label: d })),
+                            { value: CUSTOM_DISEASE_VALUE, label: "Ketik sendiri..." },
+                          ]}
+                        />
                       ) : (
                         <div className="flex flex-col gap-2">
                           <input
@@ -405,10 +409,16 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
                     </div>
                     <div>
                       <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">Kategori Penyakit</label>
-                      <select value={editor.category} onChange={(e) => setEditor({ ...editor, category: e.target.value })} className="w-full px-4 py-2.5 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500">
-                        <option value="">Pilih kategori</option>
-                        {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
-                      </select>
+                      <CustomSelect
+                        value={editor.category}
+                        onChange={(v) => setEditor({ ...editor, category: v })}
+                        placeholder="Pilih kategori"
+                        ariaLabel="Kategori penyakit"
+                        options={[
+                          { value: "", label: "Pilih kategori" },
+                          ...CATEGORIES.map((c) => ({ value: c, label: c })),
+                        ]}
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -417,9 +427,12 @@ const HealthStep = forwardRef<HealthStepHandle, HealthStepProps>(
                       </div>
                       <div>
                         <label className="text-xs font-bold text-white/50 uppercase tracking-wider block mb-2">Status Kondisi</label>
-                        <select value={editor.conditionStatus} onChange={(e) => setEditor({ ...editor, conditionStatus: e.target.value })} className="w-full px-4 py-2.5 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-gold-500">
-                          {CONDITION_STATUSES.map((s) => (<option key={s} value={s}>{s}</option>))}
-                        </select>
+                        <CustomSelect
+                          value={editor.conditionStatus}
+                          onChange={(v) => setEditor({ ...editor, conditionStatus: v })}
+                          ariaLabel="Status kondisi"
+                          options={CONDITION_STATUSES.map((s) => ({ value: s, label: s }))}
+                        />
                       </div>
                     </div>
                     <div>

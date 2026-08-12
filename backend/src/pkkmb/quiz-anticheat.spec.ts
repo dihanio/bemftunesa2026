@@ -124,6 +124,8 @@ function buildService(
     {} as never,
     {} as never,
     {} as never,
+    {} as never,
+    {} as never,
   );
   return { svc: svc, quizModel, quizAttemptModel };
 }

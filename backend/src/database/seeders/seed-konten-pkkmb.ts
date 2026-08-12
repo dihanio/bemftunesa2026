@@ -43,12 +43,15 @@ console.log(
 );
 
 // ─── SESI PRESENSI (Tes Pra-PKKMB) ──────────────────────────────────────────
+// Pra-PKKMB dilaksanakan DARING (online) — seluruh maba mengikuti dari rumah,
+// jadi sesi ditandai isOnline: true dan tidak memakai lokasi fisik gedung.
 const SESSIONS = [
   {
     title: 'Pra-PKKMB FT UNESA — Registrasi & Tes Presensi',
     startTime: startOfToday,
     endTime: endOfEvent,
-    location: 'Gedung Dekanat FT UNESA',
+    location: 'Daring (Online)',
+    isOnline: true,
     target: 'ALL' as const,
   },
 ];
@@ -212,7 +215,7 @@ async function seed() {
       startTime: s.startTime,
       endTime: s.endTime,
       location: s.location,
-      isOnline: false,
+      isOnline: s.isOnline ?? false,
       targetParticipantType: s.target,
       status: 'PUBLISHED',
       createdBy: userAcara._id,
@@ -242,7 +245,7 @@ async function seed() {
       allowedFormats: t.allowedFormats,
       createdBy: userPelaksana._id,
     };
-    if (t.isLink) doc.link = 'https://drive.google.com/';
+    if (t.isLink) doc.link = 'https://example.com/';
     const res = await db.collection('pkkmbtasks').insertOne(doc);
     taskIds.push(new Types.ObjectId(res.insertedId.toString()));
     tasksCreated++;
@@ -327,7 +330,11 @@ async function seed() {
     },
   ];
   let announcementsCreated = 0;
+  const nowTs = new Date();
   for (const a of announcements) {
+    // Sertakan createdAt/updatedAt eksplisit: insert via raw collection TIDAK
+    // memicu `timestamps: true` mongoose, sehingga tanpa ini field createdAt
+    // kosong → frontend menampilkan "Invalid Date".
     await db.collection('pkkmb_announcements').insertOne({
       title: a.title,
       content: a.content,
@@ -337,6 +344,8 @@ async function seed() {
       status: 'PUBLISHED',
       actionType: a.actionType,
       actionId: a.actionId,
+      createdAt: nowTs,
+      updatedAt: nowTs,
     });
     announcementsCreated++;
   }

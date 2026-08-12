@@ -48,6 +48,10 @@ import {
   PkkmbPointLogDocument,
 } from '../schemas/pkkmb-point-log.schema';
 import {
+  PkkmbQrPoint,
+  PkkmbQrPointDocument,
+} from '../schemas/pkkmb-qr-point.schema';
+import {
   PkkmbGallery,
   PkkmbGalleryDocument,
 } from '../schemas/pkkmb-gallery.schema';
@@ -70,6 +74,8 @@ import {
 import {
   MabaSubmitTaskDto,
   CreateAttendanceSessionDto,
+  CreateQrPointDto,
+  ClaimQrPointDto,
   CheckInDto,
   AttendanceFilterDto,
   CreateTaskDto,
@@ -82,6 +88,7 @@ import {
   UpdateScheduleDto,
   OnboardDto,
   SubmitIzinDto,
+  UpdateAttendanceRecordDto,
   AdminCreateUserDto,
   AdminUpdateUserDto,
   CreateQuizDto,
@@ -238,6 +245,8 @@ export class PkkmbService {
     private announcementModel: Model<PkkmbAnnouncementDocument>,
     @InjectModel(PkkmbPointLog.name)
     private pointLogModel: Model<PkkmbPointLogDocument>,
+    @InjectModel(PkkmbQrPoint.name)
+    private qrPointModel: Model<PkkmbQrPointDocument>,
     @InjectModel(PkkmbGallery.name)
     private galleryModel: Model<PkkmbGalleryDocument>,
     @InjectModel(Rumpun.name)
@@ -576,6 +585,14 @@ export class PkkmbService {
     group.pendampingId = new Types.ObjectId(pendampingId);
     group.pendampingName = pendamping.name;
     group.pendampingEmail = pendamping.email;
+    // Salin nomor WhatsApp (field pendampingWhatsApp user, fallback dari phone)
+    // agar kartu kontak di dashboard MABA selalu punya link WA.
+    const wa =
+      pendamping.pendampingWhatsApp ||
+      (pendamping.phone
+        ? `https://wa.me/${String(pendamping.phone).replace(/[^0-9]/g, '')}`
+        : undefined);
+    group.pendampingWhatsApp = wa;
     await group.save();
     await this.invalidateCachePatterns('pkkmb:gugus:*');
     return group;
@@ -1440,6 +1457,135 @@ export class PkkmbService {
     };
   }
 
+  // ─── QR POIN KEAKTIFAN (maba offline / QR cetak) ─────────────────────────
+
+  // Buat sesi QR poin (panitia/KSK/admin). QR umum: semua maba yang scan
+  // dapat poin, maksimal 1× per maba per sesi.
+  async createQrPoint(userId: string, dto: CreateQrPointDto) {
+    // Otorisasi sama dengan pengelola presensi (KSK/sekretaris/admin).
+    await this.assertAttendanceManager(userId);
+
+    const startTime = dto.startTime ? parseWibDate(dto.startTime) : new Date();
+    const endTime = dto.endTime
+      ? parseWibDate(dto.endTime)
+      : new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+    if (endTime <= startTime) {
+      throw new BadRequestException(
+        'Waktu selesai harus setelah waktu mulai.',
+      );
+    }
+
+    const code = `PKKMBQ_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const result = await this.qrPointModel.create({
+      title: dto.title,
+      points: dto.points,
+      code,
+      status: 'ACTIVE',
+      startTime,
+      endTime,
+      createdBy: new Types.ObjectId(userId),
+    });
+    return result;
+  }
+
+  async listQrPoints() {
+    return this.qrPointModel
+      .find({ deletedAt: null })
+      .select('title points code status startTime endTime createdAt')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
+  }
+
+  async closeQrPoint(qrPointId: string, actorId: string) {
+    await this.assertAttendanceManager(actorId);
+    const qp = await this.qrPointModel.findById(qrPointId).exec();
+    if (!qp || qp.deletedAt) {
+      throw new NotFoundException('Sesi QR poin tidak ditemukan.');
+    }
+    qp.status = 'CLOSED';
+    const result = await qp.save();
+    await this.invalidateCachePatterns('pkkmb:points:*');
+    return result;
+  }
+
+  // Klaim QR oleh maba. Validasi: status ACTIVE, periode berjalan, belum
+  // pernah klaim (unique index (userId, qrPointId) di PointLog).
+  async claimQrPoint(userId: string, dto: ClaimQrPointDto) {
+    const code = dto.code.trim().toUpperCase();
+    const qp = await this.qrPointModel
+      .findOne({ code, deletedAt: null })
+      .exec();
+    if (!qp) {
+      throw new BadRequestException(
+        'Kode QR tidak valid. Periksa kembali kode pada kartu QR.',
+      );
+    }
+    if (qp.status !== 'ACTIVE') {
+      throw new BadRequestException('Sesi QR poin ini sudah ditutup.');
+    }
+    const now = new Date();
+    if (now < qp.startTime) {
+      throw new BadRequestException('Sesi QR poin belum dibuka.');
+    }
+    if (now > qp.endTime) {
+      throw new BadRequestException(
+        'Sesi QR poin telah kedaluwarsa. Minta QR baru ke panitia.',
+      );
+    }
+
+    // Cek manual (query cepat) + unique index sbg final protection.
+    const already = await this.pointLogModel
+      .findOne({
+        userId: new Types.ObjectId(userId),
+        qrPointId: qp._id,
+        deletedAt: null,
+      })
+      .select('_id')
+      .lean()
+      .exec();
+    if (already) {
+      throw new BadRequestException(
+        'Kamu sudah mengklaim poin dari QR ini.',
+      );
+    }
+
+    const user = await this.userModel.findById(userId).lean().exec();
+    const groupId = user?.pkkmbGroup
+      ? new Types.ObjectId(user.pkkmbGroup)
+      : undefined;
+
+    try {
+      await this.pointLogModel.create({
+        userId: new Types.ObjectId(userId),
+        groupId,
+        points: qp.points,
+        source: 'Partisipasi',
+        reason: `${qp.title} (QR: ${qp.code})`,
+        createdBy: new Types.ObjectId(userId),
+        qrPointId: qp._id,
+      });
+    } catch (err: unknown) {
+      // E11000 duplicate key: race condition dua klaim paralel.
+      const codeErr = (err as { code?: number })?.code;
+      if (codeErr !== 11000) throw err;
+      throw new BadRequestException(
+        'Kamu sudah mengklaim poin dari QR ini.',
+      );
+    }
+
+    await this.invalidateCachePatterns('pkkmb:points:*');
+
+    return {
+      success: true,
+      points: qp.points,
+      title: qp.title,
+      totalPoints: await this.getMyPointsSummary(userId).then(
+        (s) => s.totalPoints,
+      ),
+    };
+  }
+
   // ─── ATTENDANCE MONITORING ────────────────────────────────────────────────
 
   async getAttendanceMonitoring(
@@ -1629,6 +1775,35 @@ export class PkkmbService {
     this.auditAttendance(
       { userId: actorId, roleSlug: actor.roleSlug },
       'DELETE',
+      'attendance_record',
+      record._id,
+      undefined,
+      { status: record.status },
+    );
+    return record;
+  }
+
+  // Ubah status record presensi (koreksi salah input). Privilege sama dgn
+  // delete: manager (KSK/sekretaris/admin), bukan panitia read-only.
+  async updateAttendanceRecord(
+    id: string,
+    actorId: string,
+    dto: UpdateAttendanceRecordDto,
+  ) {
+    const actor = await this.assertAttendanceManager(actorId, {
+      deleteOp: false,
+    });
+
+    const record = await this.logModel.findByIdAndUpdate(
+      id,
+      { $set: { status: dto.status } },
+      { new: true },
+    );
+    if (!record)
+      throw new NotFoundException('Record presensi tidak ditemukan.');
+    this.auditAttendance(
+      { userId: actorId, roleSlug: actor.roleSlug },
+      'UPDATE',
       'attendance_record',
       record._id,
       undefined,
@@ -2645,6 +2820,18 @@ export class PkkmbService {
     return assignment;
   }
 
+  // Hapus assignment (soft delete) — status QUIZ juga melepas referensi di quiz.
+  async deleteAssignment(assignmentId: string) {
+    const assignment = await this.taskModel
+      .findOne({ _id: assignmentId, deletedAt: null })
+      .exec();
+    if (!assignment) throw new NotFoundException('Penugasan tidak ditemukan');
+
+    assignment.deletedAt = new Date();
+    await assignment.save();
+    return { id: assignment._id, deletedAt: assignment.deletedAt };
+  }
+
   async getAllSubmissions(
     queryDto: PaginationDto,
     user?: {
@@ -2735,8 +2922,24 @@ export class PkkmbService {
     if (!submission)
       throw new NotFoundException('Pengumpulan tugas tidak ditemukan');
 
-    // Pemegang manage:all atau pkkmb.grading.update (panitia/pimpinan) boleh menilai.
+    // Pendamping gugus bersifat READ-ONLY untuk penugasan — menilai dilakukan
+    // Sie Acara/Pemateri. Hanya pemegang grading.update / manage:all yang boleh.
     const perms = normalizedGrader.permissions || [];
+    const graderUser = await this.userModel
+      .findById(normalizedGrader.userId as string)
+      .select('division')
+      .lean()
+      .exec();
+    if (
+      graderUser &&
+      (graderUser.division || '').toLowerCase().includes('pendamping')
+    ) {
+      throw new ForbiddenException(
+        'Pendamping gugus hanya dapat melihat penugasan (read-only).',
+      );
+    }
+
+    // Pemegang manage:all atau pkkmb.grading.update (panitia/pimpinan) boleh menilai.
     const canGradeAll =
       perms.includes('manage:all') || perms.includes('pkkmb.grading.update');
     if (!canGradeAll) {
@@ -3870,7 +4073,7 @@ export class PkkmbService {
   }
 
   async getAllUsers(paginationDto: PaginationDto) {
-    const filter = { deletedAt: null };
+    const filter: Record<string, unknown> = { deletedAt: null };
     // Search filter
     if (paginationDto.search) {
       const searchRegex = new RegExp(paginationDto.search, 'i');
@@ -3879,6 +4082,16 @@ export class PkkmbService {
         { nim: searchRegex },
         { email: searchRegex },
       ];
+    }
+
+    // Filter by role slug (e.g. panitia, maba, super_admin)
+    if (paginationDto.role) {
+      const role = await this.roleModel
+        .findOne({ slug: paginationDto.role })
+        .select('_id')
+        .lean()
+        .exec();
+      if (role) filter.role = role._id;
     }
 
     const query = this.userModel

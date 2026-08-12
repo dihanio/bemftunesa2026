@@ -3,7 +3,7 @@ import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type PkkmbAnnouncementDocument = HydratedDocument<PkkmbAnnouncement>;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, collection: 'pkkmb_announcements' })
 export class PkkmbAnnouncement {
   @Prop({ required: true })
   title: string;

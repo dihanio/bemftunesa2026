@@ -75,6 +75,8 @@ function buildService(overrides: {
     {} as never,
     {} as never,
     {} as never,
+    {} as never,
+    {} as never,
     redis,
   );
   return { svc: svc, sessionModel, logModel };

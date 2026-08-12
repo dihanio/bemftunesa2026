@@ -7,10 +7,10 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
   const A=await login('test.qmabaa@mhs.unesa.ac.id','Password123!');
   // 1. detail quiz ALL: cek correctAnswer TIDAK bocor
-  const det=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{}); // GET start juga memvalidasi, tapi detail via GET /quiz (tidak ada detail endpoint). Cek GET start untuk akses & soal
+  const det=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{method:'POST'}); // start memvalidasi akses & soal
   // Sebenarnya tidak ada GET detail; soal hanya via start. Mari test start -> dapat soal tanpa correctAnswer
   console.log('--- START quiz ALL as MABA_A ---');
-  const st=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{});
+  const st=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{method:'POST'});
   console.log('start status', st.status, '|', st.j.message, st.status!==201?JSON.stringify(st.j).slice(0,150):'');
   const attemptId=st.j.data?.attemptId;
   const soAl=st.j.data; // hanya attemptId, bukan soal
@@ -24,7 +24,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   // 2. correctAnswer tidak bocor: cek response start/detail
   // (start hanya return attemptId; soal tidak disertakan. Verifikasi security lain)
   // 3. maxAttempts: start lagi harus ditolak (maxAttempts=1)
-  const st2=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{});
+  const st2=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{method:'POST'});
   console.log('start ulang (maxAttempts=1):', st2.status, '|', st2.j.message);
   await sleep(13000);
   // 4. submit ulang attempt sama -> harus ditolak

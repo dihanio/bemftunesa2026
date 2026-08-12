@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, Clock, Users, Activity, Plus, Wifi, WifiOff, Check, X, FileText } from "lucide-react";
+import { MapPin, Clock, Users, Activity, Plus, Wifi, WifiOff, Check, X, FileText, Trash2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import LiveAttendanceMap from './LiveAttendanceMap';
 import toast from "react-hot-toast";
@@ -59,6 +59,37 @@ export default function AttendancePage() {
   // Izin / Sakit pending
   const [izins, setIzins] = useState<IzinRecord[]>([]);
   const [verifying, setVerifying] = useState<string | null>(null);
+
+  const STATUSES = ["Hadir", "Telat", "Izin", "Sakit", "Tidak Hadir"];
+
+  const changeStatus = async (id: string, status: string) => {
+    try {
+      const res = await apiFetch(`/pkkmb/attendance/records/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || "Gagal ubah status");
+      toast.success(`Status diubah ke ${status}`);
+      fetchLogs();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+
+  const deleteRecord = async (log: Log) => {
+    if (!window.confirm("Hapus record presensi ini?")) return;
+    try {
+      const res = await apiFetch(`/pkkmb/attendance/records/${log._id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || "Gagal hapus record");
+      toast.success("Record presensi dihapus");
+      fetchLogs();
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
 
   const fetchIzins = useCallback(async () => {
     try {
@@ -355,17 +386,39 @@ export default function AttendancePage() {
                       <Clock className="w-3 h-3" />
                       {new Date(log.checkInTime).toLocaleTimeString('id-ID', { hour12: false })} WIB
                     </span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                      log.status === 'PRESENT' ? 'bg-green-500/20 text-green-400' : 
-                      log.status === 'LATE' ? 'bg-orange-500/20 text-orange-400' : 'bg-white/10 text-white/60'
-                    }`}>
-                      {log.status}
-                    </span>
+                    {isManager ? (
+                      <select
+                        value={log.status}
+                        onChange={(e) => changeStatus(log._id, e.target.value)}
+                        className="text-[10px] px-1.5 py-0.5 rounded border bg-black/40 text-white outline-none focus:border-gold-500/50"
+                      >
+                        {STATUSES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                        log.status === 'PRESENT' ? 'bg-green-500/20 text-green-400' : 
+                        log.status === 'LATE' ? 'bg-orange-500/20 text-orange-400' : 'bg-white/10 text-white/60'
+                      }`}>
+                        {log.status}
+                      </span>
+                    )}
                   </div>
                   <p className="text-white">
                     <span className="font-bold text-gold-500">{log.participant?.nim}</span> ({log.participant?.name.split(' ')[0]}) berhasil check-in.
                   </p>
                   <p className="text-white/40 text-[10px] mt-1">Sesi: {log.session?.title} • Oleh: {log.operator?.name || 'Sistem'}</p>
+                  {isManager && (
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={() => deleteRecord(log)}
+                        className="inline-flex items-center gap-1 text-[10px] text-red-400 hover:text-red-300"
+                      >
+                        <Trash2 className="w-3 h-3" /> Hapus
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))
             )}

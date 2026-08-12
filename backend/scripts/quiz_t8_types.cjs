@@ -10,20 +10,20 @@ const mk=async(tok,type,maxAttempts)=>{ return call(tok,'/pkkmb/quiz',{method:'P
   const qPost=await mk(superTok,'POSTTEST',2); const postId=qPost.j.data._id;
   console.log('PRETEST create:', qPre.status, '| POSTTEST create:', qPost.status);
   // PRETEST: C submit 2x (maxAttempts=2)
-  let r=await call(C,`/pkkmb/quiz/${preId}/start`,{}); let a1=r.j.data?.attemptId;
+  let r=await call(C,`/pkkmb/quiz/${preId}/start`,{method:'POST'}); let a1=r.j.data?.attemptId;
   let sub=await call(C,`/pkkmb/quiz/${preId}/attempt/${a1}/submit`,{method:'POST',body:JSON.stringify({answers:[{questionId:'0',selectedAnswer:'A'}]})});
   console.log('PRETEST attempt1:', sub.status, sub.status===201?JSON.stringify(sub.j.data):sub.j.message);
   await sleep(13000);
-  r=await call(C,`/pkkmb/quiz/${preId}/start`,{}); let a2=r.j.data?.attemptId;
+  r=await call(C,`/pkkmb/quiz/${preId}/start`,{method:'POST'}); let a2=r.j.data?.attemptId;
   console.log('PRETEST attempt2 start:', r.status, '| attemptNumber', r.j.data?.attemptNumber);
   sub=await call(C,`/pkkmb/quiz/${preId}/attempt/${a2}/submit`,{method:'POST',body:JSON.stringify({answers:[{questionId:'0',selectedAnswer:'B'}]})});
   console.log('PRETEST attempt2 (benar):', sub.status, sub.status===201?JSON.stringify(sub.j.data):sub.j.message);
   await sleep(13000);
-  r=await call(C,`/pkkmb/quiz/${preId}/start`,{});
+  r=await call(C,`/pkkmb/quiz/${preId}/start`,{method:'POST'});
   console.log('PRETEST attempt3 (max=2):', r.status, '|', r.j.message);
   await sleep(13000);
   // POSTTEST: 1 attempt cukup utk buktikan type
-  r=await call(C,`/pkkmb/quiz/${postId}/start`,{}); let pa=r.j.data?.attemptId;
+  r=await call(C,`/pkkmb/quiz/${postId}/start`,{method:'POST'}); let pa=r.j.data?.attemptId;
   sub=await call(C,`/pkkmb/quiz/${postId}/attempt/${pa}/submit`,{method:'POST',body:JSON.stringify({answers:[{questionId:'0',selectedAnswer:'A'}]})});
   console.log('POSTTEST attempt1:', sub.status, sub.status===201?JSON.stringify(sub.j.data).slice(0,80):sub.j.message);
 })();

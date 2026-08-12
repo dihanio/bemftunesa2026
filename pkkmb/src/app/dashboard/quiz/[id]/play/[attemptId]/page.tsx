@@ -87,31 +87,17 @@ export default function QuizPlayerPage() {
     !!data && data.status === "IN_PROGRESS" && !resuming;
 
   // ─── FULLSCREEN (optional deterrence) ─────────────────────────────────────
-  // Jika user memilih fullscreen di modal aturan, minta requestFullscreen saat
-  // attempt aktif. Jangan memaksa bila browser menolak — hanya deterrence.
+  // Fullscreen DIMINTA di halaman detail (klik "Mulai Quiz" / "Lanjutkan" —
+  // dalam user gesture; requestFullscreen lewat setTimeout pasca-navigasi
+  // ditolak browser: "API can only be initiated by a user gesture").
+  // Di player hanya keluar dari fullscreen saat halaman ditinggalkan/unmount.
   useEffect(() => {
-    if (!monitoringActive) return;
-    let enabled = false;
-    try {
-      enabled = sessionStorage.getItem(`quiz_fullscreen_${id}`) === "1";
-    } catch {}
-    if (!enabled) return;
-    const el = document.documentElement;
-    const request = () => {
-      if (!document.fullscreenElement && el.requestFullscreen) {
-        el.requestFullscreen().catch(() => {
-          /* browser menolak — non-fatal */
-        });
-      }
-    };
-    const t = setTimeout(request, 800);
     return () => {
-      clearTimeout(t);
       if (document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
     };
-  }, [monitoringActive, id]);
+  }, []);
 
   // ─── ANTI-CHEAT / ANTI-AI DETERRENCE ──────────────────────────────────────
   // BUKAN deteksi AI yang mutlak & BUKAN security boundary. Frontend hanya
@@ -139,7 +125,7 @@ export default function QuizPlayerPage() {
           const msg = warningMessageForCount(count);
           if (msg && count > lastViolationCount) {
             lastViolationCount = count;
-            toast(msg, { icon: "⚠️" });
+            toast(msg);
           }
         } catch {
           /* monitoring non-blocking */

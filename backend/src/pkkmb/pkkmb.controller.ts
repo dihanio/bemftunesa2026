@@ -37,6 +37,8 @@ import { XLSX_MIME } from './quiz-import-export';
 import {
   MabaSubmitTaskDto,
   CreateAttendanceSessionDto,
+  CreateQrPointDto,
+  ClaimQrPointDto,
   CheckInDto,
   AttendanceFilterDto,
   CreateTaskDto,
@@ -51,6 +53,7 @@ import {
   OnboardDto,
   SubmitIzinDto,
   VerifyIzinDto,
+  UpdateAttendanceRecordDto,
   CreateQuizDto,
   SubmitQuizDto,
   SaveQuizAnswersDto,
@@ -444,6 +447,19 @@ export class PkkmbController {
     return { success: true, message: 'Record presensi berhasil dihapus' };
   }
 
+  @Patch('attendance/records/:id')
+  // Gate panitia-level; yg boleh edit = manager (KSK/sekretaris/admin) di service.
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Mengubah status record presensi (koreksi)' })
+  async updateAttendanceRecord(
+    @Param('id') id: string,
+    @CurrentUser() user: { userId: string },
+    @Body() dto: UpdateAttendanceRecordDto,
+  ) {
+    await this.pkkmbService.updateAttendanceRecord(id, user.userId, dto);
+    return { success: true, message: 'Status presensi berhasil diubah' };
+  }
+
   @Get('attendance/monitoring')
   // READ: panitia/divisi boleh monitoring (read-only); scope data per gugus
   // tetap dibatasi service untuk non-admin. MONITORING_READ dipertahankan agar
@@ -550,6 +566,14 @@ export class PkkmbController {
     const data = await this.pkkmbService.updateAssignment(assignmentId, dto);
     return { success: true, message: 'Penugasan berhasil diperbarui', data };
   }
+
+  @Delete('assignments/:id')
+  @RequiredPermissions(PkkmbPermission.TASK_DELETE)
+  @ApiOperation({ summary: 'Hapus penugasan (soft delete)' })
+  async deleteAssignment(@Param('id') assignmentId: string) {
+    const data = await this.pkkmbService.deleteAssignment(assignmentId);
+    return { success: true, message: 'Penugasan berhasil dihapus', data };
+  }
   @Get('maba/points/summary')
   @ApiOperation({ summary: 'Melihat total skor poin (MABA)' })
   async getMyPointsSummary(
@@ -564,6 +588,60 @@ export class PkkmbController {
   async getMyPoints(@CurrentUser() user: { userId: string }) {
     const data = await this.pkkmbService.getMyPoints(user.userId);
     return { success: true, data };
+  }
+
+  // ─── QR POIN KEAKTIFAN (maba offline / QR cetak) ──────────────────────────
+
+  @Post('qr-points')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Buat sesi QR poin keaktifan (panitia) — QR dicetak/ditempel',
+  })
+  async createQrPoint(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: CreateQrPointDto,
+  ) {
+    const data = await this.pkkmbService.createQrPoint(user.userId, dto);
+    return {
+      success: true,
+      message: 'Sesi QR poin berhasil dibuat. Cetak QR untuk dibagikan.',
+      data,
+    };
+  }
+
+  @Get('qr-points')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Daftar sesi QR poin keaktifan (panitia)' })
+  async listQrPoints() {
+    const data = await this.pkkmbService.listQrPoints();
+    return { success: true, data };
+  }
+
+  @Patch('qr-points/:id/close')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Tutup sesi QR poin keaktifan (panitia)' })
+  async closeQrPoint(
+    @Param('id') id: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const data = await this.pkkmbService.closeQrPoint(id, user.userId);
+    return { success: true, message: 'Sesi QR poin ditutup.', data };
+  }
+
+  @Post('qr-points/claim')
+  @RequiredPermissions(PkkmbPermission.ATTENDANCE_CHECKIN)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({
+    summary:
+      'Klaim poin dari QR cetak (maba) — maksimal 1× per maba per sesi QR',
+  })
+  async claimQrPoint(
+    @CurrentUser() user: { userId: string },
+    @Body() dto: ClaimQrPointDto,
+  ) {
+    const data = await this.pkkmbService.claimQrPoint(user.userId, dto);
+    return { success: true, message: 'Poin berhasil diklaim!', data };
   }
 
   @Get('maba/submissions')
@@ -689,8 +767,10 @@ export class PkkmbController {
     return { success: true, message: 'Quiz berhasil diperbarui', data };
   }
 
-  @Get('quiz/:id/start')
+  // POST (bukan GET) karena memulai quiz = aksi menulis: membuat attempt baru.
+  @Post('quiz/:id/start')
   @RequiredPermissions(PkkmbPermission.QUIZ_SUBMIT)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Memulai pengerjaan quiz (buat attempt)' })
   async startQuiz(
     @CurrentUser() user: { userId: string },

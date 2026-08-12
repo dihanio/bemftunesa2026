@@ -17,6 +17,7 @@
     "seed:gugus": "ts-node src/database/seeders/seed-gugus.ts",
     "seed:pendamping": "ts-node src/database/seeders/seed-pendamping-50.ts",
     "seed:konten": "ts-node src/database/seeders/seed-konten-pkkmb.ts",
+    "seed:gugus-tes": "ts-node src/database/seeders/seed-gugus-tes.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",

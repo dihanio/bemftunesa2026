@@ -14,9 +14,11 @@ import {
   CalendarClock,
   Sparkles,
   RotateCcw,
+  QrCode,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { formatWIB, useNow, wibDayKey, shiftDayKey } from "@/lib/presensi-time";
+import QrClaimModal from "@/components/points/QrClaimModal";
 
 interface PointLog {
   _id: string;
@@ -65,6 +67,7 @@ export default function PoinPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [qrOpen, setQrOpen] = useState(false);
   const now = useNow(); // update label "Hari Ini/Kemarin" + ringkasan tiap 30s
 
   const fetchPoints = useCallback(async () => {
@@ -190,13 +193,29 @@ export default function PoinPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-display font-bold">Skor Keaktifan</h1>
-        <p className="text-white/60 mt-1">
-          Poin dihitung dari kehadiran, kedisiplinan, dan partisipasi selama
-          PKKMB. Poin dicatat oleh panitia.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-display font-bold">Skor Keaktifan</h1>
+          <p className="text-white/60 mt-1">
+            Poin dihitung dari kehadiran, kedisiplinan, dan partisipasi selama
+            PKKMB. Poin dicatat oleh panitia.
+          </p>
+        </div>
+        <button
+          onClick={() => setQrOpen(true)}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gold-500 hover:bg-gold-400 text-black rounded-xl font-bold text-sm transition-colors shadow-[0_0_20px_rgba(234,179,8,0.2)] shrink-0"
+        >
+          <QrCode className="w-4 h-4" />
+          Klaim Poin QR
+        </button>
       </div>
+
+      {qrOpen && (
+        <QrClaimModal
+          onClose={() => setQrOpen(false)}
+          onClaimed={() => setReloadKey((k) => k + 1)}
+        />
+      )}
 
       {/* Ringkasan */}
       <div className="grid grid-cols-3 gap-3">

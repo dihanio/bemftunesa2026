@@ -7,7 +7,7 @@ async function call(tok,path,opts={}){ const r=await fetch(uri+path,{...opts,hea
   const quiz=(await call(C,'/pkkmb/quiz')).j.data;
   const post=quiz.find(q=>q.title==='TEST POSTTEST');
   console.log('C visible quizzes:', quiz.map(q=>q.title+'/'+q.type).join(', '));
-  const st=await call(C,`/pkkmb/quiz/${post._id}/start`,{});
+  const st=await call(C,`/pkkmb/quiz/${post._id}/start`,{method:'POST'});
   const a=st.j.data?.attemptId;
   console.log('POSTTEST attempt2 start:', st.status, 'attemptNumber', st.j.data?.attemptNumber);
   const sub=await call(C,`/pkkmb/quiz/${post._id}/attempt/${a}/submit`,{method:'POST',body:JSON.stringify({answers:[{questionId:'0',selectedAnswer:'B'}]})});

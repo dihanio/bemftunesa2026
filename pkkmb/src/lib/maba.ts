@@ -173,6 +173,17 @@ export function quizCounts(assignments: MabaAssignment[]): {
   return { total: quizzes.length, done };
 }
 
+// ─── TEKS SKOR QUIZ ──────────────────────────────────────────────────────────
+// Satu format skor yang jelas bagi maba: persentase + poin mentah vs total
+// (mis. "83% · 50/60 poin"). Total poin dihitung dari score/percentage agar
+// tidak butuh field tambahan dari backend.
+export function quizScoreText(score?: number, percentage?: number): string {
+  const s = score ?? 0;
+  const p = percentage ?? 0;
+  const total = p > 0 ? Math.round(s / (p / 100)) : 0;
+  return `${p}% · ${s}/${total} poin`;
+}
+
 // ─── GATE SUBMIT TUGAS ───────────────────────────────────────────────────────
 // Kelompok/angkatan hanya ketua gugus yang submit; submission yang sudah
 // lewat deadline tidak boleh diubah lagi (backend tetap authority).

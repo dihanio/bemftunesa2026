@@ -6,6 +6,7 @@ import { Plus, Trash2, ArrowLeft, Save, GripVertical, Download, Upload, CheckCir
 import { apiFetch } from "@/lib/api";
 import { ManagedQuiz, ManagedQuestion, TargetType, QuizType } from "@/lib/quiz";
 import { parseImportFile, validateImportRows, normalizeOrders, downloadTemplate, ImportRowResult } from "@/lib/quiz-import-export";
+import { CustomSelect } from "@/components/onboarding/CustomSelect";
 import toast from "react-hot-toast";
 
 const TYPES: QuizType[] = ["PRETEST", "POSTTEST", "MATERIAL"];
@@ -459,23 +460,34 @@ export default function QuizForm({ quiz }: { quiz?: ManagedQuiz }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className={labelCls}>Jenis Quiz *</label>
-            <select className={inputCls} value={type} onChange={(e) => setType(e.target.value as QuizType)}>
-              {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <CustomSelect
+              value={type}
+              onChange={(v) => setType(v as QuizType)}
+              options={TYPES.map((t) => ({ value: t, label: t }))}
+              ariaLabel="Jenis Quiz"
+            />
           </div>
           <div>
             <label className={labelCls}>Status *</label>
-            <select className={inputCls} value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="DRAFT">Draft</option>
-              <option value="PUBLISHED">Published</option>
-              <option value="CLOSED">Closed</option>
-            </select>
+            <CustomSelect
+              value={status}
+              onChange={setStatus}
+              options={[
+                { value: "DRAFT", label: "Draft" },
+                { value: "PUBLISHED", label: "Published" },
+                { value: "CLOSED", label: "Closed" },
+              ]}
+              ariaLabel="Status"
+            />
           </div>
           <div>
             <label className={labelCls}>Target *</label>
-            <select className={inputCls} value={targetType} onChange={(e) => { setTargetType(e.target.value as TargetType); setTargetIds([]); }}>
-              {TARGET_TYPES.map((t) => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
-            </select>
+            <CustomSelect
+              value={targetType}
+              onChange={(v) => { setTargetType(v as TargetType); setTargetIds([]); }}
+              options={TARGET_TYPES.map((t) => ({ value: t, label: t.replace("_", " ") }))}
+              ariaLabel="Target"
+            />
           </div>
         </div>
 
@@ -579,9 +591,15 @@ export default function QuizForm({ quiz }: { quiz?: ManagedQuiz }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Jawaban Benar</label>
-                <select className={inputCls} value={q.correctAnswer} onChange={(e) => updateQuestion(qi, { correctAnswer: e.target.value })}>
-                  {q.options.map((o) => <option key={o.id} value={o.id}>{o.id}</option>)}
-                </select>
+                <CustomSelect
+                  value={q.correctAnswer}
+                  onChange={(v) => updateQuestion(qi, { correctAnswer: v })}
+                  options={q.options.map((o) => ({
+                    value: o.id,
+                    label: o.text ? `${o.id}. ${o.text}` : o.id,
+                  }))}
+                  ariaLabel={`Jawaban benar soal ${qi + 1}`}
+                />
               </div>
               <div>
                 <label className={labelCls}>Poin</label>

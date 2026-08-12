@@ -156,7 +156,7 @@ function readMongoUri() {
   );
 
   // ── D. Start → IN_PROGRESS ───────────────────────────────────────────
-  const start1 = await callJson(maba, 'GET', `/pkkmb/quiz/${quizId}/start`);
+  const start1 = await callJson(maba, 'POST', `/pkkmb/quiz/${quizId}/start`);
   const attempt1 = start1.j?.data?.attemptId;
   check(
     'D.start.created',
@@ -209,7 +209,7 @@ function readMongoUri() {
   check('G.resume.missing.404', resumeMissing.status === 404, `status=${resumeMissing.status}`);
 
   // ── H. Start ulang saat masih aktif → attempt SAMA (resume) ──────────
-  const start2 = await callJson(maba, 'GET', `/pkkmb/quiz/${quizId}/start`);
+  const start2 = await callJson(maba, 'POST', `/pkkmb/quiz/${quizId}/start`);
   check(
     'H.start.resume.sameAttempt',
     start2.status === 200 &&
@@ -224,7 +224,7 @@ function readMongoUri() {
     { quizId: quizObjId, status: 'IN_PROGRESS' },
     { $set: { startedAt: new Date(Date.now() - 40 * 60000) } },
   );
-  const start3 = await callJson(maba, 'GET', `/pkkmb/quiz/${quizId}/start`);
+  const start3 = await callJson(maba, 'POST', `/pkkmb/quiz/${quizId}/start`);
   const attempt2 = start3.j?.data?.attemptId;
   const expiredDoc = await attemptsCol.findOne({ _id: new mongoose.Types.ObjectId(attempt1) });
   check(
@@ -280,7 +280,7 @@ function readMongoUri() {
   check('J2.saveAfterSubmit.400', saveAfter.status === 400, `status=${saveAfter.status}`);
 
   // ── L. maxAttempts=1 + SUBMITTED → ditolak ───────────────────────────
-  const start4 = await callJson(maba, 'GET', `/pkkmb/quiz/${quizId}/start`);
+  const start4 = await callJson(maba, 'POST', `/pkkmb/quiz/${quizId}/start`);
   check('L.maxAttempts.submitted.400', start4.status === 400, `status=${start4.status}`);
 
   // ── M. Maba DELETE → 403 ─────────────────────────────────────────────
@@ -297,7 +297,7 @@ function readMongoUri() {
 
   // ── O. Setelah delete: detail 404, start 404, attempt utuh ───────────
   const afterDetail = await callJson(maba, 'GET', `/pkkmb/quiz/${quizId}`);
-  const afterStart = await callJson(maba, 'GET', `/pkkmb/quiz/${quizId}/start`);
+  const afterStart = await callJson(maba, 'POST', `/pkkmb/quiz/${quizId}/start`);
   const attemptsLeft = await attemptsCol.countDocuments({ quizId: quizObjId });
   check('O.deleted.detail.404', afterDetail.status === 404, `status=${afterDetail.status}`);
   check('O.deleted.start.404', afterStart.status === 404, `status=${afterStart.status}`);

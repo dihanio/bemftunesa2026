@@ -32,6 +32,10 @@ import {
   PkkmbPointLogSchema,
 } from '../schemas/pkkmb-point-log.schema';
 import {
+  PkkmbQrPoint,
+  PkkmbQrPointSchema,
+} from '../schemas/pkkmb-qr-point.schema';
+import {
   PkkmbGallery,
   PkkmbGallerySchema,
 } from '../schemas/pkkmb-gallery.schema';
@@ -92,6 +96,7 @@ import { HealthService } from './health.service';
       { name: PkkmbSchedule.name, schema: PkkmbScheduleSchema },
       { name: PkkmbAnnouncement.name, schema: PkkmbAnnouncementSchema },
       { name: PkkmbPointLog.name, schema: PkkmbPointLogSchema },
+      { name: PkkmbQrPoint.name, schema: PkkmbQrPointSchema },
       { name: PkkmbGallery.name, schema: PkkmbGallerySchema },
       { name: Rumpun.name, schema: RumpunSchema },
       { name: StudyProgram.name, schema: StudyProgramSchema },

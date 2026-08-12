@@ -2,18 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import {
-  CalendarDays,
-  MapPin,
-  Wifi,
-  WifiOff,
-  CheckCircle2,
-  ArrowRight,
-  Clock,
-  Camera,
-  AlertTriangle,
-  User as UserIcon,
-} from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import {
   formatWIB,
@@ -138,8 +126,12 @@ export default function JadwalMabaPage() {
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="font-display text-2xl md:text-3xl font-bold">
-          📅 Jadwal PKKMB
+        <h1 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2.5">
+          <span
+            className="inline-block w-2.5 h-2.5 rounded-sm bg-gold-500"
+            aria-hidden="true"
+          />
+          Jadwal PKKMB
         </h1>
         <p className="text-sm text-white/50 mt-1">
           Rangkaian kegiatan resmi — cek mode <span className="text-blue-300 font-semibold">ONLINE</span> /{" "}
@@ -151,14 +143,17 @@ export default function JadwalMabaPage() {
       <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-4 md:p-5">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h2 className="font-bold text-white flex items-center gap-2">
-            <Camera className="w-4 h-4 text-gold-400" />
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-gold-400"
+              aria-hidden="true"
+            />
             Presensi Hari Ini
           </h2>
           <Link
             href="/dashboard/presensi"
-            className="text-xs text-gold-500 hover:text-gold-400 font-semibold inline-flex items-center gap-1"
+            className="text-xs text-gold-500 hover:text-gold-400 font-semibold"
           >
-            Buka Halaman Presensi <ArrowRight className="w-3.5 h-3.5" />
+            Buka Halaman Presensi
           </Link>
         </div>
 
@@ -169,7 +164,7 @@ export default function JadwalMabaPage() {
           </div>
         ) : todaySessions.length === 0 ? (
           <p className="mt-4 text-sm text-white/40">
-            Tidak ada sesi presensi hari ini. Pantau terus ya! 👀
+            Tidak ada sesi presensi hari ini. Pantau terus ya!
           </p>
         ) : (
           <div className="mt-4 space-y-2">
@@ -186,8 +181,7 @@ export default function JadwalMabaPage() {
                       {s.title}
                     </p>
                     <p className="text-xs text-white/50 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                      <span className="inline-flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
+                      <span>
                         {formatWIB(s.startTime, {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -198,23 +192,23 @@ export default function JadwalMabaPage() {
                           minute: "2-digit",
                         })}
                       </span>
-                      {s.location && (
-                        <span className="inline-flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {s.location}
-                        </span>
-                      )}
+                      {s.location && <span>{s.location}</span>}
                     </p>
                   </div>
                   {recorded ? (
                     <span className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Tercatat
+                      <span
+                        className="w-1.5 h-1.5 rounded-full bg-green-400"
+                        aria-hidden="true"
+                      />
+                      Tercatat
                     </span>
                   ) : period === "aktif" ? (
                     <Link
                       href="/dashboard/presensi"
                       className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold-500 text-black text-xs font-black hover:bg-gold-400 transition-colors"
                     >
-                      <Camera className="w-3.5 h-3.5" /> Presensi Sekarang
+                      Presensi Sekarang
                     </Link>
                   ) : (
                     <span className="shrink-0 text-[11px] text-white/40 font-semibold">
@@ -242,7 +236,10 @@ export default function JadwalMabaPage() {
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-red-500/25 bg-red-500/5 p-6 text-center">
-            <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+            <span
+              className="mx-auto mb-2 block w-2.5 h-2.5 rounded-full bg-red-400"
+              aria-hidden="true"
+            />
             <p className="text-white/70 text-sm">
               Gagal memuat jadwal. Periksa koneksi lalu coba lagi.
             </p>
@@ -255,7 +252,11 @@ export default function JadwalMabaPage() {
           </div>
         ) : dayKeys.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-10 text-center">
-            <p className="text-3xl mb-2">🎉</p>
+            <div className="mx-auto mb-3 flex items-center justify-center gap-1.5" aria-hidden="true">
+              <span className="w-2.5 h-2.5 rounded-full bg-white/40" />
+              <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+              <span className="w-2.5 h-2.5 rounded-full bg-white/10" />
+            </div>
             <p className="text-white font-semibold">
               Belum ada jadwal kegiatan
             </p>
@@ -305,8 +306,7 @@ export default function JadwalMabaPage() {
                           <p className="font-semibold text-white leading-snug">
                             {s.name}
                           </p>
-                          <p className="text-xs text-white/50 mt-1 inline-flex items-center gap-1.5">
-                            <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+                          <p className="text-xs text-white/50 mt-1">
                             {formatWIB(s.startTime, {
                               hour: "2-digit",
                               minute: "2-digit",
@@ -326,28 +326,21 @@ export default function JadwalMabaPage() {
                               : "bg-green-500/10 border-green-500/30 text-green-300"
                           }`}
                         >
-                          {s.isOnline ? (
-                            <Wifi className="w-3 h-3" />
-                          ) : (
-                            <WifiOff className="w-3 h-3" />
-                          )}
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${s.isOnline ? "bg-blue-400" : "bg-green-400"}`}
+                            aria-hidden="true"
+                          />
                           {s.isOnline ? "ONLINE" : "OFFLINE"}
                         </span>
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-white/60">
-                        <span className="inline-flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-white/40" />
+                        <span>
                           {s.isOnline
                             ? "Daring (Online)"
                             : s.location || "Lokasi menyusul"}
                         </span>
-                        {s.pic && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <UserIcon className="w-3.5 h-3.5 text-white/40" />
-                            PIC: {s.pic}
-                          </span>
-                        )}
+                        {s.pic && <span>PIC: {s.pic}</span>}
                         {live && (
                           <span className="inline-flex items-center gap-1.5 text-gold-400 font-bold">
                             <span className="w-1.5 h-1.5 rounded-full bg-gold-400 animate-pulse" />

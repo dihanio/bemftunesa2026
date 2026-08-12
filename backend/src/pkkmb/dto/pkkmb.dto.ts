@@ -41,6 +41,48 @@ export class MabaSubmitTaskDto {
   notes?: string;
 }
 
+export class CreateQrPointDto {
+  @ApiProperty({
+    description: 'Judul sesi QR poin',
+    example: 'Games PKKMB — Ice Breaking',
+  })
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+
+  @ApiProperty({ description: 'Poin per klaim', example: 10 })
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  points: number;
+
+  @ApiPropertyOptional({
+    description: 'Waktu mulai (WIB). Default: sekarang.',
+    example: '2026-08-15T01:00:00.000Z',
+  })
+  @IsDateString()
+  @IsOptional()
+  startTime?: string;
+
+  @ApiPropertyOptional({
+    description: 'Waktu selesai (WIB). Default: +24 jam dari startTime.',
+    example: '2026-08-15T16:00:00.000Z',
+  })
+  @IsDateString()
+  @IsOptional()
+  endTime?: string;
+}
+
+export class ClaimQrPointDto {
+  @ApiProperty({
+    description: 'Kode hasil scan QR (atau diketik manual)',
+    example: 'PKKMBQ_AB12CD',
+  })
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+}
+
 export class CreateAttendanceSessionDto {
   @ApiProperty({
     description: 'Judul Sesi Presensi',
@@ -234,6 +276,13 @@ export class PaginationDto {
   @IsString()
   @IsOptional()
   sortOrder?: 'asc' | 'desc';
+
+  @ApiPropertyOptional({
+    description: 'Filter role (slug role, mis. panitia / maba)',
+  })
+  @IsString()
+  @IsOptional()
+  role?: string;
 }
 
 export class AttendanceFilterDto extends PaginationDto {
@@ -397,6 +446,16 @@ export class AdminManualCheckinDto {
     enum: ['Hadir', 'Telat', 'Tidak Hadir'],
   })
   @IsEnum(['Hadir', 'Telat', 'Tidak Hadir'])
+  @IsNotEmpty()
+  status: string;
+}
+
+export class UpdateAttendanceRecordDto {
+  @ApiProperty({
+    description: 'Status Presensi baru',
+    enum: ['Hadir', 'Telat', 'Izin', 'Sakit', 'Tidak Hadir'],
+  })
+  @IsEnum(['Hadir', 'Telat', 'Izin', 'Sakit', 'Tidak Hadir'])
   @IsNotEmpty()
   status: string;
 }

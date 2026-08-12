@@ -1,14 +1,7 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import {
-  CalendarDays,
-  CheckCircle2,
-  MapPin,
-  Clock,
-  Fingerprint,
-  MessagesSquare,
-} from "lucide-react";
 import { greeting, pkkmbDay, type MabaGroup, type MabaSchedule } from "@/lib/maba";
 import { formatWIB } from "@/lib/presensi-time";
 
@@ -31,6 +24,9 @@ export default function HeroToday({
 }: HeroTodayProps) {
   const firstName = (name || "Maba").trim().split(" ")[0];
   const day = pkkmbDay();
+  // Fallback inisial bila avatar gagal dimuat (url rusak / diblokir) —
+  // mencegah browser menampilkan teks alt "Avatar" yang jelek di layar.
+  const [imgFailed, setImgFailed] = useState(false);
 
   const scheduleIsToday = (() => {
     if (!schedule) return false;
@@ -50,12 +46,13 @@ export default function HeroToday({
       {/* Baris identitas */}
       <div className="relative z-10 flex flex-wrap items-center gap-4">
         <div className="w-12 h-12 rounded-full border-2 border-gold-500/40 bg-white/10 overflow-hidden shrink-0">
-          {avatarUrl ? (
+          {avatarUrl && !imgFailed ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={avatarUrl}
-              alt="Avatar"
+              alt={`Avatar ${firstName}`}
               referrerPolicy="no-referrer"
+              onError={() => setImgFailed(true)}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -66,7 +63,7 @@ export default function HeroToday({
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-xl md:text-2xl font-bold truncate">
-            {greeting()}, <span className="text-gold-500">{firstName}</span>! 👋
+            {greeting()}, <span className="text-gold-500">{firstName}</span>!
           </h2>
           <div className="flex flex-wrap items-center gap-2 mt-1">
             {group ? (
@@ -79,8 +76,8 @@ export default function HeroToday({
               </span>
             )}
             {day !== null && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-white/60 text-xs font-medium">
-                <CalendarDays className="w-3 h-3" /> Hari ke-{day}
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-white/60 text-xs font-medium">
+                Hari ke-{day}
               </span>
             )}
           </div>
@@ -117,8 +114,7 @@ export default function HeroToday({
               {schedule.name}
             </p>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm text-white/60">
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-gold-400/80" />
+              <span>
                 {formatWIB(schedule.startTime, {
                   weekday: "short",
                   day: "numeric",
@@ -133,12 +129,7 @@ export default function HeroToday({
                 })}
                 {" WIB"}
               </span>
-              {schedule.location && (
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-gold-400/80" />
-                  {schedule.location}
-                </span>
-              )}
+              {schedule.location && <span>{schedule.location}</span>}
             </div>
           </div>
         ) : (
@@ -155,13 +146,15 @@ export default function HeroToday({
             href="/dashboard/presensi"
             className="inline-flex items-center justify-center gap-2 bg-gold-500 hover:bg-gold-400 text-black font-bold px-5 py-3 rounded-xl transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(234,179,8,0.3)]"
           >
-            <Fingerprint className="w-5 h-5" />
             Presensi Sekarang
           </Link>
         )}
         {attendance?.state === "done" && (
           <div className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-green-500/30 bg-green-500/10 text-green-400 font-semibold text-sm">
-            <CheckCircle2 className="w-5 h-5" />
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-green-400"
+              aria-hidden="true"
+            />
             Sudah presensi{attendance.checkInTime ? ` ${formatWIB(attendance.checkInTime, { hour: "2-digit", minute: "2-digit" })} WIB` : ""}
           </div>
         )}
@@ -177,7 +170,6 @@ export default function HeroToday({
             rel="noreferrer"
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-green-500/30 bg-green-500/10 text-green-400 text-sm font-semibold hover:bg-green-500/20 transition-colors"
           >
-            <MessagesSquare className="w-4 h-4" />
             Gabung Grup Gugus
           </a>
         )}

@@ -1,13 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  AlertTriangle,
-  RotateCcw,
-  BookOpen,
-  MessagesSquare,
-  Megaphone,
-} from "lucide-react";
 import { API_URL, apiFetch } from "@/lib/api";
 import { getPeriodStatus } from "@/lib/presensi-time";
 import {
@@ -45,6 +38,20 @@ interface DashboardData {
   ribbon: MabaRibbon;
   bukuPanduanUrl: string;
   pusatBantuanUrl: string;
+}
+
+// Format tanggal pengumuman yang aman — hindari "Invalid Date" saat field
+// createdAt kosong/tak valid (mis. data lama yang di-seed via raw insert).
+function announcementDate(iso?: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleString("id-ID", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 interface SessionItem {
@@ -206,7 +213,10 @@ export default function MabaDashboard() {
   if (!data) {
     return (
       <div className="rounded-3xl border border-red-500/20 bg-red-500/5 p-8 text-center">
-        <AlertTriangle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+        <span
+          className="mx-auto mb-3 block w-2.5 h-2.5 rounded-full bg-red-400"
+          aria-hidden="true"
+        />
         <p className="text-white/80 font-semibold">Gagal memuat dashboard</p>
         <p className="text-sm text-white/40 mt-1">
           Periksa koneksi internet lalu coba lagi.
@@ -215,7 +225,7 @@ export default function MabaDashboard() {
           onClick={() => setReloadKey((k) => k + 1)}
           className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-gold-500 hover:bg-gold-400 text-black rounded-xl font-bold text-sm transition-colors"
         >
-          <RotateCcw className="w-4 h-4" /> Coba Lagi
+          Coba Lagi
         </button>
       </div>
     );
@@ -226,14 +236,17 @@ export default function MabaDashboard() {
       {error && (
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3">
           <p className="text-sm text-red-300 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0"
+              aria-hidden="true"
+            />
             {error}
           </p>
           <button
             onClick={() => setReloadKey((k) => k + 1)}
             className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-gold-400 hover:text-gold-300"
           >
-            <RotateCcw className="w-3.5 h-3.5" /> Coba Lagi
+            Coba Lagi
           </button>
         </div>
       )}
@@ -264,8 +277,12 @@ export default function MabaDashboard() {
 
       {data.announcements.length > 0 && (
         <section>
-          <h3 className="font-bold text-lg text-white mb-4 flex items-center gap-2">
-            <Megaphone className="w-5 h-5 text-gold-500" /> Papan Pengumuman
+          <h3 className="font-bold text-lg text-white mb-4 flex items-center gap-2.5">
+            <span
+              className="w-2 h-2 rounded-sm bg-gold-500"
+              aria-hidden="true"
+            />
+            Papan Pengumuman
           </h3>
           <div className="space-y-3">
             {data.announcements.slice(0, 2).map((ann, idx) => (
@@ -284,14 +301,11 @@ export default function MabaDashboard() {
                 <p className="text-xs text-white/60 leading-relaxed mt-1.5 line-clamp-2">
                   {ann.content}
                 </p>
-                <p className="text-[10px] text-white/40 mt-2">
-                  {new Date(ann.createdAt).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
+                {announcementDate(ann.createdAt) && (
+                  <p className="text-[10px] text-white/40 mt-2">
+                    {announcementDate(ann.createdAt)}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -303,11 +317,12 @@ export default function MabaDashboard() {
           href={data.bukuPanduanUrl}
           target={data.bukuPanduanUrl !== "#" ? "_blank" : "_self"}
           rel="noreferrer"
-          className="flex items-center gap-3 bg-white/[0.02] border border-white/10 rounded-2xl p-4 hover:bg-white/[0.06] transition-colors"
+          className="relative overflow-hidden flex items-center gap-3 bg-white/[0.02] border border-white/10 rounded-2xl p-4 hover:bg-white/[0.06] transition-colors"
         >
-          <div className="p-2.5 rounded-xl bg-gold-500/10 text-gold-400">
-            <BookOpen className="w-5 h-5" />
-          </div>
+          <span
+            className="absolute left-0 top-0 h-full w-1 bg-gold-500"
+            aria-hidden="true"
+          />
           <div>
             <p className="text-sm font-medium text-white">Buku Panduan PKKMB</p>
             <p className="text-xs text-white/40">Tata tertib & daftar atribut</p>
@@ -321,11 +336,12 @@ export default function MabaDashboard() {
               : "_self"
           }
           rel="noreferrer"
-          className="flex items-center gap-3 bg-white/[0.02] border border-white/10 rounded-2xl p-4 hover:bg-white/[0.06] transition-colors"
+          className="relative overflow-hidden flex items-center gap-3 bg-white/[0.02] border border-white/10 rounded-2xl p-4 hover:bg-white/[0.06] transition-colors"
         >
-          <div className="p-2.5 rounded-xl bg-green-500/10 text-green-400">
-            <MessagesSquare className="w-5 h-5" />
-          </div>
+          <span
+            className="absolute left-0 top-0 h-full w-1 bg-green-500"
+            aria-hidden="true"
+          />
           <div>
             <p className="text-sm font-medium text-white">
               {data.group ? "Hubungi Pendamping" : "Pusat Bantuan"}

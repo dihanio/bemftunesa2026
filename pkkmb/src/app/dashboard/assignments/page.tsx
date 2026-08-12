@@ -2,23 +2,10 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  FileText,
-  ClipboardList,
-  Play,
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Loader2,
-  ListTodo,
-  Users,
-  User,
-} from "lucide-react";
-import Link from "next/link";
 import { apiFetch } from "@/lib/api";
-import { statusMeta, deadlineLabel } from "@/lib/maba";
+import { statusMeta, deadlineLabel, quizScoreText } from "@/lib/maba";
 import TaskSubmitModal from "@/components/assignments/TaskSubmitModal";
+import AssignmentDetailModal from "@/components/assignments/AssignmentDetailModal";
 
 interface Assignment {
   _id: string;
@@ -63,21 +50,39 @@ type FilterTab =
   | "SELESAI"
   | "TERLAMBAT";
 
-const FILTERS: { key: FilterTab; match: (a: Assignment) => boolean }[] = [
-  { key: "SEMUA", match: () => true },
-  { key: "BELUM DIKERJAKAN", match: (a) => a.status === "NOT_STARTED" },
-  { key: "SEDANG DIKERJAKAN", match: (a) => a.status === "IN_PROGRESS" },
+// Warna aksen per tab (dot indikator) — menggantikan icon.
+const FILTERS: {
+  key: FilterTab;
+  label: string;
+  dot: string;
+  match: (a: Assignment) => boolean;
+}[] = [
+  { key: "SEMUA", label: "Semua", dot: "bg-white/40", match: () => true },
+  {
+    key: "BELUM DIKERJAKAN",
+    label: "Belum dikerjakan",
+    dot: "bg-white/60",
+    match: (a) => a.status === "NOT_STARTED",
+  },
+  {
+    key: "SEDANG DIKERJAKAN",
+    label: "Sedang dikerjakan",
+    dot: "bg-amber-400",
+    match: (a) => a.status === "IN_PROGRESS",
+  },
   {
     key: "SELESAI",
+    label: "Selesai",
+    dot: "bg-green-400",
     match: (a) => a.status === "COMPLETED" || a.status === "SUBMITTED",
   },
-  { key: "TERLAMBAT", match: (a) => a.status === "OVERDUE" },
+  {
+    key: "TERLAMBAT",
+    label: "Terlambat",
+    dot: "bg-red-400",
+    match: (a) => a.status === "OVERDUE",
+  },
 ];
-
-const TYPE_ICON = {
-  TASK: <FileText className="w-6 h-6" />,
-  QUIZ: <ClipboardList className="w-6 h-6" />,
-};
 
 export default function AssignmentsPage() {
   const router = useRouter();
@@ -87,6 +92,9 @@ export default function AssignmentsPage() {
   const [isKetuaGugus, setIsKetuaGugus] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedTask, setSelectedTask] = useState<Assignment | null>(null);
+  const [detailAssignment, setDetailAssignment] = useState<Assignment | null>(
+    null,
+  );
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -106,6 +114,16 @@ export default function AssignmentsPage() {
       const meJson = await meRes.json().catch(() => null);
       if (meJson?.success && meJson.data) {
         setIsKetuaGugus(!!meJson.data.isKetuaGugus);
+        // Halaman ini khusus maba — panitia/pendamping dialihkan ke dashboard.
+        const roleObj = meJson.data.role;
+        const roleString =
+          typeof roleObj === "object" && roleObj !== null
+            ? (roleObj.slug || roleObj.name || "user").toLowerCase()
+            : String(roleObj || "user").toLowerCase();
+        if (roleString !== "user" && roleString !== "maba") {
+          router.replace("/dashboard");
+          return;
+        }
       }
 
       const subsJson = await subsRes.json().catch(() => null);
@@ -128,6 +146,14 @@ export default function AssignmentsPage() {
         (a) => FILTERS.find((f) => f.key === activeTab)?.match(a) ?? true,
       ),
     [assignments, activeTab],
+  );
+
+  const doneCount = useMemo(
+    () =>
+      assignments.filter(
+        (a) => a.status === "COMPLETED" || a.status === "SUBMITTED",
+      ).length,
+    [assignments],
   );
 
   const hasSubmitted = (a: Assignment) =>
@@ -170,31 +196,26 @@ export default function AssignmentsPage() {
     }
   };
 
-  const actionLabel = (a: Assignment) => {
+  // CTA: teks saja (tanpa icon) + warna sesuai urgensi.
+  const actionMeta = (a: Assignment) => {
     if (a.assignmentType === "QUIZ") {
       if (a.status === "IN_PROGRESS")
-        return { label: "Lanjutkan Quiz", icon: <Play className="w-4 h-4" /> };
+        return { label: "Lanjutkan", cls: "bg-amber-500 text-black" };
       if (a.status === "COMPLETED")
-        return {
-          label: "Lihat Hasil",
-          icon: <ArrowRight className="w-4 h-4" />,
-        };
+        return { label: "Lihat Hasil", cls: "bg-white/10 text-white" };
       if (a.status === "OVERDUE")
-        return {
-          label: "Quiz Ditutup",
-          icon: <AlertTriangle className="w-4 h-4" />,
-        };
-      return { label: "Mulai", icon: <Play className="w-4 h-4" /> };
+        return { label: "Quiz Ditutup", cls: "bg-white/5 text-white/30" };
+      return { label: "Kerjakan", cls: "bg-gold-500 text-black" };
     }
     if (a.status === "COMPLETED")
-      return { label: "Lihat Nilai", icon: <ArrowRight className="w-4 h-4" /> };
+      return { label: "Lihat Nilai", cls: "bg-white/10 text-white" };
     if (a.status === "SUBMITTED")
-      return { label: "Perbarui", icon: <ArrowRight className="w-4 h-4" /> };
+      return { label: "Perbarui", cls: "bg-gold-500 text-black" };
     if (a.status === "OVERDUE")
-      return { label: "Terlambat", icon: <AlertTriangle className="w-4 h-4" /> };
+      return { label: "Terlambat", cls: "bg-white/5 text-white/30" };
     if (isMemberBlocked(a))
-      return { label: "Menunggu Ketua", icon: <Users className="w-4 h-4" /> };
-    return { label: "Kumpulkan", icon: <ArrowRight className="w-4 h-4" /> };
+      return { label: "Menunggu Ketua", cls: "bg-white/5 text-white/30" };
+    return { label: "Kumpulkan", cls: "bg-gold-500 text-black" };
   };
 
   const actionDisabled = (a: Assignment) => {
@@ -210,21 +231,42 @@ export default function AssignmentsPage() {
       (a) => a.status === "COMPLETED" || a.status === "SUBMITTED",
     );
 
+  const progressPct =
+    assignments.length > 0
+      ? Math.round((doneCount / assignments.length) * 100)
+      : 0;
+
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <ListTodo className="w-6 h-6 text-gold-500" />
-          Aktivitas Saya
-        </h1>
+      {/* Header: teks + garis aksen (tanpa icon) */}
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-white/[0.02] p-5 mb-6">
+        <span
+          className="absolute left-0 top-0 h-full w-1 bg-gold-500"
+          aria-hidden="true"
+        />
+        <h1 className="text-2xl font-bold text-white">Aktivitas Saya</h1>
         <p className="text-white/50 mt-1 text-sm">
           Semua tugas & quiz dalam satu tempat. Status selalu terbarui setelah
           kamu mengerjakan.
         </p>
+        {assignments.length > 0 && (
+          <div className="mt-3 flex items-center gap-3">
+            <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-gold-500 to-amber-500 transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+            <p className="text-xs text-white/50 shrink-0">
+              <span className="text-white font-bold">{doneCount}</span>/
+              {assignments.length} selesai
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* Filter tabs: pill dengan dot warna */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-6 -mx-1 px-1">
         {FILTERS.map((f) => {
           const count = assignments.filter(f.match).length;
           const active = activeTab === f.key;
@@ -232,29 +274,46 @@ export default function AssignmentsPage() {
             <button
               key={f.key}
               onClick={() => setActiveTab(f.key)}
-              className={`px-4 py-1.5 rounded-full text-sm border transition-all ${
+              className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm border transition-all ${
                 active
-                  ? "bg-gold-500/20 border-gold-500/40 text-gold-400 font-medium"
+                  ? "bg-gold-500/20 border-gold-500/50 text-gold-400 font-semibold"
                   : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
               }`}
             >
-              {f.key}
-              <span className="ml-1.5 text-xs opacity-70">({count})</span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${f.dot}`}
+                aria-hidden="true"
+              />
+              {f.label}
+              <span
+                className={`text-xs ${active ? "text-gold-400/70" : "opacity-60"}`}
+              >
+                {count}
+              </span>
             </button>
           );
         })}
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-8 h-8 text-gold-500 animate-spin" />
+        <div className="space-y-3" aria-busy="true">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-28 rounded-2xl bg-white/5 animate-pulse"
+            />
+          ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-white/40">
+        <div className="text-center py-16 bg-white/[0.02] border border-white/10 rounded-2xl">
           {allDone && activeTab === "SEMUA" ? (
             <>
-              <div className="text-4xl mb-3">🎉</div>
-              <p className="text-white/70 font-semibold">
+              <div className="mx-auto mb-3 flex items-center justify-center gap-1.5" aria-hidden="true">
+                <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                <span className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+                <span className="w-2.5 h-2.5 rounded-full bg-green-400/30" />
+              </div>
+              <p className="text-white/80 font-semibold">
                 Semua aktivitas selesai!
               </p>
               <p className="text-sm text-white/40 mt-1">
@@ -263,64 +322,81 @@ export default function AssignmentsPage() {
             </>
           ) : (
             <>
-              <ClipboardList className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p>Tidak ada aktivitas pada filter ini.</p>
+              <div className="mx-auto mb-3 flex items-center justify-center gap-1.5" aria-hidden="true">
+                <span className="w-2.5 h-2.5 rounded-full bg-gold-500/70" />
+                <span className="w-2.5 h-2.5 rounded-full bg-gold-500/40" />
+                <span className="w-2.5 h-2.5 rounded-full bg-gold-500/20" />
+              </div>
+              <p className="text-white/70 font-semibold">
+                Tidak ada aktivitas pada filter ini.
+              </p>
+              <p className="text-sm text-white/40 mt-1">
+                {activeTab === "BELUM DIKERJAKAN"
+                  ? "Semua tugas & quiz sudah dikerjakan. Mantap!"
+                  : activeTab === "TERLAMBAT"
+                    ? "Tidak ada aktivitas yang terlewat. Bagus!"
+                    : "Pilih filter lain untuk melihat aktivitas kamu."}
+              </p>
             </>
           )}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {filtered.map((a) => {
             const st = statusMeta(a.status);
-            const action = actionLabel(a);
+            const action = actionMeta(a);
             const disabled = actionDisabled(a);
             const blocked = isMemberBlocked(a);
+            const isQuiz = a.assignmentType === "QUIZ";
+            const isLate = a.status === "OVERDUE";
             return (
               <div
                 key={a._id}
-                className="group border border-white/10 rounded-xl bg-gradient-to-br from-white/5 to-white/[0.02] hover:border-gold-500/40 transition-all overflow-hidden"
+                className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-br from-white/[0.05] to-white/[0.02] transition-all hover:border-gold-500/40 ${
+                  isLate ? "border-red-500/25" : "border-white/10"
+                }`}
               >
-                <div className="p-5 flex flex-col sm:flex-row sm:items-start gap-4">
-                  <div className="w-11 h-11 rounded-lg bg-gold-500/10 border border-gold-500/30 text-gold-400 flex items-center justify-center shrink-0">
-                    {TYPE_ICON[a.assignmentType] || TYPE_ICON.TASK}
-                  </div>
+                {/* Strip kiri: warna tipe aktivitas */}
+                <span
+                  className={`absolute left-0 top-0 h-full w-1 ${
+                    isQuiz ? "bg-purple-400" : "bg-blue-400"
+                  }`}
+                  aria-hidden="true"
+                />
 
+                <div className="p-5 flex flex-col sm:flex-row sm:items-start gap-4 pl-6">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-base font-semibold text-white truncate">
-                        {a.title}
-                      </h3>
                       <span
-                        className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${
-                          a.assignmentType === "QUIZ"
-                            ? "bg-purple-500/10 border-purple-500/30 text-purple-300"
-                            : "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg border ${
+                          isQuiz
+                            ? "bg-purple-500/10 border-purple-500/25 text-purple-300"
+                            : "bg-blue-500/10 border-blue-500/25 text-blue-300"
                         }`}
                       >
-                        {a.assignmentType === "QUIZ" ? "Quiz" : "Tugas"}
+                        {isQuiz ? "Quiz" : "Tugas"}
                       </span>
                       {a.assignmentType === "TASK" && a.type && (
                         <span
-                          className={`text-[11px] px-2 py-0.5 rounded-full border font-medium capitalize inline-flex items-center gap-1 ${
+                          className={`text-[10px] px-2 py-0.5 rounded-lg border font-medium capitalize ${
                             a.type === "individu"
                               ? "bg-white/5 border-white/10 text-white/50"
-                              : "bg-orange-500/10 border-orange-500/30 text-orange-300"
+                              : "bg-orange-500/10 border-orange-500/25 text-orange-300"
                           }`}
                         >
-                          {a.type === "individu" ? (
-                            <User className="w-3 h-3" />
-                          ) : (
-                            <Users className="w-3 h-3" />
-                          )}
                           {a.type}
                         </span>
                       )}
                       <span
-                        className={`text-[11px] px-2 py-0.5 rounded-full border ${st.cls}`}
+                        className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${st.cls}`}
                       >
                         {st.label}
                       </span>
                     </div>
+
+                    <h3 className="text-base font-semibold text-white mt-2 truncate">
+                      {a.title}
+                    </h3>
 
                     {a.description ? (
                       <p className="text-white/50 text-sm mt-1 line-clamp-2">
@@ -328,79 +404,80 @@ export default function AssignmentsPage() {
                       </p>
                     ) : null}
 
-                    <div className="flex items-center gap-4 text-xs text-white/45 mt-2 flex-wrap">
-                      {a.assignmentType === "QUIZ" && a.quiz ? (
+                    <div className="flex items-center gap-x-4 gap-y-1 text-xs text-white/45 mt-2 flex-wrap">
+                      {isQuiz && a.quiz ? (
                         <>
-                          <span className="inline-flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" />
-                            {a.quiz.durationMinutes} menit
-                          </span>
+                          <span>{a.quiz.durationMinutes} menit</span>
                           <span>{a.quiz.totalQuestions} soal</span>
                           <span>Passing {a.quiz.passingScore}%</span>
                           {a.bestAttempt?.percentage !== undefined && (
-                            <span className="text-green-400">
-                              Skor terbaik {a.bestAttempt.percentage}%
+                            <span className="text-green-400 font-medium">
+                              Skor {a.bestAttempt.percentage}%
                             </span>
                           )}
                         </>
                       ) : (
-                        <span className="inline-flex items-center gap-1">
-                          <FileText className="w-3.5 h-3.5" />
-                          Tugas pengumpulan
-                        </span>
+                        <span>Pengumpulan file / link</span>
                       )}
-                      <span className="inline-flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5" />
+                      <span
+                        className={
+                          isLate ? "text-red-400 font-medium" : undefined
+                        }
+                      >
                         Deadline {deadlineLabel(a.deadline)}
                       </span>
                     </div>
 
                     {blocked && (
-                      <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2 py-1">
-                        <Users className="w-3 h-3" /> Tugas kelompok —
-                        pengumpulan oleh Ketua Gugus. Kamu tidak perlu submit.
+                      <p className="mt-2 inline-block text-[11px] text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-lg px-2 py-1">
+                        Tugas kelompok — dikumpulkan oleh Ketua Gugus.
                       </p>
                     )}
 
-                    {a.assignmentType === "TASK" && (
-                      <Link
-                        href={`/dashboard/assignments/${a._id}`}
-                        className="mt-2 inline-block text-xs text-gold-500 hover:text-gold-400 font-semibold"
-                      >
-                        Lihat detail &rarr;
-                      </Link>
-                    )}
+                    <button
+                      onClick={() => setDetailAssignment(a)}
+                      className="mt-2 inline-block text-xs text-gold-500 hover:text-gold-400 font-semibold"
+                    >
+                      Lihat detail &rarr;
+                    </button>
                   </div>
 
                   <div className="shrink-0 flex sm:items-center">
                     <button
                       onClick={() => openAssignment(a)}
                       disabled={disabled}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
                         disabled
                           ? "bg-white/5 text-white/30 cursor-not-allowed border border-white/10"
-                          : a.status === "IN_PROGRESS"
-                            ? "bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30"
-                            : "bg-gold-500 text-black hover:bg-gold-400"
+                          : `${action.cls} hover:scale-[1.02] active:scale-[0.98]`
                       }`}
                     >
-                      {action.icon}
                       {action.label}
                     </button>
                   </div>
                 </div>
 
+                {/* Footer status: dot + teks (tanpa icon) */}
                 {a.status === "COMPLETED" && a.bestAttempt && (
                   <div className="px-5 py-2 border-t border-white/5 bg-green-500/5 flex items-center gap-2 text-xs text-green-400">
-                    <CheckCircle2 className="w-4 h-4" />
-                    {a.assignmentType === "QUIZ"
-                      ? `Selesai — nilai ${a.bestAttempt.score ?? 0} (${a.bestAttempt.percentage ?? 0}%)`
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0"
+                      aria-hidden="true"
+                    />
+                    {isQuiz
+                      ? `Selesai — ${quizScoreText(
+                          a.bestAttempt.score,
+                          a.bestAttempt.percentage,
+                        )}`
                       : `Selesai — dinilai ${a.bestAttempt.score ?? 0}/100`}
                   </div>
                 )}
                 {a.status === "SUBMITTED" && (
                   <div className="px-5 py-2 border-t border-white/5 bg-blue-500/5 flex items-center gap-2 text-xs text-blue-300">
-                    <CheckCircle2 className="w-4 h-4" />
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"
+                      aria-hidden="true"
+                    />
                     Sudah dikumpulkan — menunggu penilaian.
                   </div>
                 )}
@@ -408,6 +485,21 @@ export default function AssignmentsPage() {
             );
           })}
         </div>
+      )}
+
+      {detailAssignment && (
+        <AssignmentDetailModal
+          assignment={detailAssignment}
+          isKetuaGugus={isKetuaGugus}
+          fileUrl={submissionFileUrl(detailAssignment)}
+          onClose={() => setDetailAssignment(null)}
+          onSubmitted={() => {
+            // Jangan tutup di sini — layar sukses TaskSubmitModal ditampilkan
+            // dulu; penutupan ditangani AssignmentDetailModal setelah user
+            // klik "Selesai". Daftar tetap di-refresh di baliknya.
+            void fetchData();
+          }}
+        />
       )}
 
       {selectedTask && (

@@ -8,7 +8,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const A=await login('test.qmabaa@mhs.unesa.ac.id','Password123!');
   const B=await login('test.qmabab@mhs.unesa.ac.id','Password123!');
   // START -> verifikasi soal + no correctAnswer
-  const st=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{});
+  const st=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{method:'POST'});
   console.log('start:', st.status);
   const qs=st.j.data?.questions;
   if(qs){ console.log('  soal count:', qs.length, '| punya correctAnswer field?', qs.some(q=>'correctAnswer' in q));
@@ -28,7 +28,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   console.log('SECURITY B lihat result A:', resB.status, '|', resB.j.message);
   await sleep(13000);
   // SECURITY: submit dgn manipulasi score di body (ditambah field score) -> DTO whitelist tolak
-  const stB=await call(B,`/pkkmb/quiz/${QT.PRODI}/start`,{}); // B prodi A, PRODI target spTI -> B visible, bisa start
+  const stB=await call(B,`/pkkmb/quiz/${QT.PRODI}/start`,{method:'POST'}); // B prodi A, PRODI target spTI -> B visible, bisa start
   const attB=stB.j.data?.attemptId;
   const subB2=await call(B,`/pkkmb/quiz/${QT.PRODI}/attempt/${attB}/submit`,{method:'POST',body:JSON.stringify({answers:[{questionId:'0',selectedAnswer:'A'}], score:99, correctCount:99, userId:A})});
   console.log('SECURITY submit +score/userId tamper:', subB2.status, subB2.status===201?JSON.stringify(subB2.j.data):subB2.j.message);

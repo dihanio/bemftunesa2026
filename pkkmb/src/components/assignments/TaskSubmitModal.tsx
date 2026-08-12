@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { UploadCloud, Users, CheckCircle2, X, Loader2, AlertTriangle } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { canSubmitTask } from "@/lib/maba";
 
@@ -42,10 +42,22 @@ export default function TaskSubmitModal({
       deadline: deadline || "",
     }) || submitting;
 
+  // Validasi custom (bukan bawaan browser) agar pesan error konsisten dengan
+  // bahasa & desain aplikasi — bukan bubble default "harap isi bidang ini".
+  const validateLink = (value: string): string | null => {
+    const v = value.trim();
+    if (!v) return "Tautan belum diisi. Tempel link pengumpulan kamu di atas.";
+    if (!/^https?:\/\//i.test(v)) {
+      return "Tautan tidak valid. Pastikan diawali https:// (contoh: https://example.com/...)";
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!linkInput.trim()) {
-      setError("Link Google Drive tidak boleh kosong.");
+    const invalid = validateLink(linkInput);
+    if (invalid) {
+      setError(invalid);
       return;
     }
     setSubmitting(true);
@@ -89,7 +101,10 @@ export default function TaskSubmitModal({
           {task.title}
         </h2>
         <div className="flex items-center gap-2 text-sm text-gold-500 mb-6">
-          <UploadCloud className="w-4 h-4" />
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-gold-500"
+            aria-hidden="true"
+          />
           <span>
             {isGroupTask ? "Pengumpulan Tugas Kelompok" : "Pengumpulan Tugas Individu"}
           </span>
@@ -103,7 +118,10 @@ export default function TaskSubmitModal({
 
         {memberBlocked ? (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
-            <Users className="w-5 h-5 shrink-0 mt-0.5 text-blue-400" />
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0 mt-2"
+              aria-hidden="true"
+            />
             <div className="text-sm text-blue-200 leading-relaxed">
               <p className="font-bold mb-1">Tugas Kelompok</p>
               <p>
@@ -115,7 +133,10 @@ export default function TaskSubmitModal({
           </div>
         ) : success ? (
           <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex items-start gap-3">
-            <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-green-400" />
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-green-400 shrink-0 mt-2"
+              aria-hidden="true"
+            />
             <div>
               <p className="text-green-400 font-bold mb-1">
                 Tugas Berhasil Dikumpulkan!
@@ -126,32 +147,43 @@ export default function TaskSubmitModal({
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div>
               <label className="block text-sm font-bold text-white/80 mb-2">
-                Tautan (Link) File / Google Drive
+                Tautan (Link) File Pengumpulan
               </label>
               <input
-                type="url"
-                required
+                type="text"
+                inputMode="url"
                 value={linkInput}
                 onChange={(e) => setLinkInput(e.target.value)}
-                placeholder="https://drive.google.com/..."
+                placeholder="https://example.com/..."
                 disabled={submitting}
-                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors"
+                aria-invalid={!!error}
+                className={`w-full bg-black/50 border rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-1 transition-colors ${
+                  error
+                    ? "border-red-500/50 focus:border-red-500 focus:ring-red-500"
+                    : "border-white/10 focus:border-gold-500 focus:ring-gold-500"
+                }`}
               />
               <p className="text-xs text-white/40 mt-2">
                 Pastikan akses file/folder:{" "}
                 <span className="text-white/60 font-medium">
                   &quot;Anyone with the link can view&quot;
-                </span>
-                .
+                </span>{" "}
+                agar panitia bisa membukanya.
               </p>
             </div>
 
             {error && (
-              <div className="flex items-start gap-2 text-red-400 text-sm bg-red-500/10 p-3 rounded-lg border border-red-500/20">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div
+                role="alert"
+                className="flex items-start gap-2 text-red-400 text-sm bg-red-500/10 p-3 rounded-lg border border-red-500/20"
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0 mt-1.5"
+                  aria-hidden="true"
+                />
                 <span>{error}</span>
               </div>
             )}

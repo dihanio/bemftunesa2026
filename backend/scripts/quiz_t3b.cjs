@@ -6,7 +6,7 @@ async function call(tok,path,opts={}){ const r=await fetch(uri+path,{...opts,hea
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
   const A=await login('test.qmabaa@mhs.unesa.ac.id','Password123!');
-  const st=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{});
+  const st=await call(A,`/pkkmb/quiz/${QT.ALL}/start`,{method:'POST'});
   console.log('1 start:', st.status, '| attemptId', st.j.data?.attemptId, st.status!==201?st.j.message:'');
   const attemptId=st.j.data?.attemptId;
   if(attemptId){

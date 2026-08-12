@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Loader2, Plus, Edit, Trash2, Shield, Search, Info, Check } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
@@ -121,16 +121,20 @@ export default function UserManagementPage() {
   });
 
   const [roles, setRoles] = useState<{_id: string, name: string, slug?: string}[]>([]);
+  const [gugus, setGugus] = useState<{_id: string, nomor: number, name: string}[]>([]);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
   const [divisionCustom, setDivisionCustom] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
+  const [roleFilter, setRoleFilter] = useState('');
 
-  const fetchUsers = useCallback(async (currentPage = pagination.page, searchQuery = search, sort = sortBy, order = sortOrder, currentLimit = pagination.limit) => {
+  const fetchUsers = useCallback(async (currentPage = pagination.page, searchQuery = search, sort = sortBy, order = sortOrder, currentLimit = pagination.limit, role = roleFilter) => {
     try {
       setIsLoading(true);
-      const res = await apiFetch(`/pkkmb/admin/users?page=${currentPage}&limit=${currentLimit}&search=${searchQuery}&sortBy=${sort}&sortOrder=${order}`);
+      const res = await apiFetch(`/pkkmb/admin/users?page=${currentPage}&limit=${currentLimit}&search=${searchQuery}&sortBy=${sort}&sortOrder=${order}${role ? `&role=${role}` : ''}`);
 
       if (!res.ok) throw new Error("Gagal mengambil data users");
       const json = await res.json();
@@ -157,13 +161,23 @@ export default function UserManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.page, search, sortBy, sortOrder]);
+  }, [pagination.page, search, sortBy, sortOrder, roleFilter]);
 
   const fetchRoles = async () => {
     try {
       const res = await apiFetch("/pkkmb/roles");
       const json = await res.json();
       if (json.success) setRoles(json.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchGugus = async () => {
+    try {
+      const res = await apiFetch("/pkkmb/gugus");
+      const json = await res.json();
+      if (json.success) setGugus(json.data);
     } catch (err) {
       console.error(err);
     }
@@ -180,6 +194,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRoles();
+    fetchGugus();
   }, []);
 
   const executeDelete = useCallback(async () => {
@@ -264,6 +279,7 @@ export default function UserManagementPage() {
     setFormData({ name: '', email: '', nim: '', role: '', password: '', division: '', pkkmbGroup: '' });
     setDivisionCustom(false);
     setShowModal(true);
+    setTimeout(() => nameRef.current?.focus(), 50);
   };
 
   const handleOpenEdit = (user: UserData) => {
@@ -283,6 +299,10 @@ export default function UserManagementPage() {
       !!user.division && !DIVISION_PRESETS.some((p) => p.value === user.division),
     );
     setShowModal(true);
+    setTimeout(() => {
+      modalRef.current?.scrollTo(0, 0);
+      nameRef.current?.focus();
+    }, 50);
   };
 
   const handleConfirmDelete = (id: string, name: string) => {
@@ -518,14 +538,11 @@ export default function UserManagementPage() {
                   </td>
                   <td className="px-6 py-4 text-white/70">
                     {(() => {
-                      const roleName = (user.role?.name || '').toLowerCase();
-                      const isMaba = user.role?.slug === 'maba' || roleName.includes('mahasiswa baru');
-                      if (!isMaba) return '-';
+                      if (!user.division && !user.pkkmbGroup) return '-';
                       return (
                         <>
                           {user.division && <div className="text-xs text-blue-400 font-bold uppercase">{user.division}</div>}
                           {user.pkkmbGroup && <div className="text-xs text-green-400 mt-1">{user.pkkmbGroup.name}</div>}
-                          {!user.division && !user.pkkmbGroup && '-'}
                         </>
                       );
                     })()}
@@ -590,7 +607,7 @@ export default function UserManagementPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1a1405] border border-gold-500/30 rounded-2xl p-6 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div ref={modalRef} className="bg-[#1a1405] border border-gold-500/30 rounded-2xl p-6 max-w-md w-full shadow-2xl overflow-y-auto max-h-[90vh]">
             <h3 className="text-xl font-bold text-white mb-4">
               {modalMode === "CREATE" ? "Tambah User Baru" : "Edit Data User"}
             </h3>
@@ -604,12 +621,20 @@ export default function UserManagementPage() {
             <form onSubmit={handleSubmit} noValidate className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-white/50">Nama Lengkap *</label>
-                <input required type="text" value={formData.name} onChange={e => {setFormData({...formData, name: e.target.value}); setFormError("");}} className={`w-full bg-white/5 border ${formError.includes("Nama") ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-2 mt-1 text-white focus:border-gold-500 outline-none`} />
+                <input ref={nameRef} required type="text" value={formData.name} onChange={e => {setFormData({...formData, name: e.target.value}); setFormError("");}} className={`w-full bg-white/5 border ${formError.includes("Nama") ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-2 mt-1 text-white focus:border-gold-500 outline-none`} />
               </div>
               
               <div>
                 <label className="text-xs font-bold text-white/50">Email *</label>
-                <input required type="email" value={formData.email} onChange={e => {setFormData({...formData, email: e.target.value}); setFormError("");}} className={`w-full bg-white/5 border ${formError.includes("Email") ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-2 mt-1 text-white focus:border-gold-500 outline-none`} />
+                <input required type="email" value={formData.email} onChange={e => {
+                  const email = e.target.value;
+                  const prefix = (email.split('@')[0] || '').trim();
+                  // Auto-fill NIM hanya jika prefix email angka semua DAN bukan
+                  // format angkatan 23 (mis. elok.23291@… → 23291 bukan NIM).
+                  const nim = /^\d+$/.test(prefix) && !prefix.startsWith('23') ? prefix : formData.nim;
+                  setFormData({...formData, email, nim});
+                  setFormError("");
+                }} className={`w-full bg-white/5 border ${formError.includes("Email") ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-2 mt-1 text-white focus:border-gold-500 outline-none`} />
               </div>
 
               <div>
@@ -728,8 +753,19 @@ export default function UserManagementPage() {
               })()}
 
               <div>
-                <label className="text-xs font-bold text-white/50">ID Gugus (Bila perlu)</label>
-                <input type="text" placeholder="Object ID Gugus" value={formData.pkkmbGroup} onChange={e => setFormData({...formData, pkkmbGroup: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 mt-1 text-white focus:border-gold-500 outline-none" />
+                <label className="text-xs font-bold text-white/50">Gugus (Bila perlu)</label>
+                <select
+                  value={formData.pkkmbGroup}
+                  onChange={e => setFormData({...formData, pkkmbGroup: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 mt-1 text-white focus:border-gold-500 outline-none"
+                >
+                  <option value="" className="bg-zinc-900">Tidak ada gugus</option>
+                  {gugus.map(g => (
+                    <option key={g._id} value={g._id} className="bg-zinc-900">
+                      Gugus {g.nomor} — {g.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

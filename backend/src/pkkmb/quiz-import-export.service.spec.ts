@@ -77,6 +77,8 @@ function buildService(quizOverrides: {
     {} as never,
     {} as never,
     {} as never,
+    {} as never,
+    {} as never,
   );
   return { svc: svc, quizModel };
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Pencil, Loader2, Globe, School, Group, User, FileText, ClipboardList } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Globe, School, Group, User, FileText, ClipboardList } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
 interface ManagedAssignment {
@@ -77,6 +77,25 @@ export default function ManageAssignmentsPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleDelete = async (a: ManagedAssignment) => {
+    if (
+      !window.confirm(
+        `Hapus penugasan "${a.title}"? Tindakan ini tidak bisa dibatalkan.`,
+      )
+    ) {
+      return;
+    }
+    const res = await apiFetch(`/pkkmb/assignments/${a._id}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setItems((prev) => prev.filter((x) => x._id !== a._id));
+    } else {
+      const json = await res.json().catch(() => ({}));
+      alert(json.message || "Gagal menghapus penugasan.");
+    }
   };
 
   return (
@@ -165,10 +184,17 @@ export default function ManageAssignmentsPage() {
                         onClick={() =>
                           router.push(`/dashboard/manage/assignments/create?id=${a._id}`)
                         }
-                        className="inline-flex items-center gap-1.5 text-gold-400 hover:text-gold-300 text-sm"
+                        className="inline-flex items-center gap-1.5 text-gold-400 hover:text-gold-300 text-sm mr-4"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                         Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(a)}
+                        className="inline-flex items-center gap-1.5 text-red-400 hover:text-red-300 text-sm"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Hapus
                       </button>
                     </td>
                   </tr>

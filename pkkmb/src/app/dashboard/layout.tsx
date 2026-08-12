@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { API_URL, apiFetch } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
-import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, ClipboardList, CalendarDays } from "lucide-react";
+import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, ClipboardList, CalendarDays, QrCode } from "lucide-react";
 import { notificationHref, type MabaNotification } from "@/lib/maba";
 
 interface NavItem {
@@ -75,6 +75,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (status !== "authenticated") return;
+    const roleObj = session?.user?.role;
+    const roleString =
+      typeof roleObj === "object" && roleObj !== null
+        ? (roleObj.slug || roleObj.name || "user").toLowerCase()
+        : String(roleObj || "user").toLowerCase();
+    // Feed notifikasi khusus maba — jangan fetch untuk panitia/pendamping.
+    if (roleString !== "maba" && roleString !== "user") return;
     const fetchNotif = async () => {
       try {
         // limit besar agar unreadCount akurat (default backend = 3)
@@ -88,7 +95,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchNotif();
     const t = setInterval(fetchNotif, 60000);
     return () => clearInterval(t);
-  }, [status]);
+  }, [status, session]);
 
   const markRead = async (ids?: string[]) => {
     setNotif((prev) => {
@@ -191,31 +198,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const isSekretaris = division.includes('sekretaris');
       const isBph = division.includes('bph');
       const isPemateri = division.includes('pemateri') || division.includes('acara');
+      const isKsk = division.includes('ksk');
       const isTatib = division.includes('tatib') || division.includes('komdis') || division.includes('tata tertib');
 
       const items: NavItem[] = [
         { label: roleString === 'super_admin' ? "Admin Panel" : isPendamping ? "Portal Pendamping" : "Portal Panitia", href: "/dashboard", icon: <MonitorSmartphone className="w-5 h-5" />, active: pathname === "/dashboard" },
       ];
 
-      // Data Maba
+      // Data Maba — management gugus sendiri (pendamping boleh penuh).
       if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || roleString === 'panitia' || isPendamping || isSekretaris || isBph) {
         items.push({ label: "Data Maba", href: "/dashboard/manage/maba", icon: <Users className="w-5 h-5" />, active: pathname === "/dashboard/manage/maba" });
       }
 
-      // Evaluasi Penugasan
-      if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || roleString === 'panitia' || isPendamping || isPemateri) {
+      // Evaluasi Penugasan — read-only utk pendamping (di-scope gugusnya).
+      if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || isPendamping || isSekretaris || isPemateri) {
         items.push({ label: "Evaluasi Penugasan", href: "/dashboard/manage/evaluator", icon: <FileText className="w-5 h-5" />, active: pathname === "/dashboard/manage/evaluator" });
       }
 
-      // Manajemen Penugasan (TASK & QUIZ assignments)
-      if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || roleString === 'panitia' || isPendamping || isSekretaris || isPemateri) {
+      // Manajemen Penugasan (TASK & QUIZ assignments) — tugas Sie Acara.
+      if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || isSekretaris || isPemateri) {
         items.push({ label: "Manajemen Penugasan", href: "/dashboard/manage/assignments", icon: <FileText className="w-5 h-5" />, active: pathname.startsWith("/dashboard/manage/assignments") });
       }
 
-      // Kontrol Presensi (menu tampil utk semua panitia; aksi management
-      // dibatasi oleh permission/division di halaman — backend tetap authority)
-      if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || roleString === 'panitia' || isPendamping || isSekretaris || isBph) {
+      // Kontrol Presensi — read-only utk pendamping; aksi management dibatasi
+      // division di halaman (KSK) — backend tetap authority.
+      if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || isPendamping || isSekretaris || isBph || isKsk) {
         items.push({ label: "Kontrol Presensi", href: "/dashboard/manage/attendance", icon: <CheckSquare className="w-5 h-5" />, active: pathname === "/dashboard/manage/attendance" });
+      }
+
+      // QR Poin Keaktifan — tugas Sie KSK.
+      if (roleString === 'super_admin' || roleString === 'admin_pkkmb' || isSekretaris || isBph || isKsk) {
+        items.push({ label: "QR Poin Keaktifan", href: "/dashboard/manage/qrpoints", icon: <QrCode className="w-5 h-5" />, active: pathname === "/dashboard/manage/qrpoints" });
       }
 
       // Tata Tertib
@@ -229,9 +242,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         items.push({ label: "Manajemen Akun", href: "/dashboard/manage/users", icon: <User className="w-5 h-5" />, active: pathname === "/dashboard/manage/users" });
       }
 
-      // Manajemen Quiz (permission-based, frontend visibility only)
+      // Manajemen Quiz (permission-based, frontend visibility only) —
+      // bukan menu pendamping.
       const perms = Array.isArray(session.user.permissions) ? session.user.permissions : [];
-      const canManageQuiz = perms.includes('manage:all') || perms.includes('pkkmb.quiz.create') || perms.includes('pkkmb.quiz.update');
+      const canManageQuiz = !isPendamping && (perms.includes('manage:all') || perms.includes('pkkmb.quiz.create') || perms.includes('pkkmb.quiz.update'));
       if (canManageQuiz) {
         items.push({ label: "Manajemen Quiz", href: "/dashboard/manage/quiz", icon: <ClipboardList className="w-5 h-5" />, active: pathname.startsWith("/dashboard/manage/quiz") });
       }
@@ -262,25 +276,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <nav className="flex-1 px-4 py-8 space-y-2 font-body">
-          {menus.map((menu) => (
-            <Link
-              key={menu.href}
-              href={menu.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                menu.active 
-                  ? "bg-gold-500/10 text-gold-500 font-bold border border-gold-500/20" 
-                  : "text-white/50 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              {menu.icon}
-              <span className="flex-1">{menu.label}</span>
-              {menu.badge ? (
-                <span className="min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-gold-500 text-black text-[10px] font-black rounded-full">
-                  {menu.badge > 9 ? "9+" : menu.badge}
-                </span>
-              ) : null}
-            </Link>
-          ))}
+          {/* Sidebar (desktop) TIDAK memuat Notifikasi & Profil — keduanya
+              diakses lewat header (lonceng dropdown & avatar dropdown).
+              Bottom navigation (mobile) tetap menampilkan semua menu. */}
+          {menus
+            .filter(
+              (menu) =>
+                menu.href !== "/dashboard/notifikasi" &&
+                menu.href !== "/dashboard/profil",
+            )
+            .map((menu) => (
+              <Link
+                key={menu.href}
+                href={menu.href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                  menu.active 
+                    ? "bg-gold-500/10 text-gold-500 font-bold border border-gold-500/20" 
+                    : "text-white/50 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {menu.icon}
+                <span className="flex-1">{menu.label}</span>
+                {menu.badge ? (
+                  <span className="min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-gold-500 text-black text-[10px] font-black rounded-full">
+                    {menu.badge > 9 ? "9+" : menu.badge}
+                  </span>
+                ) : null}
+              </Link>
+            ))}
         </nav>
       </aside>
 
@@ -314,8 +337,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="font-body font-bold text-sm text-white">{now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
               <div className="font-body text-xs text-white/40 tabular-nums">{now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} WIB</div>
             </div>
-            {/* Announcement Bell Dropdown */}
-            <div className="relative">
+            {/* Announcement Bell Dropdown — hanya di desktop (md+); di mobile
+                notifikasi diakses lewat menu di bottom navigation. */}
+            <div className="relative hidden md:block">
               {notifOpen && <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />}
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
@@ -329,8 +353,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
               </button>
 
+              {/* Di mobile dropdown dibatasi selebar viewport (dikurangi
+                  padding header) agar tidak keluar layar; di desktop kembali
+                  ke ukuran tetap w-80. */}
               {notifOpen && (
-                <div className="absolute right-0 mt-2 w-80 z-50 bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+                <div className="absolute right-0 mt-2 z-50 w-[calc(100vw-4rem)] max-w-[20rem] md:w-80 bg-[#111] border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
                     <h3 className="font-bold text-sm text-white">Notifikasi</h3>
                     {notif.unreadCount > 0 && (
@@ -440,7 +467,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 p-8 pb-24 md:pb-8 relative z-10">
+        <div className="flex-1 p-4 pb-24 md:p-8 md:pb-8 relative z-10">
           {children}
         </div>
       </main>

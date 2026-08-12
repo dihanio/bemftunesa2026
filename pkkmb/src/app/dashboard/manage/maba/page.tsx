@@ -67,6 +67,8 @@ export default function DataMabaPage() {
   const [ketuaConfirmModal, setKetuaConfirmModal] = useState<{ show: boolean, mabaId: string, mabaName: string }>({ show: false, mabaId: '', mabaName: '' });
   const [unsetKetuaConfirmModal, setUnsetKetuaConfirmModal] = useState<{ show: boolean, mabaId: string, mabaName: string }>({ show: false, mabaId: '', mabaName: '' });
   const [resultModal, setResultModal] = useState<{ show: boolean, message: string, isError: boolean }>({ show: false, message: '', isError: false });
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean, id: string, name: string }>({ show: false, id: '', name: '' });
+  const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
   const [selectedMaba, setSelectedMaba] = useState<MabaData | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -167,6 +169,8 @@ export default function DataMabaPage() {
       if (e.key === "Escape") {
         setShowConfirmModal(false);
         setShowDetailModal(false);
+        setDeleteModal({ show: false, id: '', name: '' });
+        setBulkDeleteModal(false);
         if (resultModal.show) closeResultAndReload();
       }
       if (e.key === "Enter") {
@@ -250,7 +254,7 @@ export default function DataMabaPage() {
 
 
   const handleDeleteMaba = async (id: string, name: string) => {
-    if (!confirm(`Hapus data mahasiswa ${name}? Tindakan ini tidak dapat dibatalkan.`)) return;
+    setDeleteModal({ show: false, id: '', name: '' });
     try {
       const res = await apiFetch(`/pkkmb/admin/users/${id}`, {
         method: "DELETE",
@@ -282,7 +286,7 @@ export default function DataMabaPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Hapus ${selectedIds.length} data mahasiswa terpilih? Tindakan ini tidak dapat dibatalkan.`)) return;
+    setBulkDeleteModal(false);
     try {
       // Assuming backend supports DELETE /admin/users with body { ids } or we do Promise.all
       // For now, let's do Promise.all since there's no bulk endpoint defined yet
@@ -308,7 +312,7 @@ export default function DataMabaPage() {
         <div className="flex flex-wrap gap-3 w-full md:w-auto">
           {selectedIds.length > 0 && (
             <button 
-              onClick={handleBulkDelete}
+              onClick={() => setBulkDeleteModal(true)}
               className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-4 py-2 rounded-xl text-sm font-bold transition-colors"
             >
               Hapus Terpilih ({selectedIds.length})
@@ -465,7 +469,7 @@ export default function DataMabaPage() {
                       </button>
                       {hasSettingsManage && (
                         <button 
-                          onClick={() => handleDeleteMaba(maba._id, maba.name)}
+                          onClick={() => setDeleteModal({ show: true, id: maba._id, name: maba.name })}
                           className="text-red-500 hover:text-red-400 p-1.5 bg-red-500/5 hover:bg-red-500/20 rounded-lg transition-colors"
                           title="Hapus"
                         >
@@ -627,6 +631,58 @@ export default function DataMabaPage() {
                 className={`px-6 py-2 rounded-xl text-white font-bold text-sm transition-all shadow-lg ${resultModal.isError ? 'bg-red-600 hover:bg-red-500 shadow-red-900/50' : 'bg-gradient-to-r from-gold-500 to-amber-600 hover:from-gold-400 hover:to-amber-500 shadow-gold-900/50'}`}
               >
                 Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a1405] border border-red-500/30 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Hapus Mahasiswa</h3>
+            <p className="text-red-200/70 mb-6 text-sm">
+              Apakah Anda yakin ingin menghapus data <strong className="text-white">{deleteModal.name}</strong>? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setDeleteModal({ show: false, id: '', name: '' })}
+                className="px-4 py-2 rounded-xl text-red-200 hover:bg-red-900/30 transition-colors text-sm font-semibold"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={() => handleDeleteMaba(deleteModal.id, deleteModal.name)}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all shadow-lg shadow-red-900/50"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {bulkDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a1405] border border-red-500/30 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Hapus {selectedIds.length} Mahasiswa</h3>
+            <p className="text-red-200/70 mb-6 text-sm">
+              Apakah Anda yakin ingin menghapus <strong className="text-white">{selectedIds.length}</strong> data mahasiswa yang dipilih? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setBulkDeleteModal(false)}
+                className="px-4 py-2 rounded-xl text-red-200 hover:bg-red-900/30 transition-colors text-sm font-semibold"
+              >
+                Batal
+              </button>
+              <button 
+                onClick={handleBulkDelete}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition-all shadow-lg shadow-red-900/50"
+              >
+                Ya, Hapus Semua
               </button>
             </div>
           </div>

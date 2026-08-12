@@ -2,17 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Bell,
-  BellRing,
-  ClipboardList,
-  FileText,
-  Camera,
-  CalendarDays,
-  ArrowRight,
-  CheckCheck,
-  AlertTriangle,
-} from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import {
   notificationHref,
@@ -40,51 +29,60 @@ const timeAgo = (iso: string) => {
   });
 };
 
+// Badge tipe notifikasi: label teks + warna aksen (pengganti icon).
 function actionMeta(
   n: MabaNotification,
   href: string | null,
-): { icon: React.ReactNode; cls: string } {
+): { label: string; cls: string; dot: string } {
   const t = (n.actionType || "").toLowerCase();
   if (t === "quiz")
     return {
-      icon: <ClipboardList className="w-5 h-5" />,
+      label: "Quiz",
       cls: "bg-purple-500/10 border-purple-500/30 text-purple-300",
+      dot: "bg-purple-400",
     };
   if (t === "task")
     return {
-      icon: <FileText className="w-5 h-5" />,
+      label: "Tugas",
       cls: "bg-blue-500/10 border-blue-500/30 text-blue-300",
+      dot: "bg-blue-400",
     };
   if (t === "attendance")
     return {
-      icon: <Camera className="w-5 h-5" />,
+      label: "Presensi",
       cls: "bg-green-500/10 border-green-500/30 text-green-300",
+      dot: "bg-green-400",
     };
   if (t === "schedule")
     return {
-      icon: <CalendarDays className="w-5 h-5" />,
+      label: "Jadwal",
       cls: "bg-amber-500/10 border-amber-500/30 text-amber-300",
+      dot: "bg-amber-400",
     };
-  // Pengumuman lama (tanpa actionType): ikon disesuaikan hasil inferensi
-  // agar tidak tampil ikon umum padahal CTA mengarah ke halaman tertentu.
+  // Pengumuman lama (tanpa actionType): label disesuaikan hasil inferensi
+  // agar tidak tampil label umum padahal CTA mengarah ke halaman tertentu.
   if (href && href.includes("/presensi"))
     return {
-      icon: <Camera className="w-5 h-5" />,
+      label: "Presensi",
       cls: "bg-green-500/10 border-green-500/30 text-green-300",
+      dot: "bg-green-400",
     };
   if (href && href.includes("/jadwal"))
     return {
-      icon: <CalendarDays className="w-5 h-5" />,
+      label: "Jadwal",
       cls: "bg-amber-500/10 border-amber-500/30 text-amber-300",
+      dot: "bg-amber-400",
     };
   if (href && (href.includes("/assignments") || href.includes("/quiz")))
     return {
-      icon: <ClipboardList className="w-5 h-5" />,
+      label: "Aktivitas",
       cls: "bg-purple-500/10 border-purple-500/30 text-purple-300",
+      dot: "bg-purple-400",
     };
   return {
-    icon: <Bell className="w-5 h-5" />,
+    label: "Info",
     cls: "bg-white/5 border-white/15 text-white/50",
+    dot: "bg-white/40",
   };
 }
 
@@ -174,8 +172,12 @@ export default function NotifikasiPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2">
-            🔔 Notifikasi
+          <h1 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2.5">
+            <span
+              className="inline-block w-2.5 h-2.5 rounded-sm bg-gold-500"
+              aria-hidden="true"
+            />
+            Notifikasi
             {data.unreadCount > 0 && (
               <span className="text-xs font-black px-2 py-1 rounded-full bg-gold-500 text-black">
                 {data.unreadCount} baru
@@ -190,9 +192,8 @@ export default function NotifikasiPage() {
         {data.unreadCount > 0 && (
           <button
             onClick={() => void markRead()}
-            className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-gold-500 hover:text-gold-400 transition-colors"
+            className="shrink-0 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-gold-500 hover:text-gold-400 transition-colors"
           >
-            <CheckCheck className="w-4 h-4" />
             Tandai semua dibaca
           </button>
         )}
@@ -217,7 +218,10 @@ export default function NotifikasiPage() {
         </div>
       ) : error ? (
         <div className="rounded-2xl border border-red-500/25 bg-red-500/5 p-8 text-center">
-          <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+          <span
+            className="mx-auto mb-2 block w-2.5 h-2.5 rounded-full bg-red-400"
+            aria-hidden="true"
+          />
           <p className="text-white/70 text-sm">
             Gagal memuat notifikasi. Periksa koneksi lalu coba lagi.
           </p>
@@ -230,7 +234,11 @@ export default function NotifikasiPage() {
         </div>
       ) : data.items.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center">
-          <BellRing className="w-10 h-10 text-white/20 mx-auto mb-3" />
+          <div className="mx-auto mb-3 flex items-center justify-center gap-1.5" aria-hidden="true">
+            <span className="w-2.5 h-2.5 rounded-full bg-white/40" />
+            <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+            <span className="w-2.5 h-2.5 rounded-full bg-white/10" />
+          </div>
           <p className="text-white font-semibold">Tidak ada notifikasi</p>
           <p className="text-sm text-white/40 mt-1">
             Pengumuman dari panitia akan muncul di sini.
@@ -252,11 +260,15 @@ export default function NotifikasiPage() {
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${meta.cls}`}
+                  <span
+                    className={`shrink-0 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg border ${meta.cls}`}
                   >
-                    {meta.icon}
-                  </div>
+                    <span
+                      className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle ${meta.dot}`}
+                      aria-hidden="true"
+                    />
+                    {meta.label}
+                  </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <p
@@ -297,8 +309,8 @@ export default function NotifikasiPage() {
                           </button>
                         )}
                         {href && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gold-500">
-                            Buka <ArrowRight className="w-3 h-3" />
+                          <span className="text-[11px] font-bold text-gold-500">
+                            Buka &rarr;
                           </span>
                         )}
                       </div>

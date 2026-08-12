@@ -26,6 +26,16 @@ export default function EvaluatorPage() {
   const [score, setScore] = useState<number | "">("");
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReadOnly, setIsReadOnly] = useState(false);
+
+  useEffect(() => {
+    apiFetch("/auth/me").then(async (res) => {
+      if (!res.ok) return;
+      const json = await res.json();
+      const division = (json.data?.division || "").toLowerCase();
+      setIsReadOnly(division.includes("pendamping"));
+    });
+  }, []);
 
   const fetchSubmissions = useCallback(async () => {
     try {
@@ -177,7 +187,7 @@ export default function EvaluatorPage() {
                         onClick={() => { setSelectedItem(item); setScore(item.score || ""); setFeedback(item.feedback || ""); }}
                         className="px-3 py-1.5 bg-gold-500/10 text-gold-500 hover:bg-gold-500/20 rounded-lg transition-colors font-semibold"
                       >
-                        Nilai
+                        {isReadOnly ? "Detail" : "Nilai"}
                       </button>
                     </td>
                   </tr>
@@ -235,8 +245,9 @@ export default function EvaluatorPage() {
                     type="number" 
                     min="0" max="100"
                     value={score}
+                    disabled={isReadOnly}
                     onChange={(e) => setScore(Number(e.target.value))}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500/50 disabled:opacity-50"
                     placeholder="Masukkan nilai..."
                   />
                 </div>
@@ -244,8 +255,9 @@ export default function EvaluatorPage() {
                   <label className="block text-sm font-bold text-white mb-2">Feedback (Opsional)</label>
                   <textarea 
                     value={feedback}
+                    disabled={isReadOnly}
                     onChange={(e) => setFeedback(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500/50 min-h-[100px]"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-gold-500/50 min-h-[100px] disabled:opacity-50"
                     placeholder="Tuliskan masukan untuk tugas ini..."
                   />
                 </div>
@@ -257,15 +269,17 @@ export default function EvaluatorPage() {
                 onClick={() => setSelectedItem(null)}
                 className="px-5 py-2.5 rounded-xl text-white/70 hover:bg-white/10 font-semibold transition-colors text-sm"
               >
-                Batal
+                {isReadOnly ? "Tutup" : "Batal"}
               </button>
-              <button 
-                onClick={handleGrade}
-                disabled={isSubmitting || score === ""}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-gold-500 to-amber-600 hover:from-gold-400 hover:to-amber-500 text-white font-bold text-sm disabled:opacity-50 transition-all shadow-lg shadow-gold-500/20"
-              >
-                {isSubmitting ? "Menyimpan..." : <><Check className="w-4 h-4" /> Simpan Nilai</>}
-              </button>
+              {!isReadOnly && (
+                <button 
+                  onClick={handleGrade}
+                  disabled={isSubmitting || score === ""}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-gold-500 to-amber-600 hover:from-gold-400 hover:to-amber-500 text-white font-bold text-sm disabled:opacity-50 transition-all shadow-lg shadow-gold-500/20"
+                >
+                  {isSubmitting ? "Menyimpan..." : <><Check className="w-4 h-4" /> Simpan Nilai</>}
+                </button>
+              )}
             </div>
           </div>
         </div>

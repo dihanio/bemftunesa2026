@@ -214,7 +214,9 @@ function buildService(
     {} as never,
     {} as never,
     {} as never,
+    {} as never,
     studyProgramModel as never,
+    {} as never,
     {} as never,
     {} as never,
   );

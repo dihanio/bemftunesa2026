@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Clock, MapPin, Search, Fingerprint, AlertCircle, Camera, X, User, Lock, FileText, XCircle } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -58,6 +58,48 @@ export default function PresensiMabaPage() {
     time: string;
   } | null>(null);
 
+  // Koordinat GPS utk watermark di tampilan kamera (bukti lokasi saat selfie).
+  const [coords, setCoords] = useState<{ lat: string; lng: string } | null>(null);
+  const [gpsState, setGpsState] = useState<"loading" | "ok" | "error">("loading");
+
+  // Ambil posisi GPS yang andal: dua permintaan paralel — akurasi tinggi
+  // (lebih presisi) dan akurasi normal (lebih cepat, cocok di dalam ruangan);
+  // yang pertama berhasil dipakai. resolve(null) bila keduanya gagal.
+  const fetchPosition = useCallback((): Promise<{
+    lat: string;
+    lng: string;
+  } | null> => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve(null);
+        return;
+      }
+      let settled = false;
+      const done = (pos?: GeolocationPosition) => {
+        if (settled) return;
+        settled = true;
+        resolve(
+          pos
+            ? {
+                lat: pos.coords.latitude.toFixed(5),
+                lng: pos.coords.longitude.toFixed(5),
+              }
+            : null,
+        );
+      };
+      navigator.geolocation.getCurrentPosition(
+        (pos) => done(pos),
+        () => done(),
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 },
+      );
+      navigator.geolocation.getCurrentPosition(
+        (pos) => done(pos),
+        () => done(),
+        { enableHighAccuracy: false, timeout: 6000, maximumAge: 30000 },
+      );
+    });
+  }, []);
+
   // Izin / Sakit
   const [izinOpen, setIzinOpen] = useState(false);
   const [izinType, setIzinType] = useState<"Izin" | "Sakit">("Izin");
@@ -113,6 +155,17 @@ export default function PresensiMabaPage() {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       streamRef.current = stream;
       setCameraOpen(true);
+      // Ambil koordinat GPS utk watermark selfie — dengan fallback akurasi
+      // normal agar lebih andal (di dalam ruangan / sinyal lemah).
+      setCoords(null);
+      setGpsState("loading");
+      const pos = await fetchPosition();
+      if (pos) {
+        setCoords(pos);
+        setGpsState("ok");
+      } else {
+        setGpsState("error");
+      }
       // video element sudah render via effect
     } catch {
       // UX: error kamera harus terlihat meski modal tidak terbuka
@@ -150,11 +203,51 @@ export default function PresensiMabaPage() {
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0);
-    setPhotoUrl(canvas.toDataURL("image/jpeg", 0.8));
+    // Reset transform supaya teks watermark TIDAK ikut ter-mirror.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // Bakar metadata ke DALAM foto (hari/tanggal real-time, lokasi acara,
+    // posisi GPS user) — ikut terkirim saat selfie di-upload.
+    burnWatermark(ctx, canvas.width);
+    setPhotoUrl(canvas.toDataURL("image/jpeg", 0.85));
   };
 
   const retake = () => {
     setPhotoUrl(null);
+  };
+
+  // Bakar teks watermark langsung ke canvas foto (anti-fraud / bukti visual).
+  // Ukuran font diskalakan relatif lebar canvas (biasanya 1280x720).
+  const burnWatermark = (ctx: CanvasRenderingContext2D, width: number) => {
+    const scale = Math.max(1, width / 720);
+    const pad = 14 * scale;
+    const lineH = 24 * scale;
+    const fontSize = 13 * scale;
+    const s = selectedSession;
+    // Timestamp DIAMBIL saat capture (bukan state now yang refresh tiap 30s)
+    // agar bukti waktu di foto akurat.
+    const ts = Date.now();
+    const lines = [
+      `${formatWIB(ts, { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · ${formatWIB(ts, { hour: "2-digit", minute: "2-digit" })}`,
+      `Acara: ${s?.location || "Lokasi belum ditentukan"}`,
+      coords
+        ? `Posisi: ${coords.lat}, ${coords.lng}`
+        : gpsState === "error"
+          ? "Posisi: tidak tersedia"
+          : "Posisi: mengambil koordinat...",
+    ];
+    ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
+    ctx.textBaseline = "top";
+    const textW = Math.max(...lines.map((l) => ctx.measureText(l).width));
+    const boxH = pad * 2 + lines.length * lineH;
+    const boxX = pad * 0.5;
+    const boxY = pad * 0.5;
+    // Box semi-transparan agar teks terbaca di foto terang.
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(boxX, boxY, textW + pad * 2, boxH);
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    lines.forEach((line, i) => {
+      ctx.fillText(line, boxX + pad, boxY + pad + i * lineH);
+    });
   };
 
   useEffect(() => {
@@ -189,10 +282,18 @@ export default function PresensiMabaPage() {
       }
       const fileUrl = uploadJson.fileUrl;
 
+      // Ambil posisi GPS TERBARU tepat sebelum check-in (lebih akurat daripada
+      // saat kamera dibuka — user mungkin sudah berpindah). Fallback ke
+      // koordinat yang sudah ada jika posisi baru gagal didapat.
+      const freshPos = await fetchPosition();
+      const pos = freshPos || coords;
+
       const body = JSON.stringify({
         sessionId: selectedSessionId,
         method: "SELF_CHECKIN",
         photoUrl: fileUrl,
+        // Kirim posisi GPS user (opsional) — terekam di record presensi.
+        ...(pos ? { lat: Number(pos.lat), lng: Number(pos.lng) } : {}),
       });
 
       // Retry 3x utk gagal jaringan/5xx, backoff 1s/2s/3s
@@ -320,6 +421,27 @@ export default function PresensiMabaPage() {
     : false;
   const canCheckIn = !!selectedSession && periodStatus === "aktif" && !alreadyAttended;
 
+  // Watermark metadata di atas tampilan kamera: hari/tanggal real-time,
+  // lokasi sesi, dan koordinat GPS — sebagai bukti saat pengambilan selfie.
+  const cameraWatermark = (s: Session) => (
+    <div className="absolute top-2.5 left-2.5 right-2.5 pointer-events-none">
+      <div className="bg-black/70 backdrop-blur-sm border border-white/15 rounded-xl px-3 py-2 space-y-0.5 shadow-lg">
+        <p className="text-[11px] font-bold text-gold-400 uppercase tracking-wider">
+          {formatWIB(now, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          <span className="text-white/80 normal-case tracking-normal"> · {formatWIB(now, { hour: "2-digit", minute: "2-digit" })}</span>
+        </p>
+        <p className="text-[11px] text-white/85 truncate">Acara: {s.location || "Lokasi belum ditentukan"}</p>
+        <p className="text-[10px] font-mono text-white/55">
+          {coords
+            ? `Posisi: ${coords.lat}, ${coords.lng}`
+            : gpsState === "error"
+              ? "Posisi: tidak tersedia"
+              : "Posisi: mengambil koordinat..."}
+        </p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
@@ -423,7 +545,7 @@ export default function PresensiMabaPage() {
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-white/40">
                         <span className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
-                          {formatWIB(s.startTime, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} WIB
+                          {formatWIB(s.startTime, { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {s.location && (
                           <span className="flex items-center gap-1.5">
@@ -522,7 +644,7 @@ export default function PresensiMabaPage() {
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/50">
                     <span className="flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-gold-400/70" />
-                      {formatWIB(s.date, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })} WIB
+                      {formatWIB(s.date, { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-gold-400/70" />
@@ -589,6 +711,7 @@ export default function PresensiMabaPage() {
                 <>
                   <div className="aspect-[4/3] bg-black rounded-2xl overflow-hidden border border-white/10 relative">
                     <video ref={videoRef} className="w-full h-full object-cover -scale-x-100" playsInline muted autoPlay />
+                    {selectedSession && cameraWatermark(selectedSession)}
                     {!cameraOpen && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/40">
                         <Camera className="w-10 h-10" />
@@ -599,15 +722,31 @@ export default function PresensiMabaPage() {
                   <button
                     type="button"
                     onClick={capture}
-                    className="mt-4 w-full px-6 py-3 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl flex items-center justify-center gap-2"
+                    disabled={gpsState === "loading"}
+                    className="mt-4 w-full px-6 py-3 bg-gold-500 hover:bg-gold-400 text-black font-bold rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <Camera className="w-5 h-5" /> Ambil Foto
+                    {gpsState === "loading" ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                        Menunggu posisi GPS...
+                      </>
+                    ) : (
+                      <><Camera className="w-5 h-5" /> Ambil Foto</>
+                    )}
                   </button>
+                  {gpsState === "loading" && (
+                    <p className="text-center text-xs text-white/40 mt-2">
+                      Posisi GPS kamu sedang diambil untuk dibakar ke foto.
+                    </p>
+                  )}
                 </>
               ) : (
                 <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photoUrl} alt="Selfie" className="aspect-[4/3] w-full object-cover rounded-2xl border border-white/10" />
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photoUrl} alt="Selfie" className="aspect-[4/3] w-full object-cover rounded-2xl border border-white/10" />
+                    {selectedSession && cameraWatermark(selectedSession)}
+                  </div>
                   <div className="flex gap-3 mt-4">
                     <button
                       type="button"
