@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Loader2, Wand2, Star, StarOff, Eye, Trash2, Award, Accessibility } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import { Loader2, Wand2, Star, StarOff, Eye, Trash2, Award, Accessibility, Download } from "lucide-react";
+import { API_URL, apiFetch } from "@/lib/api";
 
 interface MabaData {
   _id: string;
@@ -301,6 +301,30 @@ export default function DataMabaPage() {
     }
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+  const downloadExcel = async () => {
+    setIsDownloading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/export/maba`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Gagal mengunduh data");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data-maba-pkkmb-full.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      setResultModal({ show: true, message: (err as Error).message || "Gagal mengunduh data", isError: true });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -336,6 +360,16 @@ export default function DataMabaPage() {
             >
               {isGrouping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
               Bagi Gugus Otomatis
+            </button>
+          )}
+          {hasSettingsManage && (
+            <button 
+              onClick={downloadExcel}
+              disabled={isDownloading}
+              className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
+            >
+              {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Download Excel
             </button>
           )}
         </div>

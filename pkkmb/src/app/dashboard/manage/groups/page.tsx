@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, RefreshCw, X, AlertCircle, ChevronDown, Check } from 'lucide-react';
+import { Users, RefreshCw, X, AlertCircle, ChevronDown, Check, Download, Loader2 } from 'lucide-react';
 import { API_URL, apiFetch } from "@/lib/api";
 import toast from 'react-hot-toast';
 
@@ -118,6 +118,31 @@ export default function ManageGroupsPage() {
     }
   }, []);
 
+  const [isDownloading, setIsDownloading] = useState(false);
+  const downloadExcel = async () => {
+    setIsDownloading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/v1/pkkmb/admin/export/gugus`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Gagal mengunduh data gugus");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data-gugus-pkkmb-full.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      toast.error("Gagal mengunduh data gugus");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchGroups();
@@ -148,6 +173,14 @@ export default function ManageGroupsPage() {
         </div>
         
         <div className="flex gap-3">
+          <button 
+            onClick={downloadExcel}
+            disabled={isDownloading}
+            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-colors flex items-center gap-2 disabled:opacity-50"
+          >
+            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Download Excel
+          </button>
           <button 
             onClick={fetchGroups}
             className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-xl transition-colors flex items-center gap-2"

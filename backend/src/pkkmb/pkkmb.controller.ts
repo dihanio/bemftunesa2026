@@ -1262,6 +1262,32 @@ export class PkkmbController {
     return { success: true, ...result };
   }
 
+  @Get('admin/export/maba')
+  @RequiredPermissions(PkkmbPermission.GROUP_READ_ALL)
+  @ApiOperation({
+    summary: 'Export seluruh data maba (full, tanpa filter angkatan) ke Excel',
+  })
+  async exportMabaExcel() {
+    const { buffer, filename } = await this.pkkmbService.exportMabaExcel();
+    return new StreamableFile(buffer, {
+      type: XLSX_MIME,
+      disposition: `attachment; filename="${filename}"`,
+    });
+  }
+
+  @Get('admin/export/gugus')
+  @RequiredPermissions(PkkmbPermission.GROUP_READ_ALL)
+  @ApiOperation({
+    summary: 'Export seluruh data gugus beserta anggotanya ke Excel',
+  })
+  async exportGugusExcel() {
+    const { buffer, filename } = await this.pkkmbService.exportGugusExcel();
+    return new StreamableFile(buffer, {
+      type: XLSX_MIME,
+      disposition: `attachment; filename="${filename}"`,
+    });
+  }
+
   @Get('admin/users')
   @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
   @ApiOperation({ summary: 'Melihat semua user (Super Admin / Admin PKKMB)' })

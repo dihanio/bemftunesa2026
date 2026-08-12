@@ -10,6 +10,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, Query, FilterQuery } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import * as XLSX from 'xlsx';
 import Redis from 'ioredis';
 
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -3759,6 +3760,195 @@ export class PkkmbService {
     }
 
     return buildPaginationResponse(sanitizedData, total, paginationDto);
+  }
+
+  /**
+   * Export SELURUH data maba (tanpa filter angkatan, tanpa pagination) ke Excel.
+   * Kolom mencakup identitas, gugus, status onboarding, & info kesehatan/disabilitas.
+   */
+  async exportMabaExcel(): Promise<{ buffer: Buffer; filename: string }> {
+    const roleMaba = await this.roleModel.findOne({ slug: 'user' });
+
+    let rows: Array<Record<string, unknown>> = [];
+    let ketuaSet = new Set<string>();
+    let healthByStudent = new Map<string, { isDisabled?: boolean; disabilityDescription?: string }>();
+
+    if (roleMaba) {
+      const users = await this.userModel
+        .find({ role: roleMaba._id, deletedAt: null })
+        .populate('pkkmbGroup', 'nomor name ketuaGugusId')
+        .lean()
+        .exec();
+
+      // Info ketua gugus (maba yang menjadi ketua gugusnya).
+      const groups = await this.groupModel
+        .find({ deletedAt: null, ketuaGugusId: { $ne: null } })
+        .select('ketuaGugusId')
+        .lean()
+        .exec();
+      ketuaSet = new Set(
+        groups.map((g) => String((g.ketuaGugusId as Types.ObjectId)?.toString?.() ?? g.ketuaGugusId)),
+      );
+
+      // Data kesehatan (disabilitas) — batch query 1x.
+      const studentIds = users.map((u) => (u as { _id: Types.ObjectId })._id);
+      const healthProfiles = studentIds.length
+        ? await this.healthProfileModel
+            .find({ studentId: { $in: studentIds } })
+            .select('studentId isDisabled disabilityDescription')
+            .lean()
+            .exec()
+        : [];
+      healthByStudent = new Map(
+        healthProfiles.map((p) => [
+          String((p.studentId as { toString(): string }).toString()),
+          p,
+        ]),
+      );
+
+      rows = users.map((u) => {
+        const obj = u as unknown as Record<string, unknown>;
+        const group = obj.pkkmbGroup as
+          | { nomor?: number; name?: string; ketuaGugusId?: Types.ObjectId | string }
+          | undefined;
+        const health = healthByStudent.get(String(obj._id as unknown as string));
+        return {
+          NIM: obj.nim ?? '',
+          Nama: obj.name ?? '',
+          Email: obj.email ?? '',
+          'Program Studi': obj.studyProgram ?? '',
+          Gender: obj.gender === 'P' ? 'Perempuan' : obj.gender === 'L' ? 'Laki-laki' : '',
+          Telepon: obj.phone ?? '',
+          Angkatan: obj.batch ?? '',
+          Gugus: group?.name ?? 'Belum Dibagi',
+          'Nomor Gugus': group?.nomor ?? '',
+          'Status Onboarding': obj.isOnboarded ? 'Lengkap' : 'Pending',
+          'Ketua Gugus': ketuaSet.has(String(obj._id as unknown as string)) ? 'Ya' : 'Tidak',
+          Disabilitas: health?.isDisabled ? 'Ya' : 'Tidak',
+          'Deskripsi Disabilitas': health?.disabilityDescription ?? '',
+          'Kontak Darurat': obj.emergencyContact ?? '',
+          'Ukuran Baju': obj.shirtSize ?? '',
+        };
+      });
+    }
+
+    const aoa: (string | number)[][] = [
+      ['NIM', 'Nama', 'Email', 'Program Studi', 'Gender', 'Telepon', 'Angkatan', 'Gugus', 'Nomor Gugus', 'Status Onboarding', 'Ketua Gugus', 'Disabilitas', 'Deskripsi Disabilitas', 'Kontak Darurat', 'Ukuran Baju'],
+      ...rows.map(
+        (r): (string | number)[] => [
+          String(r['NIM'] ?? ''),
+          String(r['Nama'] ?? ''),
+          String(r['Email'] ?? ''),
+          String(r['Program Studi'] ?? ''),
+          String(r['Gender'] ?? ''),
+          String(r['Telepon'] ?? ''),
+          String(r['Angkatan'] ?? ''),
+          String(r['Gugus'] ?? ''),
+          String(r['Nomor Gugus'] ?? ''),
+          String(r['Status Onboarding'] ?? ''),
+          String(r['Ketua Gugus'] ?? ''),
+          String(r['Disabilitas'] ?? ''),
+          String(r['Deskripsi Disabilitas'] ?? ''),
+          String(r['Kontak Darurat'] ?? ''),
+          String(r['Ukuran Baju'] ?? ''),
+        ],
+      ),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Maba');
+    ws['!cols'] = [
+      { wch: 18 }, { wch: 32 }, { wch: 34 }, { wch: 28 }, { wch: 12 },
+      { wch: 18 }, { wch: 10 }, { wch: 26 }, { wch: 12 }, { wch: 16 },
+      { wch: 12 }, { wch: 12 }, { wch: 40 }, { wch: 20 }, { wch: 12 },
+    ];
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+    return { buffer, filename: 'data-maba-pkkmb-full.xlsx' };
+  }
+
+  /**
+   * Export SELURUH gugus beserta anggota (maba) di tiap gugus ke Excel.
+   */
+  async exportGugusExcel(): Promise<{ buffer: Buffer; filename: string }> {
+    const roleMaba = await this.roleModel.findOne({ slug: 'user' });
+
+    const gugusList = await this.groupModel
+      .find({ deletedAt: null })
+      .select('nomor name kapasitas pendampingId pendampingName pendampingWhatsApp pendampingEmail ketuaGugusId totalPoints status')
+      .populate('pendampingId', 'name email division position phone avatar')
+      .populate('ketuaGugusId', 'name nim email')
+      .sort({ nomor: 1 })
+      .lean()
+      .exec();
+
+    const memberRows: (string | number)[][] = [];
+    const summaryRows: (string | number)[][] = [];
+
+    for (const g of gugusList) {
+      const pendamping = (g.pendampingId as unknown as Record<string, unknown> | undefined)?.name as string | undefined;
+      const ketua = (g.ketuaGugusId as unknown as Record<string, unknown> | undefined)?.name as string | undefined;
+
+      let members: Array<Record<string, unknown>> = [];
+      if (roleMaba) {
+        members = await this.userModel
+          .find({ pkkmbGroup: g._id, deletedAt: null })
+          .select('name nim email studyProgram gender phone')
+          .sort({ name: 1 })
+          .lean()
+          .exec();
+      }
+
+      summaryRows.push([
+        g.nomor,
+        g.name,
+        g.kapasitas,
+        members.length,
+        pendamping ?? g.pendampingName ?? '',
+        g.pendampingWhatsApp ?? '',
+        g.pendampingEmail ?? '',
+        ketua ?? '',
+        g.status,
+        g.totalPoints ?? 0,
+      ]);
+
+      for (const m of members) {
+        memberRows.push([
+          g.nomor,
+          g.name,
+          String(m.name ?? ''),
+          String(m.nim ?? ''),
+          String(m.email ?? ''),
+          String(m.studyProgram ?? ''),
+          m.gender === 'P' ? 'Perempuan' : m.gender === 'L' ? 'Laki-laki' : '',
+          String(m.phone ?? ''),
+        ]);
+      }
+    }
+
+    const summaryWs = XLSX.utils.aoa_to_sheet([
+      ['Nomor', 'Nama Gugus', 'Kapasitas', 'Total Anggota', 'Pendamping', 'WA Pendamping', 'Email Pendamping', 'Ketua Gugus', 'Status', 'Total Poin'],
+      ...summaryRows,
+    ]);
+    summaryWs['!cols'] = [
+      { wch: 8 }, { wch: 30 }, { wch: 10 }, { wch: 13 }, { wch: 26 },
+      { wch: 22 }, { wch: 30 }, { wch: 26 }, { wch: 10 }, { wch: 12 },
+    ];
+
+    const memberWs = XLSX.utils.aoa_to_sheet([
+      ['Nomor Gugus', 'Nama Gugus', 'Nama Maba', 'NIM', 'Email', 'Program Studi', 'Gender', 'Telepon'],
+      ...memberRows,
+    ]);
+    memberWs['!cols'] = [
+      { wch: 12 }, { wch: 30 }, { wch: 32 }, { wch: 18 }, { wch: 34 },
+      { wch: 28 }, { wch: 12 }, { wch: 18 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Ringkasan Gugus');
+    XLSX.utils.book_append_sheet(wb, memberWs, 'Anggota Gugus');
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+    return { buffer, filename: 'data-gugus-pkkmb-full.xlsx' };
   }
 
   async getIncidents(
