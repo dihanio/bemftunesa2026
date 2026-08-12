@@ -41,5 +41,8 @@ export const PkkmbPointLogSchema = SchemaFactory.createForClass(PkkmbPointLog);
 PkkmbPointLogSchema.index({ groupId: 1, deletedAt: 1 });
 PkkmbPointLogSchema.index(
   { userId: 1, qrPointId: 1 },
-  { unique: true, partialFilterExpression: { qrPointId: { $type: 'objectId' } } },
+  {
+    unique: true,
+    partialFilterExpression: { qrPointId: { $type: 'objectId' } },
+  },
 );

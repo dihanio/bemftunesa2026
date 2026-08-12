@@ -166,13 +166,9 @@ describe('gugus-assignment — pickBestGugus', () => {
       ['g3', { prodiN: 1, sameGenderProdiN: 1, genderGapN: 0, totalN: 5 }],
     ]);
     // random → 0 : pilih kandidat pertama di antara yang tie.
-    expect(
-      pickBestGugus([g1, g2, g3], same, () => 0)?.id,
-    ).toBe('g1');
+    expect(pickBestGugus([g1, g2, g3], same, () => 0)?.id).toBe('g1');
     // random mendekati 1 : pilih kandidat terakhir di antara yang tie.
-    expect(
-      pickBestGugus([g1, g2, g3], same, () => 0.999)?.id,
-    ).toBe('g3');
+    expect(pickBestGugus([g1, g2, g3], same, () => 0.999)?.id).toBe('g3');
   });
 
   it('skor minimum tetap dihormati walau ada random (tidak keluar dari gugus terbaik)', () => {

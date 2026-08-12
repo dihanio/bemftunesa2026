@@ -17,11 +17,36 @@ const PENDAMPING = {
 };
 
 const TEST_MABA = [
-  { name: 'Tes Maba 01', nim: '2699999101', gender: 'L', prodi: 'S1 Teknik Informatika' },
-  { name: 'Tes Maba 02', nim: '2699999102', gender: 'P', prodi: 'S1 Teknik Informatika' },
-  { name: 'Tes Maba 03', nim: '2699999103', gender: 'L', prodi: 'S1 Teknik Mesin' },
-  { name: 'Tes Maba 04', nim: '2699999104', gender: 'P', prodi: 'S1 Teknik Elektro' },
-  { name: 'Tes Maba 05', nim: '2699999105', gender: 'L', prodi: 'S1 Teknik Sipil' },
+  {
+    name: 'Tes Maba 01',
+    nim: '2699999101',
+    gender: 'L',
+    prodi: 'S1 Teknik Informatika',
+  },
+  {
+    name: 'Tes Maba 02',
+    nim: '2699999102',
+    gender: 'P',
+    prodi: 'S1 Teknik Informatika',
+  },
+  {
+    name: 'Tes Maba 03',
+    nim: '2699999103',
+    gender: 'L',
+    prodi: 'S1 Teknik Mesin',
+  },
+  {
+    name: 'Tes Maba 04',
+    nim: '2699999104',
+    gender: 'P',
+    prodi: 'S1 Teknik Elektro',
+  },
+  {
+    name: 'Tes Maba 05',
+    nim: '2699999105',
+    gender: 'L',
+    prodi: 'S1 Teknik Sipil',
+  },
 ];
 
 async function seed() {
@@ -32,7 +57,9 @@ async function seed() {
   const panitiaRole = await db.collection('roles').findOne({ slug: 'panitia' });
   const mabaRole = await db.collection('roles').findOne({ slug: 'user' });
   if (!panitiaRole || !mabaRole) {
-    throw new Error('Role panitia/user tidak ditemukan. Jalankan seed-rbac dulu.');
+    throw new Error(
+      'Role panitia/user tidak ditemukan. Jalankan seed-rbac dulu.',
+    );
   }
 
   const passwordPendamping = await bcrypt.hash('Pendamping2026!', 10);
@@ -44,7 +71,9 @@ async function seed() {
   let pendId: string;
   if (pendUser) {
     pendId = pendUser._id.toString();
-    console.log(`ℹ️  User pendamping ${pendEmail} sudah ada, update role → panitia.`);
+    console.log(
+      `ℹ️  User pendamping ${pendEmail} sudah ada, update role → panitia.`,
+    );
   } else {
     const res = await db.collection('users').insertOne({
       name: PENDAMPING.name,
@@ -92,14 +121,23 @@ async function seed() {
   // Hubungkan user pendamping ke gugus (dipakai otorisasi set-ketua & maba list).
   await db.collection('users').updateOne(
     { _id: new Types.ObjectId(pendId) },
-    { $set: { pkkmbGroup: gugusId, role: panitiaRole._id, division: 'Sie Pendamping' } },
+    {
+      $set: {
+        pkkmbGroup: gugusId,
+        role: panitiaRole._id,
+        division: 'Sie Pendamping',
+      },
+    },
   );
 
   // ── 3. Maba anggota gugus ─────────────────────────────────────────────────
   const mabaIds: string[] = [];
   for (const m of TEST_MABA) {
     const email = `${m.nim}@mhs.unesa.ac.id`;
-    const existing = await db.collection('users').findOne({ email });
+    const existing = (await db.collection('users').findOne({ email })) as {
+      _id: Types.ObjectId;
+      createdAt?: Date;
+    } | null;
     const doc = {
       name: m.name,
       email,
@@ -121,7 +159,9 @@ async function seed() {
       updatedAt: new Date(),
     };
     if (existing) {
-      await db.collection('users').updateOne({ _id: existing._id }, { $set: doc });
+      await db
+        .collection('users')
+        .updateOne({ _id: existing._id }, { $set: doc });
       mabaIds.push(existing._id.toString());
     } else {
       const res = await db.collection('users').insertOne(doc);
@@ -132,14 +172,18 @@ async function seed() {
 
   // ── 4. Penetapan Ketua Gugus (maba pertama) ───────────────────────────────
   const ketuaId = mabaIds[0];
-  await db.collection('pkkmb_gugus').updateOne(
-    { _id: gugusId },
-    { $set: { ketuaGugusId: new Types.ObjectId(ketuaId) } },
-  );
-  await db.collection('users').updateOne(
-    { _id: new Types.ObjectId(ketuaId) },
-    { $set: { isKetuaGugus: true } },
-  );
+  await db
+    .collection('pkkmb_gugus')
+    .updateOne(
+      { _id: gugusId },
+      { $set: { ketuaGugusId: new Types.ObjectId(ketuaId) } },
+    );
+  await db
+    .collection('users')
+    .updateOne(
+      { _id: new Types.ObjectId(ketuaId) },
+      { $set: { isKetuaGugus: true } },
+    );
   console.log(`✅ Ketua Gugus Tes ditetapkan (${TEST_MABA[0].name}).`);
 
   // ── 5. Sesi & Record Presensi (termasuk izin/sakit pending) ──────────────
@@ -172,7 +216,10 @@ async function seed() {
     const status = statusPlan[i];
     const isIzin = status === 'Izin' || status === 'Sakit';
     await db.collection('pkkmb_attendance_records').findOneAndUpdate(
-      { session: new Types.ObjectId(sessionId), participant: new Types.ObjectId(mabaIds[i]) },
+      {
+        session: new Types.ObjectId(sessionId),
+        participant: new Types.ObjectId(mabaIds[i]),
+      },
       {
         $set: {
           session: new Types.ObjectId(sessionId),
@@ -194,15 +241,22 @@ async function seed() {
       { upsert: true },
     );
   }
-  console.log('✅ Presensi sesi tes dibuat (Hadir, Telat, Izin & Sakit PENDING).');
+  console.log(
+    '✅ Presensi sesi tes dibuat (Hadir, Telat, Izin & Sakit PENDING).',
+  );
 
   // ── 6. Penugasan khusus gugus + pengumpulan ───────────────────────────────
   const task = await db.collection('pkkmbtasks').findOneAndUpdate(
-    { title: 'Tes Tugas Gugus — Profil Singkat', targetType: 'GROUP', targetIds: [gugusId] },
+    {
+      title: 'Tes Tugas Gugus — Profil Singkat',
+      targetType: 'GROUP',
+      targetIds: [gugusId],
+    },
     {
       $set: {
         title: 'Tes Tugas Gugus — Profil Singkat',
-        description: 'Buat profil singkat gugus (TASK untuk uji coba pendamping).',
+        description:
+          'Buat profil singkat gugus (TASK untuk uji coba pendamping).',
         startTime: new Date(),
         deadline: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         assignmentType: 'TASK',

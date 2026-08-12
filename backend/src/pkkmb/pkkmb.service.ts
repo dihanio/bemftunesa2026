@@ -1532,9 +1532,7 @@ export class PkkmbService {
       ? parseWibDate(dto.endTime)
       : new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
     if (endTime <= startTime) {
-      throw new BadRequestException(
-        'Waktu selesai harus setelah waktu mulai.',
-      );
+      throw new BadRequestException('Waktu selesai harus setelah waktu mulai.');
     }
 
     const code = `PKKMBQ_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -1607,9 +1605,7 @@ export class PkkmbService {
       .lean()
       .exec();
     if (already) {
-      throw new BadRequestException(
-        'Kamu sudah mengklaim poin dari QR ini.',
-      );
+      throw new BadRequestException('Kamu sudah mengklaim poin dari QR ini.');
     }
 
     const user = await this.userModel.findById(userId).lean().exec();
@@ -1631,9 +1627,7 @@ export class PkkmbService {
       // E11000 duplicate key: race condition dua klaim paralel.
       const codeErr = (err as { code?: number })?.code;
       if (codeErr !== 11000) throw err;
-      throw new BadRequestException(
-        'Kamu sudah mengklaim poin dari QR ini.',
-      );
+      throw new BadRequestException('Kamu sudah mengklaim poin dari QR ini.');
     }
 
     await this.invalidateCachePatterns('pkkmb:points:*');
