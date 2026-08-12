@@ -100,7 +100,8 @@ export default function PkkmbAuditPage() {
   }, []);
 
   useEffect(() => {
-    fetchLogs(page);
+    const t = setTimeout(() => fetchLogs(page), 0);
+    return () => clearTimeout(t);
   }, [fetchLogs, page]);
 
   // filter aksi client-side pada halaman aktif

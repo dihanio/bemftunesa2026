@@ -156,7 +156,8 @@ export default function PkkmbMabaPage() {
 
   // Reset ke halaman 1 saat filter/search berubah
   useEffect(() => {
-    setPage(1);
+    const t = setTimeout(() => setPage(1), 0);
+    return () => clearTimeout(t);
   }, [search, selectedKelompok, selectedProdi, selectedOnboarding]);
 
   return (
