@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           port: ${{ secrets.VPS_SSH_PORT || '22' }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "${{ secrets.DEPLOY_PATH }}/backend/dump/*.xlsx"
+          source: "${{ secrets.DEPLOY_PATH }}/backend/dump/maba-pkkmb-full.xlsx,${{ secrets.DEPLOY_PATH }}/backend/dump/gugus-pkkmb-full.xlsx"
           target: "./dump/"
 
       - name: Upload hasil dump sebagai artifact
