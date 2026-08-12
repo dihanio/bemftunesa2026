@@ -81,7 +81,7 @@ async function main() {
   const db = conn.connection.db;
   if (!db) throw new Error('Database connection failed.');
 
-  const outDir = path.resolve(__dirname, '../../../dump');
+  const outDir = path.resolve('dump');
   fs.mkdirSync(outDir, { recursive: true });
 
   // ── Role maba (slug 'user', fallback 'maba') ─────────────────────────────
