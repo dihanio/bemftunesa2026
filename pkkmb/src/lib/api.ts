@@ -54,3 +54,44 @@ export async function apiFetch(
   }
   return res;
 }
+
+// ─── Maintenance mode ──────────────────────────────────────────────────────
+export interface MaintenanceStatus {
+  enabled: boolean;
+  message: string;
+}
+
+export async function getMaintenance(): Promise<MaintenanceStatus> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/settings/public/maintenance`);
+    const json = (await res.json()) as {
+      success?: boolean;
+      data?: MaintenanceStatus;
+    };
+    return {
+      enabled: json?.data?.enabled === true,
+      message: json?.data?.message || "",
+    };
+  } catch {
+    return { enabled: false, message: "" };
+  }
+}
+
+export async function setMaintenance(
+  enabled: boolean,
+  message?: string,
+): Promise<MaintenanceStatus> {
+  const res = await apiFetch("/settings/admin/maintenance", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled, message: message || "" }),
+  });
+  const json = (await res.json()) as {
+    success?: boolean;
+    data?: MaintenanceStatus;
+  };
+  return {
+    enabled: json?.data?.enabled === true,
+    message: json?.data?.message || "",
+  };
+}

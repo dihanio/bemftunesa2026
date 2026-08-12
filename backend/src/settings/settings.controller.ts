@@ -9,6 +9,9 @@ import {
 } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { RequiredPermissions } from '../auth/decorators/required-permission.decorator';
+import { PkkmbPermission } from '../common/auth/pkkmb-permissions';
 import { UpdateSettingDto, BulkUpdateSettingsDto } from './dto/setting.dto';
 
 @Controller('settings')
@@ -79,6 +82,49 @@ export class SettingsController {
     return {
       success: true,
       data,
+    };
+  }
+
+  // MAINTENANCE MODE
+
+  @Get('public/maintenance')
+  async getPublicMaintenance() {
+    const setting = await this.settingsService.findByKey('maintenance_mode');
+    const value = (setting?.value ?? {}) as {
+      enabled?: boolean;
+      message?: string;
+    };
+    return {
+      success: true,
+      data: {
+        enabled: value.enabled === true,
+        message: value.message || '',
+      },
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @Put('admin/maintenance')
+  async updateMaintenance(
+    @Body() body: { enabled: boolean; message?: string },
+  ) {
+    const value = {
+      enabled: body.enabled === true,
+      message: body.message || '',
+    };
+    const updated = await this.settingsService.upsert(
+      'maintenance_mode',
+      value,
+      'object',
+      'Mode maintenance portal PKKMB',
+    );
+    return {
+      success: true,
+      data: {
+        enabled: (updated.value as { enabled?: boolean }).enabled === true,
+        message: (updated.value as { message?: string }).message || '',
+      },
     };
   }
 

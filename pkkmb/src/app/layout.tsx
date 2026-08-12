@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import SmoothScrolling from "@/components/layout/SmoothScrolling";
+import MaintenanceGate from "@/components/layout/MaintenanceGate";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -60,7 +61,7 @@ export default function RootLayout({
       <body className="antialiased font-body bg-black text-white selection:bg-gold-500/30">
         <SmoothScrolling>
           <div className="noise-overlay" aria-hidden="true" />
-          {children}
+          <MaintenanceGate>{children}</MaintenanceGate>
           <Toaster 
             position="top-center"
             toastOptions={{

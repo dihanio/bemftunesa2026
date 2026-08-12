@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { API_URL, apiFetch } from "@/lib/api";
 import Image from "next/image";
 import Link from "next/link";
-import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, ClipboardList, CalendarDays, QrCode } from "lucide-react";
+import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, ClipboardList, CalendarDays, QrCode, Wrench } from "lucide-react";
 import { notificationHref, type MabaNotification } from "@/lib/maba";
 
 interface NavItem {
@@ -240,6 +240,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (roleString === 'super_admin') {
         items.push({ label: "Manajemen Gugus", href: "/dashboard/manage/groups", icon: <Users className="w-5 h-5" />, active: pathname === "/dashboard/manage/groups" });
         items.push({ label: "Manajemen Akun", href: "/dashboard/manage/users", icon: <User className="w-5 h-5" />, active: pathname === "/dashboard/manage/users" });
+        items.push({ label: "Mode Maintenance", href: "/dashboard/manage/maintenance", icon: <Wrench className="w-5 h-5" />, active: pathname === "/dashboard/manage/maintenance" });
       }
 
       // Manajemen Quiz (permission-based, frontend visibility only) —
