@@ -1223,6 +1223,68 @@ export class PkkmbService {
     return result;
   }
 
+  // Ubah data sesi presensi (judul, waktu, lokasi, online dll).
+  async updateAttendanceSession(
+    sessionId: string,
+    actorId: string,
+    dto: CreateAttendanceSessionDto,
+  ) {
+    const actor = await this.assertAttendanceManager(actorId);
+    const session = await this.sessionModel.findById(sessionId);
+    if (!session) {
+      throw new NotFoundException('Sesi presensi tidak ditemukan.');
+    }
+    if (dto.title !== undefined) session.title = dto.title;
+    if (dto.date !== undefined) session.date = new Date(dto.date);
+    if (dto.startTime !== undefined)
+      session.startTime = parseWibDate(dto.startTime);
+    if (dto.endTime !== undefined) session.endTime = parseWibDate(dto.endTime);
+    if (dto.location !== undefined) session.location = dto.location;
+    if (dto.isOnline !== undefined) session.isOnline = dto.isOnline;
+    if (dto.targetParticipantType)
+      session.targetParticipantType = dto.targetParticipantType;
+    if (dto.status) session.status = dto.status;
+
+    const result = await session.save();
+    await this.invalidateCachePatterns('pkkmb:sessions:*');
+    this.auditAttendance(
+      { userId: actorId, roleSlug: actor.roleSlug },
+      'UPDATE',
+      'attendance_session',
+      result._id,
+      result.title,
+      { status: result.status },
+    );
+    return result;
+  }
+
+  // Hapus sesi presensi (soft delete). Record presensi di dalam sesi ikut
+  // di-soft-delete (bukan hard delete) agar bisa dipulihkan bila perlu.
+  async deleteAttendanceSession(sessionId: string, actorId: string) {
+    const actor = await this.assertAttendanceManager(actorId);
+    const session = await this.sessionModel.findById(sessionId);
+    if (!session) {
+      throw new NotFoundException('Sesi presensi tidak ditemukan.');
+    }
+    const now = new Date();
+    session.deletedAt = now;
+    const result = await session.save();
+    await this.logModel.updateMany(
+      { session: session._id, deletedAt: null },
+      { $set: { deletedAt: now } },
+    );
+    await this.invalidateCachePatterns('pkkmb:sessions:*');
+    this.auditAttendance(
+      { userId: actorId, roleSlug: actor.roleSlug },
+      'DELETE',
+      'attendance_session',
+      result._id,
+      result.title,
+      { deletedAt: result.deletedAt },
+    );
+    return result;
+  }
+
   // ─── CHECK-IN ─────────────────────────────────────────────────────────────
 
   async checkIn(

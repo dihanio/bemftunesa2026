@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, Clock, Users, Activity, Plus, Wifi, WifiOff, Check, X, FileText, Trash2 } from "lucide-react";
+import { MapPin, Clock, Users, Activity, Plus, Wifi, WifiOff, Check, X, FileText, Trash2, Pencil } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import LiveAttendanceMap from './LiveAttendanceMap';
 import toast from "react-hot-toast";
@@ -47,6 +47,7 @@ export default function AttendancePage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
   const [form, setForm] = useState({
     title: "",
     date: new Date().toISOString().split("T")[0],
@@ -166,6 +167,71 @@ export default function AttendancePage() {
     }
   };
 
+  const startEditSession = (s: Session) => {
+    setEditingSession(s);
+    setForm({
+      title: s.title,
+      date: s.date.slice(0, 10),
+      startTime: s.startTime.slice(11, 16),
+      endTime: s.endTime.slice(11, 16),
+      location: s.location,
+      isOnline: !!s.isOnline,
+    });
+    setShowCreate(true);
+  };
+
+  const updateSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSession) return;
+    setCreating(true);
+    try {
+      const res = await apiFetch(`/pkkmb/attendance/sessions/${editingSession._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title,
+          date: form.date,
+          startTime: `${form.date}T${form.startTime}`,
+          endTime: `${form.date}T${form.endTime}`,
+          location: form.location || "Online",
+          isOnline: form.isOnline,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setShowCreate(false);
+        setEditingSession(null);
+        setForm({ title: "", date: new Date().toISOString().split("T")[0], startTime: "07:00", endTime: "09:00", location: "", isOnline: true });
+        toast.success("Sesi presensi diperbarui");
+        fetchSessions();
+      } else {
+        alert(json.message || "Gagal memperbarui sesi");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Gagal memperbarui sesi");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const deleteSession = async (s: Session) => {
+    if (!window.confirm(`Hapus sesi "${s.title}"?`)) return;
+    try {
+      const res = await apiFetch(`/pkkmb/attendance/sessions/${s._id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        toast.success("Sesi presensi dihapus");
+        fetchSessions();
+      } else {
+        toast.error(json.message || "Gagal menghapus sesi");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Gagal menghapus sesi");
+    }
+  };
+
   const fetchLogs = useCallback(async () => {
     try {
       const res = await apiFetch("/pkkmb/attendance/monitoring?limit=50");
@@ -263,7 +329,7 @@ export default function AttendancePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {sessions.map((s) => (
-                <div key={s._id} className="bg-black/30 border border-white/10 rounded-xl p-4 flex items-center justify-between">
+                <div key={s._id} className="bg-black/30 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-white">{s.title}</span>
@@ -279,8 +345,16 @@ export default function AttendancePage() {
                       {new Date(s.endTime).toLocaleTimeString("id-ID", { timeStyle: "short" })} •{" "}
                       {s.location}
                     </p>
+                    <div className="flex gap-3 mt-2">
+                      <button onClick={() => startEditSession(s)} className="inline-flex items-center gap-1 text-[11px] text-gold-400 hover:text-gold-300">
+                        <Pencil className="w-3 h-3" /> Edit
+                      </button>
+                      <button onClick={() => deleteSession(s)} className="inline-flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300">
+                        <Trash2 className="w-3 h-3" /> Hapus
+                      </button>
+                    </div>
                   </div>
-                  <span className={`px-2 py-1 text-xs rounded font-bold ${s.isOnline ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-white/10 text-white/60"}`}>
+                  <span className={`px-2 py-1 text-xs rounded font-bold shrink-0 ${s.isOnline ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-white/10 text-white/60"}`}>
                     {s.isOnline ? "Online" : "Offline"}
                   </span>
                 </div>
@@ -426,12 +500,14 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      {/* Create Session Modal */}
+      {/* Create / Edit Session Modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[#14100a] border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl relative overflow-hidden">
-            <h3 className="text-lg font-bold text-white mb-4">Buat Sesi Presensi</h3>
-            <form onSubmit={createSession} className="space-y-4">
+            <h3 className="text-lg font-bold text-white mb-4">
+              {editingSession ? "Edit Sesi Presensi" : "Buat Sesi Presensi"}
+            </h3>
+            <form onSubmit={editingSession ? updateSession : createSession} className="space-y-4">
               <div>
                 <label className="block text-xs text-white/50 mb-1">Judul Sesi</label>
                 <input
@@ -498,7 +574,7 @@ export default function AttendancePage() {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowCreate(false)}
+                  onClick={() => { setShowCreate(false); setEditingSession(null); }}
                   className="px-4 py-2 rounded-xl text-white/70 hover:bg-white/10 text-sm font-semibold transition-colors"
                 >
                   Batal
@@ -508,7 +584,7 @@ export default function AttendancePage() {
                   disabled={creating}
                   className="px-5 py-2 rounded-xl bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold text-sm transition-colors"
                 >
-                  {creating ? "Menyimpan..." : "Simpan"}
+                  {creating ? "Menyimpan..." : editingSession ? "Simpan Perubahan" : "Simpan"}
                 </button>
               </div>
             </form>

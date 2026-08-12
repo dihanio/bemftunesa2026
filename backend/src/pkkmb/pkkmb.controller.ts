@@ -363,6 +363,46 @@ export class PkkmbController {
     };
   }
 
+  @Patch('attendance/sessions/:id')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({
+    summary: 'Mengubah data sesi presensi (judul, waktu, lokasi)',
+  })
+  async updateAttendanceSession(
+    @Param('id') id: string,
+    @Body() dto: CreateAttendanceSessionDto,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const data = await this.pkkmbService.updateAttendanceSession(
+      id,
+      user.userId,
+      dto,
+    );
+    return {
+      success: true,
+      message: 'Sesi presensi berhasil diperbarui',
+      data,
+    };
+  }
+
+  @Delete('attendance/sessions/:id')
+  @RequiredPermissions(PkkmbPermission.MONITORING_READ)
+  @ApiOperation({ summary: 'Menghapus sesi presensi (soft delete)' })
+  async deleteAttendanceSession(
+    @Param('id') id: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    const data = await this.pkkmbService.deleteAttendanceSession(
+      id,
+      user.userId,
+    );
+    return {
+      success: true,
+      message: 'Sesi presensi berhasil dihapus',
+      data,
+    };
+  }
+
   @Post('attendance/checkin')
   @RequiredPermissions(PkkmbPermission.ATTENDANCE_CHECKIN)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
