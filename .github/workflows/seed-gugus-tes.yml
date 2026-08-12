@@ -24,10 +24,13 @@ jobs:
             export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
             cd "$DEPLOY_PATH"
 
+            echo "→ Drop index legacy assignmentId+mabaId (skema lama, tidak dipakai kode saat ini)"
+            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
+            docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.pkkmbsubmissions.dropIndex("assignmentId_1_mabaId_1")' || echo "WARN: index tidak ada atau sudah dihapus"
+
             echo "→ Jalankan seed gugus tes (idempotent)"
             docker compose -f docker-compose.yml exec -T api node dist/src/database/seeders/seed-gugus-tes.js
 
             echo "→ Verifikasi: gugus nomor 51"
-            MDB_URI=$(grep -E '^MONGODB_URI=' .env | head -n1 | cut -d= -f2-)
             docker compose -f docker-compose.yml exec -T db mongosh "$MDB_URI" --quiet --eval 'db.pkkmb_gugus.findOne({ nomor: 51 }, { name: 1, pendampingName: 1, ketuaGugusId: 1 })'
             echo "✅ Seed gugus tes selesai."
