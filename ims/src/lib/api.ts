@@ -709,14 +709,34 @@ export class ImsApiService extends BaseImsApiService {
     });
   }
 
-  static async getMabaList<TResponse = unknown>(): Promise<ApiResponse<TResponse[]>> {
-    return this.request<TResponse[]>('/pkkmb/admin/maba');
+  static async getMabaList<TResponse = unknown>(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<ApiResponse<{ data: TResponse[]; meta: { total: number; page: number; limit: number; totalPages: number } }>> {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.search) qs.set('search', params.search);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return this.request<{ data: TResponse[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(`/pkkmb/admin/maba${suffix}`);
   }
 
   static async resetMabaPassword<TResponse = unknown>(mabaId: string): Promise<ApiResponse<TResponse>> {
     return this.request<TResponse>(`/pkkmb/admin/maba/${mabaId}/reset-password`, {
       method: 'POST',
     });
+  }
+
+  static async getAuditLogs<TResponse = unknown>(params?: {
+    limit?: number;
+    page?: number;
+  }): Promise<ApiResponse<{ logs: TResponse[]; pagination: { total: number; page: number; limit: number; totalPages: number } }>> {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return this.request<{ logs: TResponse[]; pagination: { total: number; page: number; limit: number; totalPages: number } }>(`/pkkmb/admin/audit-logs${suffix}`);
   }
 
   static async createPkkmbAttendanceEvent<TResponse = unknown, TRequest = unknown>(data: TRequest): Promise<ApiResponse<TResponse>> {

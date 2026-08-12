@@ -27,7 +27,7 @@ export default function PkkmbDashboard() {
         ]);
 
         setStats({
-          mabaCount: mabaRes.data?.length || 0,
+          mabaCount: mabaRes.data?.data?.length || 0,
           eventCount: eventsRes.data?.length || 0,
           assignmentCount: assignmentsRes.data?.length || 0,
         });

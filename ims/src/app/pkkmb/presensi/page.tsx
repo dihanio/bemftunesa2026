@@ -168,7 +168,7 @@ export default function PkkmbPresensiPage() {
         setLogsList(resLogs.data);
       }
       if (resMaba.success && resMaba.data) {
-        setMabaList(resMaba.data);
+        setMabaList(resMaba.data.data);
       }
     } catch (err) {
       console.error("Failed to load logs or maba:", err);

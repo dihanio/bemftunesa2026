@@ -12,8 +12,15 @@ interface MabaItem {
   _id: string;
   nim: string;
   name: string;
-  prodi?: string;
-  kelompok: string;
+  email?: string;
+  studyProgram?: string;
+  isOnboarded?: boolean;
+  verificationStatus?: 'PENDING_VERIFICATION' | 'VERIFIED' | 'REJECTED';
+  pkkmbGroup?: {
+    _id?: string;
+    nomor?: number;
+    name?: string;
+  } | null;
 }
 
 export default function PkkmbMabaPage() {
@@ -22,6 +29,9 @@ export default function PkkmbMabaPage() {
   const [search, setSearch] = useState("");
   const [selectedKelompok, setSelectedKelompok] = useState("");
   const [selectedProdi, setSelectedProdi] = useState("");
+  const [selectedOnboarding, setSelectedOnboarding] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [resettingId, setResettingId] = useState<string | null>(null);
 
   // Seed Modal State
@@ -31,12 +41,19 @@ export default function PkkmbMabaPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (searchTerm = "") => {
     try {
       setLoading(true);
-      const res = await ImsApiService.getMabaList<MabaItem>();
+      // Muat semua data sekaligus (limit besar) supaya filter kelompok/prodi/onboarding
+      // berfungsi penuh di seluruh data, lalu di-paginasi client-side.
+      const res = await ImsApiService.getMabaList<MabaItem>({
+        page: 1,
+        limit: 5000,
+        search: searchTerm || undefined,
+      });
       if (res.success && res.data) {
-        setMabaList(res.data);
+        setMabaList(res.data.data);
+        setTotal(res.data.meta.total || 0);
       }
     } catch (err) {
       console.error("Failed to load maba list:", err);
@@ -47,10 +64,10 @@ export default function PkkmbMabaPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchData();
-    }, 0);
+      fetchData(search);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [fetchData]);
+  }, [fetchData, search]);
 
   const handleSeed = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,18 +132,32 @@ export default function PkkmbMabaPage() {
   };
 
   // Get unique options for filters
-  const kelompokOptions = Array.from(new Set(mabaList.map((m) => m.kelompok))).filter(Boolean);
-  const prodiOptions = Array.from(new Set(mabaList.map((m) => m.prodi))).filter(Boolean);
+  const kelompokOptions = Array.from(new Set(mabaList.map((m) => m.pkkmbGroup?.name))).filter(Boolean);
+  const prodiOptions = Array.from(new Set(mabaList.map((m) => m.studyProgram))).filter(Boolean);
 
   // Filter & Search
   const filteredList = mabaList.filter((m) => {
     const matchesSearch =
       m.name.toLowerCase().includes(search.toLowerCase()) ||
       m.nim.toLowerCase().includes(search.toLowerCase());
-    const matchesKelompok = !selectedKelompok || m.kelompok === selectedKelompok;
-    const matchesProdi = !selectedProdi || m.prodi === selectedProdi;
-    return matchesSearch && matchesKelompok && matchesProdi;
+    const matchesKelompok = !selectedKelompok || m.pkkmbGroup?.name === selectedKelompok;
+    const matchesProdi = !selectedProdi || m.studyProgram === selectedProdi;
+    const matchesOnboarding =
+      !selectedOnboarding ||
+      (selectedOnboarding === "onboarded" && m.isOnboarded === true) ||
+      (selectedOnboarding === "not-onboarded" && m.isOnboarded !== true);
+    return matchesSearch && matchesKelompok && matchesProdi && matchesOnboarding;
   });
+
+  const PAGE_SIZE = 50;
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginatedList = filteredList.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // Reset ke halaman 1 saat filter/search berubah
+  useEffect(() => {
+    setPage(1);
+  }, [search, selectedKelompok, selectedProdi, selectedOnboarding]);
 
   return (
     <DashboardShell requirePkkmbAccess>
@@ -187,6 +218,18 @@ export default function PkkmbMabaPage() {
             placeholder="Semua Program Studi"
             className="bg-surface-2 border-hairline hover:bg-surface-3"
           />
+
+          <CustomSelect
+            value={selectedOnboarding}
+            onChange={setSelectedOnboarding}
+            options={[
+              { value: "", label: "Semua Status Onboarding" },
+              { value: "onboarded", label: "Sudah Onboarding" },
+              { value: "not-onboarded", label: "Belum Onboarding" },
+            ]}
+            placeholder="Semua Status Onboarding"
+            className="bg-surface-2 border-hairline hover:bg-surface-3"
+          />
         </div>
 
         {/* Table list */}
@@ -203,33 +246,63 @@ export default function PkkmbMabaPage() {
                   <tr className="border-b border-hairline bg-surface-2 text-ink-muted font-bold">
                     <th className="px-6 py-4">NIM</th>
                     <th className="px-6 py-4">Nama Lengkap</th>
+                    <th className="px-6 py-4">Email</th>
                     <th className="px-6 py-4">Program Studi</th>
-                    <th className="px-6 py-4">Kelompok</th>
-                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Gugus</th>
+                    <th className="px-6 py-4">Onboarding</th>
+                    <th className="px-6 py-4">Verifikasi</th>
                     <th className="px-6 py-4 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-hairline">
-                  {filteredList.length === 0 ? (
+                  {paginatedList.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-ink-muted">
+                      <td colSpan={8} className="px-6 py-12 text-center text-ink-muted">
                         Mahasiswa tidak ditemukan.
                       </td>
                     </tr>
                   ) : (
-                    filteredList.map((maba) => (
+                    paginatedList.map((maba) => (
                       <tr key={maba._id} className="hover:bg-surface-2 transition-colors">
                         <td className="px-6 py-4 font-mono font-bold text-ink-muted">{maba.nim}</td>
                         <td className="px-6 py-4 font-extrabold text-ink">{maba.name}</td>
-                        <td className="px-6 py-4 text-ink-muted">{maba.prodi}</td>
+                        <td className="px-6 py-4 text-ink-muted">{maba.email || "-"}</td>
+                        <td className="px-6 py-4 text-ink-muted">{maba.studyProgram || "-"}</td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-500 border border-amber-500/20">
-                            {maba.kelompok}
-                          </span>
+                          {maba.pkkmbGroup ? (
+                            <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-500 border border-amber-500/20">
+                              {maba.pkkmbGroup.nomor
+                                ? `Gugus ${String(maba.pkkmbGroup.nomor).padStart(2, "0")}`
+                                : maba.pkkmbGroup.name}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-ink-muted/10 px-2.5 py-0.5 text-xs font-semibold text-ink-muted border border-ink-muted/20">
+                              Belum di-gugus
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500 border border-emerald-500/20">
-                            Aktif
+                          {maba.isOnboarded === true ? (
+                            <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500 border border-emerald-500/20">
+                              Sudah
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs font-semibold text-slate-500 border border-slate-500/20">
+                              Belum
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
+                            maba.verificationStatus === "VERIFIED"
+                              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                              : maba.verificationStatus === "REJECTED"
+                                ? "bg-red-500/10 text-red-500 border-red-500/20"
+                                : "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                          }`}>
+                            {maba.verificationStatus
+                              ? maba.verificationStatus.replace(/_/g, " ").toLowerCase()
+                              : "-"}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -251,6 +324,39 @@ export default function PkkmbMabaPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-ink-muted">
+              Menampilkan <span className="font-bold text-ink">{paginatedList.length}</span> dari{" "}
+              <span className="font-bold text-ink">{filteredList.length}</span> maba
+              {total > 0 && total !== filteredList.length && (
+                <> (dari total <span className="font-bold text-ink">{total}</span>)
+                </>
+              )}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="px-3 py-1.5 rounded-lg bg-surface-2 border border-hairline text-sm font-semibold text-ink hover:bg-surface-3 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Prev
+              </button>
+              <span className="px-3 py-1.5 text-sm font-bold text-ink">
+                {safePage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="px-3 py-1.5 rounded-lg bg-surface-2 border border-hairline text-sm font-semibold text-ink hover:bg-surface-3 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
             </div>
           </div>
         )}

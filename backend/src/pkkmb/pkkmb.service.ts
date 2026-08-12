@@ -3646,6 +3646,14 @@ export class PkkmbService {
       deletedAt: null,
     };
 
+    // Hanya tampilkan Mahasiswa Baru angkatan 26 (NIM atau email berawalan "26").
+    // Filter global sehingga semua konsumen endpoint (IMS & portal PKKMB) konsisten.
+    filter.$and = [
+      {
+        $or: [{ nim: /^26/ }, { email: /^26/ }],
+      },
+    ];
+
     // Check if the current user is restricted to seeing only their own group
     // The JWT payload includes permissions in currentUser.permissions
     const hasReadAll =
@@ -3694,7 +3702,7 @@ export class PkkmbService {
 
     const query = this.userModel
       .find(filter)
-      .populate('pkkmbGroup', 'name ketuaGugusId')
+      .populate('pkkmbGroup', 'name nomor ketuaGugusId')
       .populate('department', 'name'); // department is a ref
 
     applyPagination(query, paginationDto);
@@ -3759,6 +3767,7 @@ export class PkkmbService {
       points: { $lt: 0 },
       deletedAt: null,
     };
+
 
     const hasReadAll =
       currentUser?.permissions?.includes('pkkmb.group.read_all') ||

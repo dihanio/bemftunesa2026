@@ -6,7 +6,7 @@ import {
   Settings, Users, CheckSquare, Send, Briefcase, Megaphone, BarChart,
   FileSearch, Archive, Copy, Calendar, Edit3, CheckCircle, CreditCard,
   FileClock, FileCheck, PieChart, Book, Activity, List, Building2, Award,
-  Mail, Newspaper, MessageSquare, Handshake, Image as ImageIcon, UserPlus, Target, FolderOpen, Network, Sliders
+  Mail, Newspaper, MessageSquare, Handshake, Image as ImageIcon, UserPlus, Target, FolderOpen, Network, Sliders, ScrollText
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { SidebarSection } from "../../types/role-types";
@@ -59,6 +59,7 @@ const iconMap: Record<string, React.ElementType> = {
   'folder-open': FolderOpen,
   'network': Network,
   'sliders': Sliders,
+  'scroll-text': ScrollText,
 };
 
 export function DesktopSidebar({ sections, onLogout }: DesktopSidebarProps) {

@@ -58,6 +58,7 @@ export const navigationRegistry: readonly NavigationRegistryItem[] = Object.free
       { id: 'pkkmb-maba', title: 'Data Maba', href: '/pkkmb/maba', icon: 'users', requiredPermissions: [], requiredRoles: [] },
       { id: 'pkkmb-presensi', title: 'Sesi Presensi', href: '/pkkmb/presensi', icon: 'file-clock', requiredPermissions: [], requiredRoles: [] },
       { id: 'pkkmb-tugas', title: 'Penugasan Maba', href: '/pkkmb/tugas', icon: 'file-text', requiredPermissions: [], requiredRoles: [] },
+      { id: 'pkkmb-audit', title: 'Audit Log', href: '/pkkmb/audit', icon: 'scroll-text', requiredPermissions: ['pkkmb.audit.read'], requiredRoles: [] },
     ]
   }
 ]);
