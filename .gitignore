@@ -94,3 +94,6 @@ AGENTS.md
 graphify-out/
 backend/output.json
 backend/ind.traineddata
+
+# dump output (generated Excel dari script dump)
+backend/dump/
