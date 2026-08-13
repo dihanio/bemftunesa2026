@@ -268,15 +268,24 @@ export class HealthService {
     );
 
     // Finalisasi onboarding: set status & assign gugus.
+    // Maba yang SUDAH mendapat gugus (mis. dari sinkronisasi Google Sheets)
+    // dipertahankan gugusnya — tidak dipindahkan oleh algoritma keseimbangan.
+    // Gugus baru hanya dipilih bila maba belum punya gugus sama sekali.
     if (!user.isOnboarded) {
       user.isOnboarded = true;
       user.verificationStatus = 'PENDING_VERIFICATION';
-      user.assignmentStatus = 'UNASSIGNED';
-      await user.save();
-      try {
-        await this.assignMabaToGroup(user);
-      } catch {
-        /* non-fatal */
+      if (!user.pkkmbGroup) {
+        user.assignmentStatus = 'UNASSIGNED';
+        await user.save();
+        try {
+          await this.assignMabaToGroup(user);
+        } catch {
+          /* non-fatal */
+        }
+      } else {
+        // Sudah punya gugus → pastikan status assignment konsisten (ASSIGNED).
+        user.assignmentStatus = 'ASSIGNED';
+        await user.save();
       }
     }
 
