@@ -74,6 +74,7 @@ import {
 
 import { PkkmbController } from './pkkmb.controller';
 import { PkkmbService } from './pkkmb.service';
+import { GugusSyncService } from './gugus-sync.service';
 import { KtmsOcrController } from './ktms-ocr.controller';
 import { KtmsOcrService } from './ktms-ocr.service';
 import { HealthController } from './health.controller';
@@ -112,6 +113,7 @@ import { HealthService } from './health.service';
   controllers: [PkkmbController, KtmsOcrController, HealthController],
   providers: [
     PkkmbService,
+    GugusSyncService,
     KtmsOcrService,
     HealthService,
     {

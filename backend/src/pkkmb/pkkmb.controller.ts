@@ -31,6 +31,7 @@ import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { RequiredPermissions } from '../auth/decorators/required-permission.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { PkkmbService } from './pkkmb.service';
+import { GugusSyncService } from './gugus-sync.service';
 import type { UserDocument } from '../schemas/user.schema';
 import { PkkmbPermission } from '../common/auth/pkkmb-permissions';
 import { XLSX_MIME } from './quiz-import-export';
@@ -66,7 +67,10 @@ import {
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('pkkmb')
 export class PkkmbController {
-  constructor(private readonly pkkmbService: PkkmbService) {}
+  constructor(
+    private readonly pkkmbService: PkkmbService,
+    private readonly gugusSyncService: GugusSyncService,
+  ) {}
 
   // ─── MAHASISWA BARU (MABA) ENDPOINTS ────────────────────────────────────────
 
@@ -1318,5 +1322,20 @@ export class PkkmbController {
   async deleteUser(@Param('id') id: string) {
     const result = await this.pkkmbService.deleteUser(id);
     return { success: true, message: 'User berhasil dihapus', data: result };
+  }
+
+  @Post('admin/gugus/sync')
+  @RequiredPermissions(PkkmbPermission.SETTINGS_MANAGE)
+  @ApiOperation({
+    summary:
+      'Sinkronkan data maba & gugus dari Google Sheets ke database (upsert)',
+  })
+  async syncGugusFromSheets() {
+    const result = await this.gugusSyncService.syncToDatabase();
+    return {
+      success: true,
+      message: 'Sinkronisasi Google Sheets selesai',
+      data: result,
+    };
   }
 }
