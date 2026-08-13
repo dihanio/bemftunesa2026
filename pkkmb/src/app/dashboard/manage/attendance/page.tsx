@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { MapPin, Clock, Users, Activity, Plus, Wifi, WifiOff, Check, X, FileText, Trash2, Pencil } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import { API_URL, apiFetch } from "@/lib/api";
 import LiveAttendanceMap from './LiveAttendanceMap';
 import toast from "react-hot-toast";
 
@@ -397,7 +397,12 @@ export default function AttendancePage() {
                 <p className="text-sm text-white/60 mb-1">Sesi: {izin.session?.title || "-"}</p>
                 <p className="text-xs text-white/50 italic mb-3">{izin.reason || "-"}</p>
                 {izin.proofUrl && (
-                  <a href={izin.proofUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs text-gold-400 hover:underline mb-3">
+                  <a
+                    href={izin.proofUrl.startsWith("/") ? `${API_URL}${izin.proofUrl}` : izin.proofUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-gold-400 hover:underline mb-3"
+                  >
                     <FileText className="w-3.5 h-3.5" /> Lihat Bukti
                   </a>
                 )}

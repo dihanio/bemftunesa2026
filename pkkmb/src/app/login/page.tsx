@@ -7,9 +7,13 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, AlertCircle } from "lucide-react";
+import InteractiveTutorial from "@/components/tutorial/InteractiveTutorial";
+import TutorialButton from "@/components/tutorial/TutorialButton";
+import { loginTutorial } from "@/components/tutorial/tutorialConfigs";
 
 function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
+  const [tutorialTrigger, setTutorialTrigger] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const authenticated = searchParams.get("authenticated");
@@ -66,6 +70,7 @@ function LoginContent() {
       )}
 
       <button
+        data-login-button
         onClick={handleLogin}
         disabled={isLoading}
         className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-black px-6 py-4 rounded-xl font-bold font-body transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed group/btn shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]"
@@ -83,10 +88,17 @@ function LoginContent() {
         <span>{isLoading ? "Membuka halaman Google..." : "Lanjutkan dengan Google"}</span>
       </button>
 
+      <TutorialButton
+        onTrigger={() => setTutorialTrigger((t) => t + 1)}
+        label="Lihat Panduan"
+        className="mt-4"
+      />
+
       <div className="mt-8 pt-8 border-t border-white/10 w-full text-xs text-white/40 font-body">
         Ada kendala saat masuk? Hubungi <a href="#" className="text-gold-500 hover:underline">Tim IT PKKMB</a>
       </div>
 
+      <InteractiveTutorial config={loginTutorial} triggerKey={tutorialTrigger} />
     </div>
   );
 }

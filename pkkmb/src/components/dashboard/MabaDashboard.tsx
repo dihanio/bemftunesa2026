@@ -251,13 +251,15 @@ export default function MabaDashboard() {
         </div>
       )}
 
-      <HeroToday
-        name={data.name}
-        avatarUrl={data.avatarUrl}
-        group={data.group}
-        schedule={data.schedule}
-        attendance={data.attendance}
-      />
+      <div data-dash-hero>
+        <HeroToday
+          name={data.name}
+          avatarUrl={data.avatarUrl}
+          group={data.group}
+          schedule={data.schedule}
+          attendance={data.attendance}
+        />
+      </div>
 
       <PitaCard ribbon={data.ribbon} />
 
@@ -267,13 +269,15 @@ export default function MabaDashboard() {
         onSubmitted={() => setReloadKey((k) => k + 1)}
       />
 
-      <StatStrip
-        taskSubmitted={data.taskSubmitted}
-        taskTotal={data.taskTotal}
-        quizDone={data.quizDone}
-        quizTotal={data.quizTotal}
-        points={data.points}
-      />
+      <div data-dash-stats>
+        <StatStrip
+          taskSubmitted={data.taskSubmitted}
+          taskTotal={data.taskTotal}
+          quizDone={data.quizDone}
+          quizTotal={data.quizTotal}
+          points={data.points}
+        />
+      </div>
 
       {data.announcements.length > 0 && (
         <section>

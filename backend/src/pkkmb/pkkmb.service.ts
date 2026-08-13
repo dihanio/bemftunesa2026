@@ -2886,6 +2886,17 @@ export class PkkmbService {
 
     assignment.deletedAt = new Date();
     await assignment.save();
+
+    // Hapus (soft delete) semua pengumpulan/submission yang terhubung ke tugas
+    // ini, agar tidak tersisa "menunggu evaluasi" untuk tugas yang sudah
+    // dihapus. Konsisten dengan pola soft-delete assignment (deletedAt).
+    await this.submissionModel
+      .updateMany(
+        { taskId: assignment._id, deletedAt: null },
+        { $set: { deletedAt: new Date() } },
+      )
+      .exec();
+
     return { id: assignment._id, deletedAt: assignment.deletedAt };
   }
 
@@ -2901,7 +2912,12 @@ export class PkkmbService {
     const limit = parseInt(queryDto.limit || '20', 10);
     const skip = (page - 1) * limit;
 
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {
+      // Hanya tampilkan submission yang belum dihapus (soft delete). Ini
+      // memastikan submission dari tugas yang sudah dihapus (ikut di-soft
+      // delete) tidak lagi muncul di daftar "menunggu evaluasi".
+      deletedAt: null,
+    };
 
     if (user) {
       const hasReadAll =
@@ -4249,6 +4265,21 @@ export class PkkmbService {
     const hasReadAll =
       currentUser?.permissions?.includes('pkkmb.group.read_all') ||
       currentUser?.permissions?.includes('manage:all');
+
+    // Kebijakan "hanya angkatan 26": untuk admin PKKMB (super_admin /
+    // admin_pkkmb) yang melihat data global, total mahasiswa hanya dihitung
+    // dari maba yang NIM/email-nya berawalan 26 — bukan seluruh user maba.
+    const roleSlug = currentUser?.role?.slug;
+    const isPkkmbAdmin =
+      roleSlug === 'super_admin' || roleSlug === 'admin_pkkmb';
+    if (hasReadAll && isPkkmbAdmin) {
+      filter.$and = [
+        {
+          $or: [{ nim: /^26/ }, { email: /^26/ }],
+        },
+      ];
+    }
+
     let userGroupId: string | null | import('mongoose').Types.ObjectId = null;
 
     if (!hasReadAll) {

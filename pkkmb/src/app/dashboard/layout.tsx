@@ -7,6 +7,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { Home, User, FileText, CheckSquare, Users, ShieldAlert, MonitorSmartphone, Bell, ClipboardList, CalendarDays, QrCode, Wrench } from "lucide-react";
 import { notificationHref, type MabaNotification } from "@/lib/maba";
+import InteractiveTutorial from "@/components/tutorial/InteractiveTutorial";
+import TutorialButton from "@/components/tutorial/TutorialButton";
+import { dashboardTutorial } from "@/components/tutorial/tutorialConfigs";
 
 interface NavItem {
   label: string;
@@ -37,6 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [tutorialTrigger, setTutorialTrigger] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -276,7 +280,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-8 space-y-2 font-body">
+        <nav data-dash-menu className="flex-1 px-4 py-8 space-y-2 font-body">
           {/* Sidebar (desktop) TIDAK memuat Notifikasi & Profil — keduanya
               diakses lewat header (lonceng dropdown & avatar dropdown).
               Bottom navigation (mobile) tetap menampilkan semua menu. */}
@@ -343,6 +347,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="relative hidden md:block">
               {notifOpen && <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />}
               <button
+                data-dash-bell
                 onClick={() => setNotifOpen(!notifOpen)}
                 className="relative p-2 rounded-xl hover:bg-white/10 transition-colors"
               >
@@ -415,6 +420,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   )}
                 </div>
               )}
+            </div>
+            <div className="hidden md:block">
+              <TutorialButton
+                onTrigger={() => setTutorialTrigger((t) => t + 1)}
+                label="Panduan"
+              />
             </div>
             <div className="relative">
               {profileOpen && <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />}
@@ -522,6 +533,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       )}
+
+      {/* Tutorial interaktif dashboard */}
+      <InteractiveTutorial
+        config={dashboardTutorial}
+        triggerKey={tutorialTrigger}
+      />
     </div>
   );
 }

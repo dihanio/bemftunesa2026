@@ -85,7 +85,7 @@ export default function HeroToday({
       </div>
 
       {/* Kegiatan berikutnya */}
-      <div className="relative z-10 mt-6 rounded-2xl border border-white/10 bg-black/30 p-4 md:p-5">
+      <div data-dash-schedule className="relative z-10 mt-6 rounded-2xl border border-white/10 bg-black/30 p-4 md:p-5">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <p className="text-xs font-bold uppercase tracking-wider text-white/40">
             {scheduleIsToday ? "Kegiatan Hari Ini" : "Kegiatan Berikutnya"}

@@ -19,6 +19,9 @@ import {
 import PhotoCropDialog from "@/components/onboarding/PhotoCropDialog";
 import HealthStep, { type HealthStepHandle } from "@/components/onboarding/HealthStep";
 import ConsentStep from "@/components/onboarding/ConsentStep";
+import InteractiveTutorial from "@/components/tutorial/InteractiveTutorial";
+import TutorialButton from "@/components/tutorial/TutorialButton";
+import { onboardingTutorial } from "@/components/tutorial/tutorialConfigs";
 
 // Decode QR dari file gambar (jpg/png) via jsQR.
 async function decodeQrFromImage(file: File): Promise<string | null> {
@@ -83,6 +86,7 @@ export default function OnboardingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const healthRef = useRef<HealthStepHandle>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [tutorialTrigger, setTutorialTrigger] = useState(0);
 
   // Pasfoto
   const [croppedAvatarBlob, setCroppedAvatarBlob] = useState<Blob | null>(null);
@@ -501,7 +505,7 @@ export default function OnboardingPage() {
             </p>
           </div>
 
-          <div className="space-y-8 relative before:absolute before:inset-0 before:ml-[15px] before:-translate-x-px before:h-full before:w-[2px] before:bg-white/10">
+          <div data-onboard-step className="space-y-8 relative before:absolute before:inset-0 before:ml-[15px] before:-translate-x-px before:h-full before:w-[2px] before:bg-white/10">
             <AnimatePresence mode="popLayout" initial={false}>
             {stepLabels.filter((s) => {
               const lower = Math.max(1, Math.min(step - 2, 3));
@@ -529,7 +533,12 @@ export default function OnboardingPage() {
 
           </div>
 
-          <div className="mt-6 flex justify-center lg:justify-start mt-auto">
+          <div className="mt-6 flex justify-center lg:justify-start items-center gap-3 mt-auto">
+            <TutorialButton
+              onTrigger={() => setTutorialTrigger((t) => t + 1)}
+              label="Panduan"
+              className="px-4 py-2"
+            />
             <button onClick={handleLogout} className="text-white/40 hover:text-red-400 text-xs font-semibold flex items-center gap-2 transition-colors px-4 py-2 rounded-lg hover:bg-white/5">
               <LogOut className="w-4 h-4" /> Keluar dari Akun
             </button>
@@ -743,7 +752,7 @@ export default function OnboardingPage() {
 
             {/* STEP 4: Pasfoto */}
             {step === 4 && (
-              <motion.div key="s5" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col flex-1 min-h-full">
+              <motion.div data-onboard-step4 key="s5" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-6 flex flex-col flex-1 min-h-full">
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-2">Unggah Pasfoto 3x4</h2>
                   <p className="text-white/50 text-sm mb-4">Pasfoto ini digunakan untuk ID Card Maba dan administrasi fakultas.</p>
@@ -783,6 +792,7 @@ export default function OnboardingPage() {
 
             {/* STEP 5: Persetujuan */}
             {step === 5 && (
+              <div data-onboard-consent className="h-full">
               <ConsentStep
                 apiUrl={API_URL}
                 onBack={() => setStep(4)}
@@ -801,6 +811,7 @@ export default function OnboardingPage() {
                   pasfotoReady: !!croppedAvatarUrl,
                 }}
               />
+              </div>
             )}
 
             {/* STEP 6: Penetapan Gugus */}
@@ -840,7 +851,7 @@ export default function OnboardingPage() {
           </div>
 
           {/* Fixed Nav Footer */}
-          <div className="pt-6 mt-6 border-t border-white/10 flex items-center justify-between">
+          <div data-onboard-nav className="pt-6 mt-6 border-t border-white/10 flex items-center justify-between">
             <div>
               {step > 1 && step <= 6 && (
                 <button
@@ -910,6 +921,12 @@ export default function OnboardingPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Tutorial interaktif onboarding */}
+      <InteractiveTutorial
+        config={onboardingTutorial}
+        triggerKey={tutorialTrigger}
+      />
     </div>
   );
 }
